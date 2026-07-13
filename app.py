@@ -1,0 +1,401 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import sys
+import io
+import re
+import random
+
+# --- IMPORTAÇÕES ---
+from state import GameState
+from commands import processar_comando, normalizar
+from main import atualizar_eventos_de_tempo
+from minigames import MinigameMinotauro, MinigameSeguranca
+# Importando a CAVEIRA_MORTE do seu data.py!
+from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, CAVEIRA_MORTE, MAX_INVENTARIO
+
+import ui
+import commands
+import minigames
+import main
+
+ui.DEBUG_MODE = True 
+
+# --- ARTE NOVA DO COFRE (Incorporada diretamente aqui) ---
+ARTE_COFRE = r'''                                                                              
+       .-----:-:--:-:-:::--:::::::::::-:::-::::::-::-------:::-:------::        
+      :--:::::::::::-::::::::::::::::::::::::::::::::::::::::::::::::::--.      
+    .------------------------:-::--::--:::::::::::::::::::::::::::::::::::.     
+    ***********************************************************************.    
+    *********************************************************************** ******%%#%#%%%%%%%%%%%%%%%%%%%%%#%###############################****** *****%***********************************************************%***** *****#***********************************************************%***** *****#***********************************************************%***** *****#*********:=*************##########*#####*******************%***** +****#*********+***=+*********##+--**=+*#**###*******************%***** +****#*******%%###%##*+***++**##::-++-:-+:=+##*******************%***** +****#****#%###%%%%#%#*=*+:.**##===++==**==*##*******************%***** +****#****%#######%##%#=++:--*##:=-++-=+-=-+##*******************%***** +****#****#######%###%#***-:+*##===**+*#***###*******************%****+     
+    +****#****####%#%%####********##:::+=++*:::+##*******************%****+     
+    +****#******#####%##**********##===*+==#+==*##*******************#****+     
+    +****#************************##::=+-+=#:==+##*******************#****+     
+    *****#************************###############********************#****+     
+    +****#****+==****************************************************#****+     
+    +****##**:--=++*======+******************************************#****+     
+    +****##*********************************************************##****+     
+    +******#########################################%%%%%%%%%%%%%%%%%=****+     
+    +*********************************************************************+     
+    +*********************************************************************+'''
+
+def web_digitar(texto, tempo_base=0.03, cor="", jogo=None):
+    cor_nome = "verde"
+    if cor == ui.DOS_BRANCO: cor_nome = "branco"
+    elif cor == ui.DOS_AMARELO: cor_nome = "amarelo"
+    elif cor == ui.DOS_VERMELHO: cor_nome = "vermelho"
+    
+    ms = int(tempo_base * 1000)
+    print(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
+
+ui.digitar = web_digitar
+commands.digitar = web_digitar
+minigames.digitar = web_digitar
+main.digitar = web_digitar
+
+app = Flask(__name__)
+CORS(app)
+jogo = GameState()
+
+def imprimir_tela_boot():
+    ui.digitar("VILLAS-BOAS INDUSTRIES (C) 1982", 0.01, ui.DOS_BRANCO)
+    ui.digitar("BIOS VERSION 1.04 - RELEASE 02/11/1982", 0.01, ui.DOS_BRANCO)
+    ui.digitar("RAM CHECK: 640KB OK", 0.01, ui.DOS_VERDE)
+    ui.digitar("DRIVE A: READY", 0.01, ui.DOS_VERDE)
+    ui.digitar("CARREGANDO 'COMMAND.COM'....... OK\n", 0.05, ui.DOS_VERDE)
+    
+    ui.digitar("==================================================", 0.005, ui.DOS_VERDE)
+    ui.digitar("__     _____ _     _        _ ____   ___   ____ ", 0.005, ui.DOS_VERDE)
+    ui.digitar("\\ \\   / /_ _| |   | |      / / ___| / _ \\ / ___|", 0.005, ui.DOS_VERDE)
+    ui.digitar(" \\ \\ / / | || |   | |     / /\\___ \\| | | |\\___ \\", 0.005, ui.DOS_VERDE)
+    ui.digitar("  \\ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.005, ui.DOS_VERDE)
+    ui.digitar("   \\_/  |___|_____|_____/_/  |____/ \\___/ |____/", 0.005, ui.DOS_VERDE)
+    ui.digitar("==================================================", 0.005, ui.DOS_VERDE)
+    ui.digitar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.02, ui.DOS_BRANCO)
+    
+    print(f"{ui.DOS_BRANCO}[1] INICIAR MODO: NORMAL (Para iniciantes){ui.RESET}")
+    print(f"{ui.DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){ui.RESET}\n")
+    print(f"{ui.DOS_VERDE}SELECIONE UMA OPÇÃO (1-2): {ui.RESET}")
+
+def dar_dica_jon(passo_certo):
+    dicas = {
+        "f": "Uma corrente de ar gelado bate direto no seu rosto.",
+        "e": "Um som agudo de metal arranhando reverbera pela parede canhota do duto.",
+        "d": "O cheiro podre de carne estragada fica mais forte no caminho destro."
+    }
+    if random.random() <= 0.25:
+        erradas = [v for k, v in dicas.items() if k != passo_certo]
+        print(f"\n{ui.DOS_VERMELHO}[SENSÓRIO CONFUSO]: {random.choice(erradas)}{ui.RESET}")
+    else:
+        print(f"\n{ui.DOS_AMARELO}[SENSÓRIO]: {dicas[passo_certo]}{ui.RESET}")
+
+def imprimir_contexto_sala():
+    if not jogo.minigame_atual and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
+        sala = jogo.mapa[jogo.sala_atual]
+        print("\n" + "="*50)
+        print(f"📍 VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}")
+        
+        descricao_colorida = sala['descrição']
+        for inspecionavel in sala.get("inspecionaveis", {}):
+            descricao_colorida = descricao_colorida.replace(inspecionavel, f"{ui.DOS_AMARELO}{inspecionavel}{ui.RESET}")
+        for item in sala.get("itens", []):
+            descricao_colorida = descricao_colorida.replace(item, f"{ui.DOS_VERDE}{item}{ui.RESET}")
+            
+        print(f"👁️  Visão: {descricao_colorida}")
+
+        if len(sala.get("itens", [])) > 0:
+            if jogo.turnos_luz > 0:
+                itens_formatados = [f"{ui.DOS_VERDE}{item}{ui.RESET}" for item in sala['itens']]
+                print(f"📦 Itens no chão: {', '.join(itens_formatados)}")
+            else:
+                print(f"📦 {ui.DOS_BRANCO}Deve ter algo no chão, mas escuro demais para ver o quê.{ui.RESET}")
+
+        chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
+        saidas = [k for k in sala.keys() if k not in chaves_ignoradas and isinstance(sala[k], str)]
+        if saidas:
+            print(f"🧭 Saídas: {ui.DOS_AMARELO}{', '.join(saidas).title()}{ui.RESET}")
+        else:
+            print(f"🧭 Saídas: {ui.DOS_VERMELHO}Nenhuma saída aparente...{ui.RESET}")
+
+        print(f"\n{ui.DOS_BRANCO}[ SISTEMA OPERACIONAL VILLAS BOAS v20.08 ]{ui.RESET}")
+        print(f"{ui.DOS_BRANCO}[ HP: {ui.DOS_VERMELHO}{jogo.hp}/3{ui.DOS_BRANCO} | LUZ: {ui.DOS_AMARELO}{jogo.turnos_luz}{ui.DOS_BRANCO} | INV: {len(jogo.inventario)}/{MAX_INVENTARIO} ]{ui.RESET}")
+
+def dar_tela_de_morte():
+    jogo.estado_atual = "FIM"
+    print(f"{ui.DOS_VERMELHO}{CAVEIRA_MORTE}{ui.RESET}")
+    ui.digitar("💀 GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, ui.DOS_VERMELHO)
+    ui.digitar("=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, ui.DOS_AMARELO)
+
+@app.route('/iniciar', methods=['GET'])
+def iniciar_jogo():
+    global jogo
+    jogo = GameState()
+    jogo.estado_atual = "MENU"
+    
+    captura = io.StringIO()
+    sys.stdout = captura
+    imprimir_tela_boot()
+    sys.stdout = sys.__stdout__
+    
+    texto_html = captura.getvalue().replace(ui.DOS_VERDE, '<span class="verde">').replace(ui.DOS_BRANCO, '<span class="branco">').replace(ui.DOS_AMARELO, '<span class="amarelo">').replace(ui.DOS_VERMELHO, '<span class="vermelho">').replace(ui.RESET, '</span>')
+    return jsonify({"linhas": [l for l in texto_html.split('\n') if l.strip() != ""]})
+
+@app.route('/comando', methods=['POST'])
+def receber_comando():
+    global jogo
+    dados = request.json
+    comando = normalizar(dados.get('comando', ''))
+
+    captura = io.StringIO()
+    stdout_original = sys.stdout
+    sys.stdout = captura
+
+    try:
+        # --- BLOQUEIO TOTAL DA TELA DE FIM ---
+        if jogo.estado_atual == "FIM":
+            print(f"{ui.DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{ui.RESET}")
+
+        elif jogo.estado_atual == "MENU":
+            if comando == "1":
+                jogo.dificuldade_escolhida = "NORMAL"
+                jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
+                jogo.estado_atual = "JOGO"
+                print(f"{ui.DOS_VERDE}MODO NORMAL SELECIONADO. INICIANDO JOGO.EXE...{ui.RESET}\n")
+                print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
+                imprimir_contexto_sala()
+            elif comando == "2":
+                jogo.dificuldade_escolhida = "PESADELO"
+                jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
+                jogo.estado_atual = "JOGO"
+                print(f"{ui.DOS_VERMELHO}MODO PESADELO SELECIONADO. BOA SORTE.{ui.RESET}\n")
+                print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
+                imprimir_contexto_sala()
+            else:
+                print(f"{ui.DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE 1 OU 2.{ui.RESET}")
+
+        elif jogo.estado_atual == "JOGO":
+            if jogo.sala_atual == "sala de energia" and not jogo.fios_cortados_inventario:
+                jogo.minigame_atual = MinigameMinotauro(jogo)
+                jogo.estado_atual = "MINIGAME_MINOTAURO"
+                jogo.minigame_atual.imprimir_status()
+            elif jogo.sala_atual == "cadeira" and not jogo.noite_vencida:
+                jogo.minigame_atual = MinigameSeguranca(jogo)
+                jogo.estado_atual = "MINIGAME_SEGURANCA"
+                jogo.minigame_atual.imprimir_status()
+            elif comando == "abrir cofre" and jogo.sala_atual == "01":
+                jogo.estado_atual = "MINIGAME_COFRE"
+                print(f"{ui.DOS_BRANCO}{ARTE_COFRE}{ui.RESET}")
+                print(f"{ui.DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo.{ui.RESET}")
+                print(f"{ui.DOS_VERDE}Digite a senha de 4 dígitos: {ui.RESET}")
+            elif (comando == "jogar jon" or comando == "jogar fome de jon") and jogo.sala_atual == "sala de fliperamas":
+                jogo.estado_atual = "MINIGAME_JON"
+                jogo.jon_passos_dados = 0
+                jogo.jon_caminho_certo = [random.choice(["f", "e", "d"]) for _ in range(4)]
+                print(f"{ui.DOS_BRANCO}{ARTE_PORCO}{ui.RESET}")
+                ui.digitar("--- A FOME DE JON ---", 0.03, ui.DOS_VERDE)
+                print(f"{ui.DOS_BRANCO}Guie o Porco Jon pelos dutos baseando-se nos seus sentidos.{ui.RESET}")
+                print("Comandos: [F] Frente | [E] Esquerda | [D] Direita")
+                dar_dica_jon(jogo.jon_caminho_certo[0])
+                print(f"Passo 1/4 - Direção (F/E/D): ")
+            elif comando == "jogar consertos" and jogo.sala_atual == "sala de fliperamas":
+                if "moeda velha" not in jogo.inventario:
+                    print("A máquina 'Consertos & Sorrisos' exige uma ficha (moeda velha) para iniciar.")
+                else:
+                    jogo.inventario.remove("moeda velha")
+                    jogo.estado_atual = "MINIGAME_CONSERTOS_CABECA"
+                    jogo.web_consertos = {}
+                    print(f"{ui.DOS_BRANCO}{ARTE_ROBO}{ui.RESET}")
+                    ui.digitar("--- CONSERTOS & SORRISOS ---", 0.03, ui.DOS_VERDE)
+                    print("Bem-vindo, Mecânico! Vamos montar nosso novo Festeiro!")
+                    print(f"\n{ui.DOS_AMARELO}[ FASE 1: SELEÇÃO DE PEÇAS ]{ui.RESET}")
+                    print("Escolha a Cabeça (1- Urso | 2- Coelho): ")
+            elif (comando == "jogar adivinha" or comando == "jogar julgamento") and jogo.sala_atual == "sala de fliperamas":
+                jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1"
+                jogo.web_julgamento = {"pontos": 0, "vitimas": ["angela", "joao", "renato"]}
+                print(f"{ui.DOS_BRANCO}{ARTE_PIANO}{ui.RESET}")
+                ui.digitar("--- O JULGAMENTO DO PIANISTA ---", 0.03, ui.DOS_VERDE)
+                print(f"{ui.DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{ui.RESET}")
+                print(f"\n{ui.DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{ui.RESET}")
+            else:
+                gastou_turno = processar_comando(comando, jogo, jogo.mapa)
+                if gastou_turno: atualizar_eventos_de_tempo(jogo)
+                
+                # --- VERIFICAÇÃO DE MORTE DURANTE EXPLORAÇÃO ---
+                if jogo.sala_atual == "morte":
+                    dar_tela_de_morte()
+                elif jogo.sala_atual in ["saida", "cama", "final_bom"] or (jogo.sala_atual == "hall de entrada" and jogo.incendio and jogo.noite_vencida):
+                    jogo.estado_atual = "FIM"
+                    ui.digitar("FIM DE JOGO.", 0.05, ui.DOS_VERDE)
+                    ui.digitar("=== APERTE F5 PARA REINICIAR ===", 0.05, ui.DOS_AMARELO)
+                else:
+                    imprimir_contexto_sala()
+
+        elif jogo.estado_atual == "MINIGAME_COFRE":
+            if comando == "1994": 
+                print(f"{ui.DOS_VERDE}CLICK! A pesada porta de metal se abre.{ui.RESET}")
+                if "chave dos fundos" not in jogo.inventario:
+                    print(f"{ui.DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{ui.RESET}")
+                    jogo.inventario.append("chave dos fundos")
+                else:
+                    print("O cofre está vazio. Apenas poeira.")
+            else:
+                print(f"{ui.DOS_VERMELHO}BEEP! Senha incorreta. Painel pisca em vermelho.{ui.RESET}")
+            jogo.estado_atual = "JOGO"
+            imprimir_contexto_sala()
+
+        elif jogo.estado_atual == "MINIGAME_JON":
+            passo = jogo.jon_passos_dados
+            if comando in ["f", "e", "d", "frente", "esquerda", "direita"]:
+                letra = comando[0]
+                if letra == jogo.jon_caminho_certo[passo]:
+                    print(f"{ui.DOS_BRANCO}Jon rasteja em silêncio pelos dutos...{ui.RESET}")
+                    jogo.jon_passos_dados += 1
+                    if jogo.jon_passos_dados == 4:
+                        print(f"\n{ui.DOS_VERDE}Jon encontrou a 'comida'. A tela pinga um pixel vermelho.{ui.RESET}")
+                        print(f"{ui.DOS_VERMELHO}MENSAGEM: 'Eles não saíram pela porta da frente em 94.'{ui.RESET}")
+                        jogo.turnos_luz -= 1
+                        jogo.estado_atual = "JOGO"
+                        imprimir_contexto_sala()
+                    else:
+                        dar_dica_jon(jogo.jon_caminho_certo[jogo.jon_passos_dados])
+                        print(f"Passo {jogo.jon_passos_dados + 1}/4 - Direção (F/E/D): ")
+                else:
+                    print(f"\n{ui.DOS_VERMELHO}CRUNCH! Jon caiu num triturador ativo! leva um choque brutal!{ui.RESET}")
+                    jogo.hp -= 1
+                    jogo.turnos_luz -= 1
+                    if jogo.hp <= 0:
+                        dar_tela_de_morte()
+                    else:
+                        jogo.estado_atual = "JOGO"
+                        imprimir_contexto_sala()
+            else:
+                print("Direção inválida. Use F, E ou D.")
+
+        elif jogo.estado_atual == "MINIGAME_CONSERTOS_CABECA":
+            jogo.web_consertos["cabeca"] = comando
+            jogo.estado_atual = "MINIGAME_CONSERTOS_TRONCO"
+            print("Escolha o Tronco (1- Fino | 2- Robusto): ")
+
+        elif jogo.estado_atual == "MINIGAME_CONSERTOS_TRONCO":
+            jogo.web_consertos["tronco"] = comando
+            jogo.estado_atual = "MINIGAME_CONSERTOS_PERNAS"
+            print("Escolha as Pernas (1- Aço | 2- Pelúcia): ")
+
+        elif jogo.estado_atual == "MINIGAME_CONSERTOS_PERNAS":
+            cabeca = jogo.web_consertos.get("cabeca", "1")
+            tronco = jogo.web_consertos.get("tronco", "1")
+            pernas = comando
+            item_secreto = None
+            
+            if cabeca == "2" and pernas == "2":
+                print("> AVISO: Peças incompatíveis. Anomalia detectada.")
+                item_secreto = "remedio"
+            elif cabeca == "1" and tronco == "2":
+                print("> Encaixando peças do modelo padrão 'Urso Robusto'...")
+            else:
+                print("> Erro de harmonia visual. Soldando peças à força...")
+                
+            print(f"\n{ui.DOS_VERDE}CONSERTO CONCLUÍDO! O ANIMATRÔNICO SORRI PARA VOCÊ!{ui.RESET}")
+            if "chave da cozinha" not in jogo.inventario:
+                jogo.inventario.append("chave da cozinha")
+                print(f"{ui.DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{ui.RESET}")
+            if item_secreto and len(jogo.inventario) < MAX_INVENTARIO:
+                jogo.inventario.append(item_secreto)
+                print(f"{ui.DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{ui.RESET}")
+                
+            jogo.turnos_luz -= 1
+            jogo.estado_atual = "JOGO"
+            imprimir_contexto_sala()
+
+        elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q1":
+            if comando == "1994": jogo.web_julgamento["pontos"] += 1; print("Nota suave tocada.")
+            else: print("Acorde dissonante.")
+            jogo.estado_atual = "MINIGAME_JULGAMENTO_Q2"
+            print(f"\n{ui.DOS_AMARELO}PERGUNTA 2: Qual animatrônico está atrás de você agora?{ui.RESET}")
+
+        elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q2":
+            if "caroline" in comando or "ela" in comando: jogo.web_julgamento["pontos"] += 1; print("Nota suave tocada.")
+            else: print("Acorde dissonante.")
+            jogo.estado_atual = "MINIGAME_JULGAMENTO_Q3"
+            print(f"\n{ui.DOS_AMARELO}PERGUNTA 3: Em que ano tudo isso começou?{ui.RESET}")
+
+        elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q3":
+            if comando == "1982": jogo.web_julgamento["pontos"] += 1; print("Nota suave tocada.")
+            else: print("Acorde dissonante.")
+            jogo.estado_atual = "MINIGAME_JULGAMENTO_Q4"
+            print(f"\n{ui.DOS_AMARELO}PERGUNTA 4: Quem é você?{ui.RESET}")
+
+        elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q4":
+            if "rogerio" in comando: jogo.web_julgamento["pontos"] += 1; print("Nota suave tocada.")
+            else: print("Acorde dissonante.")
+            jogo.estado_atual = "MINIGAME_JULGAMENTO_V1"
+            print(f"\n{ui.DOS_AMARELO}PERGUNTA 5: Quem são as três vítimas? Digite o 1º nome:{ui.RESET}")
+
+        elif jogo.estado_atual in ["MINIGAME_JULGAMENTO_V1", "MINIGAME_JULGAMENTO_V2", "MINIGAME_JULGAMENTO_V3"]:
+            acertou = False
+            for v in jogo.web_julgamento["vitimas"][:]:
+                if v in comando:
+                    jogo.web_julgamento["vitimas"].remove(v)
+                    acertou = True
+            if acertou: print("Processando... Correto.")
+            else: print("Acorde dissonante. Nome incorreto.")
+            
+            if jogo.estado_atual == "MINIGAME_JULGAMENTO_V1":
+                jogo.estado_atual = "MINIGAME_JULGAMENTO_V2"
+                print("Digite o 2º nome: ")
+            elif jogo.estado_atual == "MINIGAME_JULGAMENTO_V2":
+                jogo.estado_atual = "MINIGAME_JULGAMENTO_V3"
+                print("Digite o 3º nome: ")
+            else:
+                if len(jogo.web_julgamento["vitimas"]) == 0:
+                    jogo.web_julgamento["pontos"] += 1
+                if jogo.web_julgamento["pontos"] == 5:
+                    print("Obrigado por voltar pela gente, Rogério...")
+                    if "bateria nova" not in jogo.inventario:
+                        jogo.inventario.append("bateria nova")
+                        print("🎒 Encontrou uma 'bateria nova' na gaveta!")
+                else:
+                    print("Quem é você? A tela desliga. Você perdeu a absolvição.")
+                jogo.turnos_luz -= 1
+                jogo.estado_atual = "JOGO"
+                imprimir_contexto_sala()
+
+        elif jogo.estado_atual in ["MINIGAME_MINOTAURO", "MINIGAME_SEGURANCA"]:
+            
+            # --- CORREÇÃO DO BUG DA BATERIA DO MINOTAURO ---
+            mapa_direcoes = {
+                "f": "ir frente", "frente": "ir frente",
+                "t": "ir atrás", "tras": "ir atrás", "atras": "ir atrás", "atrás": "ir atrás",
+                "e": "ir esquerda", "esquerda": "ir esquerda",
+                "d": "ir direita", "direita": "ir direita"
+            }
+            if comando in mapa_direcoes:
+                comando = mapa_direcoes[comando]
+            
+            resultado = jogo.minigame_atual.processar_turno(comando, jogo)
+            
+            if resultado == "morte":
+                jogo.minigame_atual = None
+                jogo.sala_atual = "morte"
+                dar_tela_de_morte()
+            elif resultado in ["vitoria_minotauro", "vitoria_seguranca"]:
+                jogo.minigame_atual = None
+                jogo.sala_atual = "01"
+                jogo.estado_atual = "JOGO"
+                print(f"{ui.DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{ui.RESET}")
+                imprimir_contexto_sala()
+            else:
+                jogo.minigame_atual.imprimir_status()
+
+    except Exception as e:
+        print(f"\n[ERRO DE SISTEMA]: {e}")
+    finally:
+        sys.stdout = stdout_original
+
+    texto_html = captura.getvalue().replace(ui.DOS_VERDE, '<span class="verde">').replace(ui.DOS_BRANCO, '<span class="branco">').replace(ui.DOS_AMARELO, '<span class="amarelo">').replace(ui.DOS_VERMELHO, '<span class="vermelho">').replace(ui.RESET, '</span>')
+    
+    return jsonify({"linhas": [linha for linha in texto_html.split('\n') if linha.strip() != ""]})
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
