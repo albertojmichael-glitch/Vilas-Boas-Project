@@ -4,6 +4,12 @@ const terminal = document.getElementById('terminal');
 const inputLine = document.querySelector('.input-line');
 let digitando = false;
 
+function ajustarLarguraInput() {
+    const tamanho = Math.max(inputField.value.length, 1);
+    inputField.style.width = tamanho + 'ch';
+}
+inputField.addEventListener('input', ajustarLarguraInput);
+
 document.addEventListener('click', () => {
     if (!digitando) inputField.focus();
 });
@@ -29,6 +35,7 @@ inputField.addEventListener('keypress', function (e) {
         if (comando) {
             adicionarLinhaInstantaneaHTML(`<span class="verde">C:\\> ${comando}</span>`);
             inputField.value = '';
+            ajustarLarguraInput();
             travarInput(); 
             
             fetch('/comando', {

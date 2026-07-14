@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 import sys
@@ -87,7 +88,7 @@ def ansi_para_html(texto_ansi):
     return "".join(html)
 
 app = Flask(__name__, static_folder=".", static_url_path="")
-app.secret_key = "346becf98590fb5282890c7a2546f86745688a1c4f3a4af29b962c00c2ee91c9"
+app.secret_key = "villas-boas-1982-troque-essa-chave-em-producao"
 CORS(app, supports_credentials=True)
 
 # Estado de cada jogador fica isolado por sessão, assim varios amigos podem
@@ -116,7 +117,9 @@ def imprimir_tela_boot():
     ui.digitar("RAM CHECK: 640KB OK", 0.01, ui.DOS_VERDE)
     ui.digitar("DRIVE A: READY", 0.01, ui.DOS_VERDE)
     ui.digitar("CARREGANDO 'COMMAND.COM'....... OK\n", 0.05, ui.DOS_VERDE)
-    
+    print(f"{ui.DOS_VERDE}Digite {ui.DOS_BRANCO}dir{ui.DOS_VERDE} para acessar os diretórios:{ui.RESET}")
+
+def imprimir_menu_dificuldade():
     ui.digitar("==================================================", 0.005, ui.DOS_VERDE)
     ui.digitar("__     _____ _     _        _ ____   ___   ____ ", 0.005, ui.DOS_VERDE)
     ui.digitar("\\ \\   / /_ _| |   | |      / / ___| / _ \\ / ___|", 0.005, ui.DOS_VERDE)
@@ -186,7 +189,7 @@ def iniciar_jogo():
     if sid and sid in partidas:
         del partidas[sid]  # reinicia a partida deste jogador (F5 = novo jogo, não afeta outros jogadores)
     jogo = obter_estado()
-    jogo.estado_atual = "MENU"
+    jogo.estado_atual = "AGUARDANDO_DIR"
     
     captura = io.StringIO()
     sys.stdout = captura
@@ -211,6 +214,21 @@ def receber_comando():
         # --- BLOQUEIO TOTAL DA TELA DE FIM ---
         if jogo.estado_atual == "FIM":
             print(f"{ui.DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{ui.RESET}")
+
+        elif jogo.estado_atual == "AGUARDANDO_DIR":
+            if comando == "dir":
+                print(f"{ui.DOS_BRANCO} Volume in drive A is VILLASBOAS{ui.RESET}")
+                print(f"{ui.DOS_BRANCO} Directory of A:\\{ui.RESET}\n")
+                print(f"{ui.DOS_VERDE}COMMAND  COM     47.845   02-11-82   6:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}SEGURA   SYS      2.048   02-11-82   6:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}NOTURNO  EXE     18.204   02-11-82   6:00a{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}       3 file(s)     68.097 bytes{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}       0 dir(s)    655.360 bytes free{ui.RESET}\n")
+                jogo.estado_atual = "MENU"
+                imprimir_menu_dificuldade()
+            else:
+                print(f"{ui.DOS_VERMELHO}Bad command or file name{ui.RESET}")
+                print(f"{ui.DOS_VERDE}Digite {ui.DOS_BRANCO}dir{ui.DOS_VERDE} para acessar os diretórios:{ui.RESET}")
 
         elif jogo.estado_atual == "MENU":
             if comando == "1":

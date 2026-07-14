@@ -11,22 +11,26 @@ html, body {
 }
 
 body {
-    background-color: #000;
+    background-color: #001a00; /* a "moldura" verde escura ao redor da tela */
     color: #33ff00; /* O Verde Clássico do DOS */
     font-family: 'Consolas', 'Courier New', Courier, monospace;
     font-size: 18px;
     overflow: hidden;
 }
 
-/* O terminal agora ocupa a tela INTEIRA, como um sistema operacional real */
+/* O terminal ocupa quase a tela inteira, com uma margem verde fina
+   simulando a moldura de um monitor MS-DOS de verdade */
 #terminal {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    width: auto;
+    height: auto;
     padding: 24px 32px;
     background-color: #000;
+    border: 2px solid #1a6b00;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -76,7 +80,10 @@ input {
     font-family: 'Consolas', 'Courier New', Courier, monospace;
     font-size: 18px;
     outline: none;
-    flex-grow: 1;
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 1ch;
+    min-width: 1ch;
     text-shadow: 0 0 5px rgba(51, 255, 0, 0.5);
     caret-color: transparent;
 }
