@@ -1,0 +1,139 @@
+/* Reseta o design padrão do navegador */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background-color: #000;
+    color: #33ff00; /* O Verde Clássico do DOS */
+    font-family: 'Consolas', 'Courier New', Courier, monospace;
+    font-size: 18px;
+    overflow: hidden;
+}
+
+/* O terminal agora ocupa a tela INTEIRA, como um sistema operacional real */
+#terminal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    padding: 24px 32px;
+    background-color: #000;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Barra de rolagem discreta, no estilo verde do sistema */
+#terminal::-webkit-scrollbar {
+    width: 10px;
+}
+#terminal::-webkit-scrollbar-track {
+    background: #001100;
+}
+#terminal::-webkit-scrollbar-thumb {
+    background: #1a6b00;
+}
+
+#output p {
+    margin-bottom: 6px;
+    line-height: 1.35;
+    text-shadow: 0 0 5px rgba(51, 255, 0, 0.5);
+    white-space: pre-wrap; /* Mantém as artes em ASCII alinhadas */
+    word-break: break-word;
+}
+
+/* Cores usadas pelo Python via as classes HTML */
+.verde { color: #33ff00; text-shadow: 0 0 5px rgba(51, 255, 0, 0.5); }
+.branco { color: #f0f0f0; text-shadow: 0 0 5px rgba(255, 255, 255, 0.4); }
+.amarelo { color: #ffcc00; text-shadow: 0 0 5px rgba(255, 204, 0, 0.5); }
+.vermelho { color: #ff3333; text-shadow: 0 0 8px rgba(255, 51, 51, 0.8); }
+
+/* A linha de digitação, fixa no fluxo do terminal, com cursor piscando */
+.input-line {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.prompt {
+    margin-right: 8px;
+    text-shadow: 0 0 5px rgba(51, 255, 0, 0.5);
+}
+
+input {
+    background: transparent;
+    border: none;
+    color: #33ff00;
+    font-family: 'Consolas', 'Courier New', Courier, monospace;
+    font-size: 18px;
+    outline: none;
+    flex-grow: 1;
+    text-shadow: 0 0 5px rgba(51, 255, 0, 0.5);
+    caret-color: transparent;
+}
+
+/* Cursor em bloco piscando, clássico dos terminais DOS */
+.cursor-bloco {
+    display: inline-block;
+    width: 10px;
+    height: 20px;
+    background-color: #33ff00;
+    box-shadow: 0 0 6px rgba(51, 255, 0, 0.8);
+    margin-left: 2px;
+    animation: piscar 1s steps(1) infinite;
+    vertical-align: middle;
+}
+
+@keyframes piscar {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+/* --- EFEITO MONITOR DE TUBO (CRT): scanlines + vinheta --- */
+.crt {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.crt::before {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+}
+
+/* Vinheta escurecendo as bordas, como um tubo CRT curvo de verdade */
+.crt::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    box-shadow: inset 0 0 180px rgba(0, 0, 0, 0.75);
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* Leve tremor de fósforo, sutil, pra não cansar quem estiver lendo */
+@keyframes flicker {
+    0% { opacity: 0.98; }
+    50% { opacity: 1; }
+    100% { opacity: 0.985; }
+}
+#terminal {
+    animation: flicker 4s infinite;
+}
