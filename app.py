@@ -87,7 +87,7 @@ def ansi_para_html(texto_ansi):
     return "".join(html)
 
 app = Flask(__name__, static_folder=".", static_url_path="")
-app.secret_key = "villas-boas-1982-troque-essa-chave-em-producao"
+app.secret_key = "346becf98590fb5282890c7a2546f86745688a1c4f3a4af29b962c00c2ee91c9"
 CORS(app, supports_credentials=True)
 
 # Estado de cada jogador fica isolado por sessão, assim varios amigos podem
