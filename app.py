@@ -24,7 +24,7 @@ ARTE_COFRE = r'''
       :--:::::::::::-::::::::::::::::::::::::::::::::::::::::::::::::::--.      
     .------------------------:-::--::--:::::::::::::::::::::::::::::::::::.     
     ***********************************************************************.    
-    *********************************************************************** 
+    *********************************************************************** ******%%#%#%%%%%%%%%%%%%%%%%%%%%#%###############################****** *****%***********************************************************%***** *****#***********************************************************%***** *****#***********************************************************%***** *****#*********:=*************##########*#####*******************%***** +****#*********+***=+*********##+--**=+*#**###*******************%***** +****#*******%%###%##*+***++**##::-++-:-+:=+##*******************%***** +****#****#%###%%%%#%#*=*+:.**##===++==**==*##*******************%***** +****#****%#######%##%#=++:--*##:=-++-=+-=-+##*******************%***** +****#****#######%###%#***-:+*##===**+*#***###*******************%****+     
     +****#****####%#%%####********##:::+=++*:::+##*******************%****+     
     +****#******#####%##**********##===*+==*+==*##*******************#****+     
     +****#************************##::=+-+=#:==+##*******************#****+     
@@ -154,6 +154,9 @@ def falar_pianista(acertou):
         ui.digitar(f'"{random.choice(FALAS_PIANISTA_ERRADO)}"', 0.04, ui.DOS_AMARELO)
 
 def imprimir_contexto_sala():
+    # Não imprime o contexto da sala se você estiver sendo enforcado por um monstro!
+    if jogo.estado_atual == "COMBATE_ANIMATRONICO": return
+    
     if not jogo.minigame_atual and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
         sala = jogo.mapa[jogo.sala_atual]
         print("\n" + "="*50)
@@ -183,11 +186,9 @@ def imprimir_contexto_sala():
 
         print(f"\n{ui.DOS_BRANCO}[ SISTEMA OPERACIONAL VILLAS BOAS v20.08 ]{ui.RESET}")
         
-        # --- A MAGIA DO MENU INFINITO ---
         vida_visual = "9999" if jogo.god_mode else f"{jogo.hp}/3"
         luz_visual = "9999" if jogo.god_mode else str(jogo.turnos_luz)
         inv_visual = "∞" if jogo.god_mode else f"{len(jogo.inventario)}/{MAX_INVENTARIO}"
-        
         print(f"{ui.DOS_BRANCO}[ HP: {ui.DOS_VERMELHO}{vida_visual}{ui.DOS_BRANCO} | LUZ: {ui.DOS_AMARELO}{luz_visual}{ui.DOS_BRANCO} | INV: {inv_visual} ]{ui.RESET}")
 
 def dar_tela_de_morte():
@@ -326,7 +327,6 @@ def receber_comando():
                 print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
                 imprimir_contexto_sala()
-            
             elif comando == "2007":
                 print("@@CLEAR@@")
                 jogo.dificuldade_escolhida = "GOD MODE"
@@ -340,11 +340,10 @@ def receber_comando():
                 print(f"{ui.DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{ui.RESET}\n")
                 print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{ui.RESET}")
                 imprimir_contexto_sala()
-                
             else:
                 print(f"{ui.DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE 1 OU 2.{ui.RESET}")
 
-        elif jogo.estado_atual == "JOGO":
+        elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
             if comando in ["cls", "limpar", "clear", "clean"]:
                 print("@@CLEAR@@")
                 imprimir_contexto_sala()
@@ -407,6 +406,8 @@ def receber_comando():
                     rodar_final_web("final_bom")
                 elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'incendio', False) and getattr(jogo, 'noite_vencida', False):
                     rodar_final_web("verdadeiro")
+                elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
+                    pass # Impede que a sala imprima por cima do combate mortal!
                 else:
                     imprimir_contexto_sala()
 
@@ -585,6 +586,30 @@ def receber_comando():
             if comando in ["cls", "limpar", "clear", "clean"]:
                 print("@@CLEAR@@")
                 jogo.minigame_atual.imprimir_status()
+                
+            # --- O PULO DA NOITE NA SEGURANÇA ---
+            elif comando in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_SEGURANCA":
+                print(f"{ui.DOS_AMARELO}[GOD MODE] Você altera os ponteiros do universo. O relógio salta para as 06:00 instantaneamente.{ui.RESET}")
+                jogo.minigame_atual.turno = 24 # Força o fim da noite no Minigame!
+                resultado = jogo.minigame_atual.processar_turno("esperar", jogo) # Engana ele com 'esperar' pra ativar o Win
+                
+                if resultado == "vitoria_seguranca":
+                    jogo.minigame_atual = None
+                    jogo.sala_atual = "01"
+                    jogo.estado_atual = "JOGO"
+                    print(f"{ui.DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{ui.RESET}")
+                    imprimir_contexto_sala()
+
+            # --- A VOADORA NO MINOTAURO ---
+            elif comando in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_MINOTAURO":
+                print(f"{ui.DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{ui.RESET}")
+                jogo.minigame_atual = None
+                jogo.sala_atual = "01"
+                jogo.estado_atual = "JOGO"
+                print(f"{ui.DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{ui.RESET}")
+                imprimir_contexto_sala()
+                
             else:
                 mapa_direcoes = {
                     "f": "ir frente", "frente": "ir frente",
@@ -610,7 +635,6 @@ def receber_comando():
                 else:
                     jogo.minigame_atual.imprimir_status()
         
-        # --- A BARREIRA INQUEBRÁVEL DO MODO DEUS ---
         if jogo.god_mode:
             jogo.hp = 9999
             jogo.turnos_luz = 9999
