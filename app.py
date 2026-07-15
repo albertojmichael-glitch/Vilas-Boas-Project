@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 import sys
@@ -144,6 +143,27 @@ def dar_dica_jon(passo_certo):
         print(f"\n{ui.DOS_VERMELHO}[SENSÓRIO CONFUSO]: {random.choice(erradas)}{ui.RESET}")
     else:
         print(f"\n{ui.DOS_AMARELO}[SENSÓRIO]: {dicas[passo_certo]}{ui.RESET}")
+
+FALAS_PIANISTA_CERTO = [
+    "Você lembra bem, Rogério. Isso é bom.",
+    "O ritmo continua. Você ainda tem ouvido para isso.",
+    "Correto. Ele sempre soube que você voltaria.",
+    "Sim... exatamente como aconteceu.",
+]
+FALAS_PIANISTA_ERRADO = [
+    "Errado. As teclas pretas não perdoam mentiras.",
+    "Você deveria lembrar melhor do que isso, Rogério.",
+    "Uma nota fora do lugar... como você, aquela noite.",
+    "Isso não é o que consta no registro do restaurante.",
+]
+
+def falar_pianista(acertou):
+    if acertou:
+        print(f"{ui.DOS_BRANCO}A máquina toca uma nota suave e agradável.{ui.RESET}")
+        ui.digitar(f'"{random.choice(FALAS_PIANISTA_CERTO)}"', 0.03, ui.DOS_AMARELO)
+    else:
+        print(f"{ui.DOS_VERMELHO}Acorde dissonante.{ui.RESET}")
+        ui.digitar(f'"{random.choice(FALAS_PIANISTA_ERRADO)}"', 0.03, ui.DOS_AMARELO)
 
 def imprimir_contexto_sala():
     if not jogo.minigame_atual and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
