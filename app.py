@@ -6,12 +6,10 @@ import re
 import random
 import uuid
 
-# --- IMPORTAÇÕES ---
 from state import GameState
 from commands import processar_comando, normalizar
 from main import atualizar_eventos_de_tempo
 from minigames import MinigameMinotauro, MinigameSeguranca
-# Importando a CAVEIRA_MORTE do seu data.py!
 from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, CAVEIRA_MORTE, MAX_INVENTARIO
 
 import ui
@@ -21,7 +19,6 @@ import main
 
 ui.DEBUG_MODE = True 
 
-# --- ARTE NOVA DO COFRE (Incorporada diretamente aqui) ---
 ARTE_COFRE = r'''                                                                              
        .-----:-:--:-:-:::--:::::::::::-:::-::::::-::-------:::-:------::        
       :--:::::::::::-::::::::::::::::::::::::::::::::::::::::::::::::::--.      
@@ -29,7 +26,7 @@ ARTE_COFRE = r'''
     ***********************************************************************.    
     *********************************************************************** ******%%#%#%%%%%%%%%%%%%%%%%%%%%#%###############################****** *****%***********************************************************%***** *****#***********************************************************%***** *****#***********************************************************%***** *****#*********:=*************##########*#####*******************%***** +****#*********+***=+*********##+--**=+*#**###*******************%***** +****#*******%%###%##*+***++**##::-++-:-+:=+##*******************%***** +****#****#%###%%%%#%#*=*+:.**##===++==**==*##*******************%***** +****#****%#######%##%#=++:--*##:=-++-=+-=-+##*******************%***** +****#****#######%###%#***-:+*##===**+*#***###*******************%****+     
     +****#****####%#%%####********##:::+=++*:::+##*******************%****+     
-    +****#******#####%##**********##===*+==#+==*##*******************#****+     
+    +****#******#####%##**********##===*+==*+==*##*******************#****+     
     +****#************************##::=+-+=#:==+##*******************#****+     
     *****#************************###############********************#****+     
     +****#****+==****************************************************#****+     
@@ -54,11 +51,6 @@ minigames.digitar = web_digitar
 main.digitar = web_digitar
 
 def ansi_para_html(texto_ansi):
-    """
-    Converte códigos ANSI para <span> HTML válidos e corretamente aninhados.
-    Ao contrário de um .replace() ingênuo, isto fecha a tag anterior antes de
-    abrir a próxima, e fecha qualquer span pendente no fim do texto.
-    """
     mapa_cores = {
         ui.DOS_VERDE: "verde",
         ui.DOS_BRANCO: "branco",
@@ -72,8 +64,7 @@ def ansi_para_html(texto_ansi):
     aberto = False
     for parte in partes:
         if parte in mapa_cores:
-            if aberto:
-                html.append("</span>")
+            if aberto: html.append("</span>")
             html.append(f'<span class="{mapa_cores[parte]}">')
             aberto = True
         elif parte == ui.RESET:
@@ -82,16 +73,13 @@ def ansi_para_html(texto_ansi):
                 aberto = False
         else:
             html.append(parte)
-    if aberto:
-        html.append("</span>")
+    if aberto: html.append("</span>")
     return "".join(html)
 
 app = Flask(__name__, static_folder=".", static_url_path="")
 app.secret_key = "villas-boas-1982-troque-essa-chave-em-producao"
 CORS(app, supports_credentials=True)
 
-# Estado de cada jogador fica isolado por sessão, assim varios amigos podem
-# jogar ao mesmo tempo no mesmo servidor sem interferir uns nos outros.
 partidas = {}
 
 def obter_estado():
@@ -104,7 +92,7 @@ def obter_estado():
     jogo = partidas[sid]
     return jogo
 
-jogo = GameState()  # placeholder inicial, substituído por obter_estado() a cada request
+jogo = GameState()
 
 @app.route("/")
 def raiz():
@@ -148,22 +136,22 @@ FALAS_PIANISTA_CERTO = [
     "Você lembra bem, Rogério. Isso é bom.",
     "O ritmo continua. Você ainda tem ouvido para isso.",
     "Correto. Ele sempre soube que você voltaria.",
-    "Sim... exatamente como aconteceu.",
+    "Sim... exatamente como aconteceu."
 ]
 FALAS_PIANISTA_ERRADO = [
     "Errado. As teclas pretas não perdoam mentiras.",
     "Você deveria lembrar melhor do que isso, Rogério.",
     "Uma nota fora do lugar... como você, aquela noite.",
-    "Isso não é o que consta no registro do restaurante.",
+    "Isso não é o que consta no registro do restaurante."
 ]
 
 def falar_pianista(acertou):
     if acertou:
         print(f"{ui.DOS_BRANCO}A máquina toca uma nota suave e agradável.{ui.RESET}")
-        ui.digitar(f'"{random.choice(FALAS_PIANISTA_CERTO)}"', 0.03, ui.DOS_AMARELO)
+        ui.digitar(f'"{random.choice(FALAS_PIANISTA_CERTO)}"', 0.04, ui.DOS_AMARELO)
     else:
         print(f"{ui.DOS_VERMELHO}Acorde dissonante.{ui.RESET}")
-        ui.digitar(f'"{random.choice(FALAS_PIANISTA_ERRADO)}"', 0.03, ui.DOS_AMARELO)
+        ui.digitar(f'"{random.choice(FALAS_PIANISTA_ERRADO)}"', 0.04, ui.DOS_AMARELO)
 
 def imprimir_contexto_sala():
     if not jogo.minigame_atual and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
@@ -207,7 +195,7 @@ def iniciar_jogo():
     global jogo
     sid = session.get("sid")
     if sid and sid in partidas:
-        del partidas[sid]  # reinicia a partida deste jogador (F5 = novo jogo, não afeta outros jogadores)
+        del partidas[sid]  
     jogo = obter_estado()
     jogo.estado_atual = "AGUARDANDO_DIR"
     
@@ -231,12 +219,15 @@ def receber_comando():
     sys.stdout = captura
 
     try:
-        # --- BLOQUEIO TOTAL DA TELA DE FIM ---
         if jogo.estado_atual == "FIM":
             print(f"{ui.DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{ui.RESET}")
 
         elif jogo.estado_atual == "AGUARDANDO_DIR":
-            if comando == "dir":
+            if comando in ["cls", "limpar", "clear", "clean"]:
+                print("@@CLEAR@@")
+                imprimir_tela_boot()
+            elif comando == "dir":
+                print("@@CLEAR@@")
                 print(f"{ui.DOS_BRANCO} Volume in drive A is VILLASBOAS{ui.RESET}")
                 print(f"{ui.DOS_BRANCO} Directory of A:\\{ui.RESET}\n")
                 print(f"{ui.DOS_VERDE}COMMAND  COM     47.845   02-11-82   6:00a{ui.RESET}")
@@ -251,7 +242,11 @@ def receber_comando():
                 print(f"{ui.DOS_VERDE}Digite {ui.DOS_BRANCO}dir{ui.DOS_VERDE} para acessar os diretórios:{ui.RESET}")
 
         elif jogo.estado_atual == "MENU":
-            if comando == "1":
+            if comando in ["cls", "limpar", "clear", "clean"]:
+                print("@@CLEAR@@")
+                imprimir_menu_dificuldade()
+            elif comando == "1":
+                print("@@CLEAR@@")
                 jogo.dificuldade_escolhida = "NORMAL"
                 jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
                 jogo.estado_atual = "JOGO"
@@ -260,6 +255,7 @@ def receber_comando():
                 print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
                 imprimir_contexto_sala()
             elif comando == "2":
+                print("@@CLEAR@@")
                 jogo.dificuldade_escolhida = "PESADELO"
                 jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
                 jogo.estado_atual = "JOGO"
@@ -271,7 +267,10 @@ def receber_comando():
                 print(f"{ui.DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE 1 OU 2.{ui.RESET}")
 
         elif jogo.estado_atual == "JOGO":
-            if jogo.sala_atual == "sala de energia" and not jogo.fios_cortados_inventario:
+            if comando in ["cls", "limpar", "clear", "clean"]:
+                print("@@CLEAR@@")
+                imprimir_contexto_sala()
+            elif jogo.sala_atual == "sala de energia" and not jogo.fios_cortados_inventario:
                 jogo.minigame_atual = MinigameMinotauro(jogo)
                 jogo.estado_atual = "MINIGAME_MINOTAURO"
                 jogo.minigame_atual.imprimir_status()
@@ -288,6 +287,7 @@ def receber_comando():
                 jogo.estado_atual = "MINIGAME_JON"
                 jogo.jon_passos_dados = 0
                 jogo.jon_caminho_certo = [random.choice(["f", "e", "d"]) for _ in range(4)]
+                print("@@CLEAR@@")
                 print(f"{ui.DOS_BRANCO}{ARTE_PORCO}{ui.RESET}")
                 ui.digitar("--- A FOME DE JON ---", 0.03, ui.DOS_VERDE)
                 print(f"{ui.DOS_BRANCO}Guie o Porco Jon pelos dutos baseando-se nos seus sentidos.{ui.RESET}")
@@ -301,6 +301,7 @@ def receber_comando():
                     jogo.inventario.remove("moeda velha")
                     jogo.estado_atual = "MINIGAME_CONSERTOS_CABECA"
                     jogo.web_consertos = {}
+                    print("@@CLEAR@@")
                     print(f"{ui.DOS_BRANCO}{ARTE_ROBO}{ui.RESET}")
                     ui.digitar("--- CONSERTOS & SORRISOS ---", 0.03, ui.DOS_VERDE)
                     print("Bem-vindo, Mecânico! Vamos montar nosso novo Festeiro!")
@@ -309,6 +310,7 @@ def receber_comando():
             elif (comando == "jogar adivinha" or comando == "jogar julgamento") and jogo.sala_atual == "sala de fliperamas":
                 jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1"
                 jogo.web_julgamento = {"pontos": 0, "vitimas": ["angela", "joao", "renato"]}
+                print("@@CLEAR@@")
                 print(f"{ui.DOS_BRANCO}{ARTE_PIANO}{ui.RESET}")
                 ui.digitar("--- O JULGAMENTO DO PIANISTA ---", 0.03, ui.DOS_VERDE)
                 print(f"{ui.DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{ui.RESET}")
@@ -317,7 +319,6 @@ def receber_comando():
                 gastou_turno = processar_comando(comando, jogo, jogo.mapa)
                 if gastou_turno: atualizar_eventos_de_tempo(jogo)
                 
-                # --- VERIFICAÇÃO DE MORTE DURANTE EXPLORAÇÃO ---
                 if jogo.sala_atual == "morte":
                     dar_tela_de_morte()
                 elif jogo.sala_atual in ["saida", "cama", "final_bom"] or (jogo.sala_atual == "hall de entrada" and jogo.incendio and jogo.noite_vencida):
@@ -328,21 +329,38 @@ def receber_comando():
                     imprimir_contexto_sala()
 
         elif jogo.estado_atual == "MINIGAME_COFRE":
-            if comando == "1994": 
+            if comando in ["cls", "limpar", "clear", "clean"]:
+                print("@@CLEAR@@")
+                print(f"{ui.DOS_BRANCO}{ARTE_COFRE}{ui.RESET}")
+                print(f"{ui.DOS_VERDE}Digite a senha de 4 dígitos: {ui.RESET}")
+            elif comando == "1994": 
                 print(f"{ui.DOS_VERDE}CLICK! A pesada porta de metal se abre.{ui.RESET}")
-                if "chave dos fundos" not in jogo.inventario:
-                    print(f"{ui.DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{ui.RESET}")
-                    jogo.inventario.append("chave dos fundos")
+                sala = jogo.mapa[jogo.sala_atual]
+                if "itens" not in sala: sala["itens"] = []
+                
+                if "chave dos fundos" not in jogo.inventario and "chave dos fundos" not in sala["itens"]:
+                    if len(jogo.inventario) < MAX_INVENTARIO:
+                        print(f"{ui.DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{ui.RESET}")
+                        jogo.inventario.append("chave dos fundos")
+                    else:
+                        print(f"{ui.DOS_AMARELO}Sua mochila está cheia! A 'chave dos fundos' caiu no chão da sala.{ui.RESET}")
+                        sala["itens"].append("chave dos fundos")
                 else:
                     print("O cofre está vazio. Apenas poeira.")
+                jogo.estado_atual = "JOGO"
+                imprimir_contexto_sala()
             else:
                 print(f"{ui.DOS_VERMELHO}BEEP! Senha incorreta. Painel pisca em vermelho.{ui.RESET}")
-            jogo.estado_atual = "JOGO"
-            imprimir_contexto_sala()
+                jogo.estado_atual = "JOGO"
+                imprimir_contexto_sala()
 
         elif jogo.estado_atual == "MINIGAME_JON":
             passo = jogo.jon_passos_dados
-            if comando in ["f", "e", "d", "frente", "esquerda", "direita"]:
+            if comando in ["cls", "limpar", "clear", "clean"]:
+                print("@@CLEAR@@")
+                print(f"{ui.DOS_BRANCO}{ARTE_PORCO}{ui.RESET}")
+                print(f"Passo {passo + 1}/4 - Direção (F/E/D): ")
+            elif comando in ["f", "e", "d", "frente", "esquerda", "direita"]:
                 letra = comando[0]
                 if letra == jogo.jon_caminho_certo[passo]:
                     print(f"{ui.DOS_BRANCO}Jon rasteja em silêncio pelos dutos...{ui.RESET}")
@@ -350,7 +368,7 @@ def receber_comando():
                     if jogo.jon_passos_dados == 4:
                         print(f"\n{ui.DOS_VERDE}Jon encontrou a 'comida'. A tela pinga um pixel vermelho.{ui.RESET}")
                         print(f"{ui.DOS_VERMELHO}MENSAGEM: 'Eles não saíram pela porta da frente em 94.'{ui.RESET}")
-                        jogo.turnos_luz -= 1
+                        jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                         jogo.estado_atual = "JOGO"
                         imprimir_contexto_sala()
                     else:
@@ -359,7 +377,7 @@ def receber_comando():
                 else:
                     print(f"\n{ui.DOS_VERMELHO}CRUNCH! Jon caiu num triturador ativo! leva um choque brutal!{ui.RESET}")
                     jogo.hp -= 1
-                    jogo.turnos_luz -= 1
+                    jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                     if jogo.hp <= 0:
                         dar_tela_de_morte()
                     else:
@@ -393,38 +411,52 @@ def receber_comando():
                 print("> Erro de harmonia visual. Soldando peças à força...")
                 
             print(f"\n{ui.DOS_VERDE}CONSERTO CONCLUÍDO! O ANIMATRÔNICO SORRI PARA VOCÊ!{ui.RESET}")
-            if "chave da cozinha" not in jogo.inventario:
-                jogo.inventario.append("chave da cozinha")
-                print(f"{ui.DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{ui.RESET}")
-            if item_secreto and len(jogo.inventario) < MAX_INVENTARIO:
-                jogo.inventario.append(item_secreto)
-                print(f"{ui.DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{ui.RESET}")
+            sala = jogo.mapa[jogo.sala_atual]
+            if "itens" not in sala: sala["itens"] = []
+            
+            if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
+                print(f"{ui.DOS_BRANCO}A gaveta principal de prêmios se abre com um barulho metálico.{ui.RESET}")
+                if len(jogo.inventario) < MAX_INVENTARIO:
+                    jogo.inventario.append("chave da cozinha")
+                    print(f"{ui.DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{ui.RESET}")
+                else:
+                    print(f"{ui.DOS_AMARELO}🎒 Sua mochila está cheia! A CHAVE DA COZINHA caiu no chão.{ui.RESET}")
+                    sala["itens"].append("chave da cozinha")
+
+            if item_secreto:
+                print(f"{ui.DOS_BRANCO}Um compartimento de emergência se abriu na base da máquina!{ui.RESET}")
+                if len(jogo.inventario) < MAX_INVENTARIO:
+                    jogo.inventario.append(item_secreto)
+                    print(f"{ui.DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{ui.RESET}")
+                else:
+                    print(f"{ui.DOS_AMARELO}🎒 Sua mochila está cheia! O item {item_secreto.upper()} caiu no chão.{ui.RESET}")
+                    sala["itens"].append(item_secreto)
                 
-            jogo.turnos_luz -= 1
+            jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala()
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q1":
-            if comando == "1994": jogo.web_julgamento["pontos"] += 1; print("Nota suave tocada.")
-            else: print("Acorde dissonante.")
+            if comando == "1994": jogo.web_julgamento["pontos"] += 1; falar_pianista(True)
+            else: falar_pianista(False)
             jogo.estado_atual = "MINIGAME_JULGAMENTO_Q2"
             print(f"\n{ui.DOS_AMARELO}PERGUNTA 2: Qual animatrônico está atrás de você agora?{ui.RESET}")
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q2":
-            if "caroline" in comando or "ela" in comando: jogo.web_julgamento["pontos"] += 1; print("Nota suave tocada.")
-            else: print("Acorde dissonante.")
+            if "caroline" in comando or "ela" in comando: jogo.web_julgamento["pontos"] += 1; falar_pianista(True)
+            else: falar_pianista(False)
             jogo.estado_atual = "MINIGAME_JULGAMENTO_Q3"
             print(f"\n{ui.DOS_AMARELO}PERGUNTA 3: Em que ano tudo isso começou?{ui.RESET}")
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q3":
-            if comando == "1982": jogo.web_julgamento["pontos"] += 1; print("Nota suave tocada.")
-            else: print("Acorde dissonante.")
+            if comando == "1982": jogo.web_julgamento["pontos"] += 1; falar_pianista(True)
+            else: falar_pianista(False)
             jogo.estado_atual = "MINIGAME_JULGAMENTO_Q4"
             print(f"\n{ui.DOS_AMARELO}PERGUNTA 4: Quem é você?{ui.RESET}")
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q4":
-            if "rogerio" in comando: jogo.web_julgamento["pontos"] += 1; print("Nota suave tocada.")
-            else: print("Acorde dissonante.")
+            if "rogerio" in comando: jogo.web_julgamento["pontos"] += 1; falar_pianista(True)
+            else: falar_pianista(False)
             jogo.estado_atual = "MINIGAME_JULGAMENTO_V1"
             print(f"\n{ui.DOS_AMARELO}PERGUNTA 5: Quem são as três vítimas? Digite o 1º nome:{ui.RESET}")
 
@@ -434,8 +466,9 @@ def receber_comando():
                 if v in comando:
                     jogo.web_julgamento["vitimas"].remove(v)
                     acertou = True
-            if acertou: print("Processando... Correto.")
-            else: print("Acorde dissonante. Nome incorreto.")
+            
+            if acertou: falar_pianista(True)
+            else: falar_pianista(False)
             
             if jogo.estado_atual == "MINIGAME_JULGAMENTO_V1":
                 jogo.estado_atual = "MINIGAME_JULGAMENTO_V2"
@@ -447,42 +480,53 @@ def receber_comando():
                 if len(jogo.web_julgamento["vitimas"]) == 0:
                     jogo.web_julgamento["pontos"] += 1
                 if jogo.web_julgamento["pontos"] == 5:
-                    print("Obrigado por voltar pela gente, Rogério...")
-                    if "bateria nova" not in jogo.inventario:
-                        jogo.inventario.append("bateria nova")
-                        print("🎒 Encontrou uma 'bateria nova' na gaveta!")
+                    ui.digitar("Obrigado por voltar pela gente, Rogério...", 0.08, ui.DOS_VERDE)
+                    sala = jogo.mapa[jogo.sala_atual]
+                    if "itens" not in sala: sala["itens"] = []
+                    
+                    if "bateria nova" not in jogo.inventario and "bateria nova" not in sala["itens"]:
+                        print(f"{ui.DOS_BRANCO}A gaveta inferior abre com uma 'bateria nova'!{ui.RESET}")
+                        if len(jogo.inventario) < MAX_INVENTARIO:
+                            jogo.inventario.append("bateria nova")
+                            print(f"{ui.DOS_VERDE}🎒 Você a guardou na mochila.{ui.RESET}")
+                        else:
+                            print(f"{ui.DOS_AMARELO}🎒 Mochila cheia! A bateria nova caiu no chão.{ui.RESET}")
+                            sala["itens"].append("bateria nova")
                 else:
-                    print("Quem é você? A tela desliga. Você perdeu a absolvição.")
-                jogo.turnos_luz -= 1
+                    ui.digitar("Quem é você? A tela desliga. Você perdeu a absolvição.", 0.05, ui.DOS_VERMELHO)
+                    
+                jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                 jogo.estado_atual = "JOGO"
                 imprimir_contexto_sala()
 
         elif jogo.estado_atual in ["MINIGAME_MINOTAURO", "MINIGAME_SEGURANCA"]:
-            
-            # --- CORREÇÃO DO BUG DA BATERIA DO MINOTAURO ---
-            mapa_direcoes = {
-                "f": "ir frente", "frente": "ir frente",
-                "t": "ir atrás", "tras": "ir atrás", "atras": "ir atrás", "atrás": "ir atrás",
-                "e": "ir esquerda", "esquerda": "ir esquerda",
-                "d": "ir direita", "direita": "ir direita"
-            }
-            if comando in mapa_direcoes:
-                comando = mapa_direcoes[comando]
-            
-            resultado = jogo.minigame_atual.processar_turno(comando, jogo)
-            
-            if resultado == "morte":
-                jogo.minigame_atual = None
-                jogo.sala_atual = "morte"
-                dar_tela_de_morte()
-            elif resultado in ["vitoria_minotauro", "vitoria_seguranca"]:
-                jogo.minigame_atual = None
-                jogo.sala_atual = "01"
-                jogo.estado_atual = "JOGO"
-                print(f"{ui.DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{ui.RESET}")
-                imprimir_contexto_sala()
-            else:
+            if comando in ["cls", "limpar", "clear", "clean"]:
+                print("@@CLEAR@@")
                 jogo.minigame_atual.imprimir_status()
+            else:
+                mapa_direcoes = {
+                    "f": "ir frente", "frente": "ir frente",
+                    "t": "ir atrás", "tras": "ir atrás", "atras": "ir atrás", "atrás": "ir atrás",
+                    "e": "ir esquerda", "esquerda": "ir esquerda",
+                    "d": "ir direita", "direita": "ir direita"
+                }
+                if comando in mapa_direcoes:
+                    comando = mapa_direcoes[comando]
+                
+                resultado = jogo.minigame_atual.processar_turno(comando, jogo)
+                
+                if resultado == "morte":
+                    jogo.minigame_atual = None
+                    jogo.sala_atual = "morte"
+                    dar_tela_de_morte()
+                elif resultado in ["vitoria_minotauro", "vitoria_seguranca"]:
+                    jogo.minigame_atual = None
+                    jogo.sala_atual = "01"
+                    jogo.estado_atual = "JOGO"
+                    print(f"{ui.DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{ui.RESET}")
+                    imprimir_contexto_sala()
+                else:
+                    jogo.minigame_atual.imprimir_status()
 
     except Exception as e:
         print(f"\n[ERRO DE SISTEMA]: {e}")
@@ -490,7 +534,6 @@ def receber_comando():
         sys.stdout = stdout_original
 
     texto_html = ansi_para_html(captura.getvalue())
-    
     return jsonify({"linhas": [linha for linha in texto_html.split('\n') if linha.strip() != ""]})
 
 if __name__ == '__main__':

@@ -3,25 +3,14 @@ import random
 import unicodedata
 import difflib
 
-# Importa as ferramentas de interface
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, limpar_tela, pausar, digitar
-
-# Importa os dados estáticos (que criaremos no data.py)
 from data import MAX_INVENTARIO, COFRE_SENHA, descricoes_itens, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
-
-# Importa a lógica de estado e saves (que criaremos no state.py)
 from state import salvar_jogo, carregar_jogo, QuitGameException
 
-# ==========================================
-# FUNÇÃO DE NORMALIZAÇÃO DE TEXTO
-# ==========================================
 def normalizar(texto):
     texto_sem_acento = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
     return texto_sem_acento.strip().lower()
 
-# ==========================================
-# FUNÇÕES DE COMANDOS ESPECÍFICOS
-# ==========================================
 def cmd_ir(comando, jogo, mapa):
     direcao_bruta = comando.replace("ir ", "").strip()
     
@@ -176,9 +165,16 @@ def cmd_abrir_cofre(jogo):
         
         if senha == COFRE_SENHA: 
             print(f"{DOS_VERDE}CLICK! A pesada porta de metal se abre.{RESET}")
-            if "chave dos fundos" not in jogo.inventario:
-                print(f"{DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{RESET}")
-                jogo.inventario.append("chave dos fundos")
+            sala = jogo.mapa[jogo.sala_atual]
+            if "itens" not in sala: sala["itens"] = []
+            
+            if "chave dos fundos" not in jogo.inventario and "chave dos fundos" not in sala["itens"]:
+                if len(jogo.inventario) < MAX_INVENTARIO:
+                    print(f"{DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{RESET}")
+                    jogo.inventario.append("chave dos fundos")
+                else:
+                    print(f"{DOS_AMARELO}Você encontrou a 'chave dos fundos', mas sua mochila está cheia. Ela caiu no chão.{RESET}")
+                    sala["itens"].append("chave dos fundos")
             else:
                 print("O cofre está vazio. Apenas poeira.")
         else:
@@ -319,6 +315,8 @@ def cmd_jogar(comando, jogo):
         return
 
     jogo_nome = comando.replace("jogar ", "").strip()
+    sala = jogo.mapa[jogo.sala_atual]
+    if "itens" not in sala: sala["itens"] = []
     
     if jogo_nome == "fome de jon" or jogo_nome == "jon":
         limpar_tela()
@@ -363,7 +361,7 @@ def cmd_jogar(comando, jogo):
             digitar("\nJon encontrou a 'comida'. A tela pinga um pixel vermelho.", 0.03, DOS_VERDE)
             digitar("MENSAGEM: 'Eles não saíram pela porta da frente em 94.'", 0.03, DOS_VERMELHO)
         
-        jogo.turnos_luz -= 1
+        jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
         pausar(3)
 
     elif jogo_nome == "consertos":
@@ -405,19 +403,25 @@ def cmd_jogar(comando, jogo):
         print(f"\n{DOS_VERDE}CONSERTO CONCLUÍDO! O ANIMATRÔNICO SORRI PARA VOCÊ!{RESET}")
         pausar(1)
         
-        if "chave da cozinha" not in jogo.inventario:
+        if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
             print(f"{DOS_BRANCO}A gaveta principal de prêmios se abre com um barulho metálico.{RESET}")
-            jogo.inventario.append("chave da cozinha")
-            print(f"{DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{RESET}")
+            if len(jogo.inventario) < MAX_INVENTARIO:
+                jogo.inventario.append("chave da cozinha")
+                print(f"{DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{RESET}")
+            else:
+                print(f"{DOS_AMARELO}🎒 Sua mochila está cheia. A CHAVE DA COZINHA caiu no chão.{RESET}")
+                sala["itens"].append("chave da cozinha")
             
-        if item_secreto and len(jogo.inventario) < MAX_INVENTARIO:
+        if item_secreto:
             print(f"{DOS_BRANCO}Um compartimento de emergência se abriu na base da máquina!{RESET}")
-            jogo.inventario.append(item_secreto)
-            print(f"{DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{RESET}")
-        elif item_secreto:
-            print(f"{DOS_BRANCO}Um compartimento se abriu com um '{item_secreto}', mas seu inventário está cheio.{RESET}")
+            if len(jogo.inventario) < MAX_INVENTARIO:
+                jogo.inventario.append(item_secreto)
+                print(f"{DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{RESET}")
+            else:
+                print(f"{DOS_AMARELO}🎒 Sua mochila está cheia. O item {item_secreto.upper()} caiu no chão.{RESET}")
+                sala["itens"].append(item_secreto)
         
-        jogo.turnos_luz -= 1
+        jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
         pausar(3)
 
     elif jogo_nome == "adivinha" or jogo_nome == "julgamento":
@@ -498,24 +502,26 @@ def cmd_jogar(comando, jogo):
         pausar(2)
         
         if pontos == 5:
-            digitar("Obrigado por voltar pela gente, Rogério...", 0.08, DOS_VERDE)
-            if "bateria nova" not in jogo.inventario:
-                print(f"{DOS_BRANCO}A gaveta inferior abre. Você encontrou uma 'bateria nova'!{RESET}")
-                jogo.inventario.append("bateria nova")
+            digitar("Obrigado por voltar pela gente, Rogério...", 0.09, DOS_VERDE)
+            if "bateria nova" not in jogo.inventario and "bateria nova" not in sala["itens"]:
+                print(f"{DOS_BRANCO}A gaveta inferior abre com uma 'bateria nova'!{RESET}")
+                if len(jogo.inventario) < MAX_INVENTARIO:
+                    jogo.inventario.append("bateria nova")
+                    print(f"{DOS_VERDE}🎒 Você a guardou na mochila!{RESET}")
+                else:
+                    print(f"{DOS_AMARELO}🎒 Sua mochila está cheia. A bateria caiu no chão.{RESET}")
+                    sala["itens"].append("bateria nova")
         else:
             digitar("Quem é você?", 0.08, DOS_VERMELHO)
             print(f"{DOS_BRANCO}A tela desliga. Você perdeu sua chance de absolvição.{RESET}")
             
-        jogo.turnos_luz -= 1
+        jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
         pausar(3)
         
     else:
         print(f"Não existe um fliperama chamado '{jogo_nome}'. Máquinas ligadas: 'jon', 'consertos' e 'julgamento'.")
         pausar(2)
 
-# ==========================================
-# PROCESSADOR CENTRAL
-# ==========================================
 def processar_comando(comando, jogo, mapa):
     comando = comando.strip()
     if not comando: return False
@@ -533,16 +539,13 @@ def processar_comando(comando, jogo, mapa):
     verbo_bruto = partes[0]
     resto = partes[1] if len(partes) > 1 else ""
 
-    verbos_validos = ["ir", "pegar", "largar", "usar", "combinar", "juntar", "examinar", "ex", "jogar", "abrir", "salvar", "carregar", "ajuda", "comandos", "inventario", "i", "olhar", "o", "cls", "limpar", "whoami", "sair"]
+    verbos_validos = ["ir", "pegar", "largar", "usar", "combinar", "juntar", "examinar", "ex", "jogar", "abrir", "salvar", "carregar", "ajuda", "comandos", "inventario", "i", "olhar", "o", "cls", "limpar", "clear", "clean", "whoami", "sair"]
     
     if verbo_bruto not in verbos_validos:
         sugestoes = difflib.get_close_matches(verbo_bruto, verbos_validos, n=1, cutoff=0.6)
-        
         if sugestoes:
             verbo_corrigido = sugestoes[0]
             comando = f"{verbo_corrigido} {resto}".strip()
-            print(f"{DOS_AMARELO}(Entendido como: '{comando}'){RESET}")
-            pausar(1)
         else:
             if verbo_bruto in ["correr", "fugir", "escapar"]:
                 print(f"{DOS_BRANCO}Você está com muito medo, mas correr às cegas no escuro seria suicídio.{RESET}")
@@ -583,7 +586,7 @@ def processar_comando(comando, jogo, mapa):
         print("Itens: 'pegar [item]', 'largar [item]', 'usar [item]'")
         print("Ações: 'examinar [item/cenario]', 'combinar [item] com [item]'")
         print("Jogos: 'jogar [nome]', 'abrir cofre'")
-        print("Outros: 'inventario' (ou 'i'), 'olhar' (ou 'o'), 'salvar', 'carregar'")
+        print("Outros: 'inventario' (ou 'i'), 'olhar' (ou 'o'), 'cls' (ou 'limpar'), 'salvar', 'carregar'")
         pausar(2); return False
     elif comando == "inventario" or comando == "i":
         if len(jogo.inventario) > 0: 
@@ -594,7 +597,7 @@ def processar_comando(comando, jogo, mapa):
         pausar(2); return False
     elif comando == "olhar" or comando == "o":
         return False 
-    elif comando == "cls" or comando == "limpar":
+    elif comando in ["cls", "limpar", "clear", "clean"]:
         limpar_tela(); return False
     elif comando == "whoami":
         digitar("Sou eu, Rogério.", 0.08, DOS_VERMELHO)
@@ -606,5 +609,5 @@ def processar_comando(comando, jogo, mapa):
     elif comando == "sair":
         raise QuitGameException()
     else:
-        print("Faltam informações no comando. (Ex: se digitou 'pegar', o que deseja pegar?) para ver os comandos, digite 'ajuda' ou 'comandos' ")
+        print("Faltam informações no comando. (Ex: se digitou 'pegar', o que deseja pegar?)")
         pausar(1.5); return False

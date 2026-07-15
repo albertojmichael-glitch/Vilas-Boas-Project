@@ -84,7 +84,16 @@ function digitarFilaDeLinhas(linhas, index) {
 
     let linha = linhas[index];
     
-    // 1. O Python mandou digitar numa velocidade específica (ex: Boot ou Frases de Tensão)
+    // Identifica o comando especial de Limpar Tela
+    let textoPuro = linha.replace(/<[^>]*>?/gm, '').trim();
+    if (textoPuro === "@@CLEAR@@") {
+        outputDiv.innerHTML = ''; // Limpa fisicamente o monitor
+        setTimeout(() => {
+            digitarFilaDeLinhas(linhas, index + 1);
+        }, 10);
+        return;
+    }
+    
     if (linha.startsWith("@@TYPE@@")) {
         let parts = linha.split("@@");
         let cor = parts[2];
@@ -95,24 +104,16 @@ function digitarFilaDeLinhas(linhas, index) {
             setTimeout(() => { digitarFilaDeLinhas(linhas, index + 1); }, 150);
         });
     } else {
-        // 2. É um Print Normal do Python (HUD, Ações, Mapa, Artes)
         
-        // Limpa as tags HTML mentalmente para avaliar o texto
-        let textoPuro = linha.replace(/<[^>]*>?/gm, '');
-        
-        // Identifica se é Arte ASCII ou barras de separação do HUD
         let heArte = textoPuro.startsWith("  ") || textoPuro.startsWith("==") || textoPuro.startsWith("--") || textoPuro.startsWith("__") || textoPuro.startsWith("\\");
         
         if (heArte || textoPuro === "") {
-            // Imprime artes instantaneamente para não distorcer!
             adicionarLinhaInstantaneaHTML(linha);
             setTimeout(() => {
                 digitarFilaDeLinhas(linhas, index + 1);
             }, 10); 
         } else {
-            // ANIMA TODO O RESTO! Textos normais e o HUD agora são digitados a 15ms por letra!
             digitarTextoAnimadoHTML(linha, 'verde', 15, () => {
-                // Dá um respiro de 80ms antes de ir para a próxima linha
                 setTimeout(() => {
                     digitarFilaDeLinhas(linhas, index + 1);
                 }, 80); 
@@ -121,7 +122,6 @@ function digitarFilaDeLinhas(linhas, index) {
     }
 }
 
-// A Máquina de Escrever capaz de ler HTML sem quebrar as cores!
 function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) {
     const p = document.createElement('p');
     p.className = classeCor;
@@ -143,11 +143,10 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
             if (char === '<') isTag = true;
             if (char === '>') isTag = false;
             
-            // Pula a lentidão instantaneamente se for um código HTML de cor (<span class="verde">)
             if (isTag || htmlString.charAt(i) === '<') {
                 digitar(); 
             } else {
-                setTimeout(digitar, velocidade); // Pausa apenas nas letras lidas pelo jogador
+                setTimeout(digitar, velocidade);
             }
         } else {
             aoTerminar(); 
