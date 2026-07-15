@@ -6,7 +6,6 @@ import re
 import random
 import uuid
 
-# --- IMPORTAMOS O NOVO REGISTRADOR DE FINAIS ---
 from state import GameState, registrar_final
 from commands import processar_comando, normalizar
 from main import atualizar_eventos_de_tempo
@@ -184,10 +183,12 @@ def imprimir_contexto_sala():
 
         print(f"\n{ui.DOS_BRANCO}[ SISTEMA OPERACIONAL VILLAS BOAS v20.08 ]{ui.RESET}")
         
-        # Mostra o status visual de GOD MODE se estiver ativado
+        # --- A MAGIA DO MENU INFINITO ---
         vida_visual = "9999" if jogo.god_mode else f"{jogo.hp}/3"
         luz_visual = "9999" if jogo.god_mode else str(jogo.turnos_luz)
-        print(f"{ui.DOS_BRANCO}[ HP: {ui.DOS_VERMELHO}{vida_visual}{ui.DOS_BRANCO} | LUZ: {ui.DOS_AMARELO}{luz_visual}{ui.DOS_BRANCO} | INV: {len(jogo.inventario)}/{MAX_INVENTARIO} ]{ui.RESET}")
+        inv_visual = "∞" if jogo.god_mode else f"{len(jogo.inventario)}/{MAX_INVENTARIO}"
+        
+        print(f"{ui.DOS_BRANCO}[ HP: {ui.DOS_VERMELHO}{vida_visual}{ui.DOS_BRANCO} | LUZ: {ui.DOS_AMARELO}{luz_visual}{ui.DOS_BRANCO} | INV: {inv_visual} ]{ui.RESET}")
 
 def dar_tela_de_morte():
     jogo.estado_atual = "FIM"
@@ -196,7 +197,6 @@ def dar_tela_de_morte():
     ui.digitar("=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, ui.DOS_AMARELO)
 
 def rodar_final_web(tipo_final):
-    """Roda a narrativa de final na Web e verifica se liberou o God Mode"""
     jogo.estado_atual = "FIM"
     print("@@CLEAR@@")
     
@@ -327,7 +327,6 @@ def receber_comando():
                 print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
                 imprimir_contexto_sala()
             
-            # --- O CÓDIGO SECRETO 2007 (GOD MODE) ---
             elif comando == "2007":
                 print("@@CLEAR@@")
                 jogo.dificuldade_escolhida = "GOD MODE"
@@ -422,7 +421,7 @@ def receber_comando():
                 if "itens" not in sala: sala["itens"] = []
                 
                 if "chave dos fundos" not in jogo.inventario and "chave dos fundos" not in sala["itens"]:
-                    if len(jogo.inventario) < MAX_INVENTARIO:
+                    if len(jogo.inventario) < MAX_INVENTARIO or jogo.god_mode:
                         print(f"{ui.DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{ui.RESET}")
                         jogo.inventario.append("chave dos fundos")
                     else:
@@ -499,7 +498,7 @@ def receber_comando():
             
             if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
                 print(f"{ui.DOS_BRANCO}A gaveta principal de prêmios se abre com um barulho metálico.{ui.RESET}")
-                if len(jogo.inventario) < MAX_INVENTARIO:
+                if len(jogo.inventario) < MAX_INVENTARIO or jogo.god_mode:
                     jogo.inventario.append("chave da cozinha")
                     print(f"{ui.DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{ui.RESET}")
                 else:
@@ -508,7 +507,7 @@ def receber_comando():
 
             if item_secreto:
                 print(f"{ui.DOS_BRANCO}Um compartimento de emergência se abriu na base da máquina!{ui.RESET}")
-                if len(jogo.inventario) < MAX_INVENTARIO:
+                if len(jogo.inventario) < MAX_INVENTARIO or jogo.god_mode:
                     jogo.inventario.append(item_secreto)
                     print(f"{ui.DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{ui.RESET}")
                 else:
@@ -569,7 +568,7 @@ def receber_comando():
                     
                     if "bateria nova" not in jogo.inventario and "bateria nova" not in sala["itens"]:
                         print(f"{ui.DOS_BRANCO}A gaveta inferior abre com uma 'bateria nova'!{ui.RESET}")
-                        if len(jogo.inventario) < MAX_INVENTARIO:
+                        if len(jogo.inventario) < MAX_INVENTARIO or jogo.god_mode:
                             jogo.inventario.append("bateria nova")
                             print(f"{ui.DOS_VERDE}🎒 Você a guardou na mochila.{ui.RESET}")
                         else:
@@ -612,8 +611,6 @@ def receber_comando():
                     jogo.minigame_atual.imprimir_status()
         
         # --- A BARREIRA INQUEBRÁVEL DO MODO DEUS ---
-        # Se a pessoa estiver usando a God Mode, não importa o que o Python diga,
-        # Nós forçamos o retorno da Vida e da Luz pro máximo no servidor Web!
         if jogo.god_mode:
             jogo.hp = 9999
             jogo.turnos_luz = 9999

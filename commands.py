@@ -33,7 +33,8 @@ def cmd_ir(comando, jogo, mapa):
             limpar_tela()
             jogo.turnos_mesma_sala = 0
 
-            if jogo.turnos_luz <= 0 and random.randint(1, 100) <= 10:
+            # O Modo Deus também te protege de tropeçar no escuro!
+            if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False) and random.randint(1, 100) <= 10:
                 print("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão")
                 jogo.hp -= 1
                 print(f" Você se machucou na queda. (HP: {jogo.hp})")
@@ -73,12 +74,13 @@ def cmd_pegar(comando, jogo, mapa):
     item_real_na_sala = next((item for item in sala.get("itens", []) if item_desejado in item), None)
     
     if item_real_na_sala:
-        if len(jogo.inventario) >= MAX_INVENTARIO:
+        # AQUI ESTÁ A MÁGICA: O jogo ignora o MAX_INVENTARIO se você for Deus
+        if len(jogo.inventario) >= MAX_INVENTARIO and not getattr(jogo, 'god_mode', False):
             print(f"{DOS_AMARELO}🎒 Sua mochila está cheia! (Máx: {MAX_INVENTARIO}). Use 'largar [item]' primeiro.{RESET}")
             pausar(1.5)
             return
         
-        if jogo.turnos_luz <= 0:
+        if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False):
             chance = random.randint(1, 100)
             if chance <= 30:
                 print(f"{DOS_BRANCO}Você tateia o chão freneticamente, mas não encontra nada no escuro.{RESET}")
@@ -129,7 +131,7 @@ def cmd_examinar(comando, jogo, mapa):
         alvo_limpo = alvo_limpo.replace(palavra, " ")
     alvo = alvo_limpo.strip()
 
-    if jogo.turnos_luz <= 0:
+    if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False):
         print(f"{DOS_BRANCO}Está escuro demais para examinar '{alvo_bruto}'.{RESET}")
         pausar(1.5)
         return
@@ -147,7 +149,7 @@ def cmd_examinar(comando, jogo, mapa):
         pausar(2)
     elif item_inventario:
         print(f"\n🔎 {descricoes_itens.get(item_inventario, 'Não há nada de especial nisso.')}")
-        if item_inventario == "tabua pequena de madeira":
+        if item_inventario == "tabua pequena de madeira" and not getattr(jogo, 'god_mode', False):
             jogo.hp -= 1
             print(f"Você se machucou nas farpas. (HP: {jogo.hp})")
             if jogo.hp <= 0:
@@ -169,7 +171,7 @@ def cmd_abrir_cofre(jogo):
             if "itens" not in sala: sala["itens"] = []
             
             if "chave dos fundos" not in jogo.inventario and "chave dos fundos" not in sala["itens"]:
-                if len(jogo.inventario) < MAX_INVENTARIO:
+                if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                     print(f"{DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{RESET}")
                     jogo.inventario.append("chave dos fundos")
                 else:
@@ -206,17 +208,17 @@ def cmd_combinar(comando, jogo):
                 jogo.inventario.append("tocha")
                 print("Você enrolou o papel na tábua. Criou uma 'tocha' (apagada).")
             elif ("tocha" in partes) and ("isqueiro" in partes):
-                if jogo.isqueiro_usos > 0:
-                    jogo.isqueiro_usos -= 1
+                if jogo.isqueiro_usos > 0 or getattr(jogo, 'god_mode', False):
+                    if not getattr(jogo, 'god_mode', False): jogo.isqueiro_usos -= 1
                     jogo.inventario.remove("tocha"); jogo.inventario.append("tocha acesa")
-                    jogo.turnos_luz = 2
+                    jogo.turnos_luz = 2 if not getattr(jogo, 'god_mode', False) else 9999
                     print(f"🔥 Você acendeu a tocha! A luz vai durar 2 turnos. (Usos: {jogo.isqueiro_usos})")
                 else: print("O isqueiro não faz faísca... acabou o gás!")
             elif ("papel" in partes) and ("isqueiro" in partes):
-                if jogo.isqueiro_usos > 0:
-                    jogo.isqueiro_usos -= 1
+                if jogo.isqueiro_usos > 0 or getattr(jogo, 'god_mode', False):
+                    if not getattr(jogo, 'god_mode', False): jogo.isqueiro_usos -= 1
                     jogo.inventario.remove("papel"); jogo.inventario.append("papel aceso")
-                    jogo.turnos_luz = 1
+                    jogo.turnos_luz = 1 if not getattr(jogo, 'god_mode', False) else 9999
                     print(f" Você acendeu o papel. A chama vai queimar seus dedos rapidamente (Usos: {jogo.isqueiro_usos})")
                 else: print("O isqueiro não tem gás")
             elif ("tesoura quebrada" in partes) and ("fita isolante" in partes):
@@ -257,7 +259,8 @@ def cmd_usar(comando, jogo, mapa):
         print(f" Você comeu isso? Você vomita e seu estomago está doendo muito. (HP: {jogo.hp})")
         pausar(2)
     elif item == "bateria nova":
-        jogo.turnos_luz = 10; jogo.inventario.remove("bateria nova")
+        jogo.turnos_luz = 10 if not getattr(jogo, 'god_mode', False) else 9999
+        jogo.inventario.remove("bateria nova")
         print(f"{DOS_VERDE} Você conectou a bateria na sua lanterna, ela brilha com força total.{RESET}")
         pausar(2)
     elif item == "tesoura" and jogo.sala_atual == "corredor":
@@ -352,7 +355,7 @@ def cmd_jogar(comando, jogo):
                 print(f"\n{DOS_VERMELHO}CRUNCH! Jon caiu num triturador de lixo ativo!{RESET}")
                 jogo.hp -= 1
                 print(f"{DOS_VERMELHO}A máquina entra em curto e você leva um choque brutal! Perdeu 1 HP. (HP: {jogo.hp}){RESET}")
-                if jogo.hp <= 0:
+                if jogo.hp <= 0 and not getattr(jogo, 'god_mode', False):
                     print(f"{DOS_VERMELHO}Seu coração não suportou o choque...{RESET}")
                     jogo.sala_atual = "morte"
                 break
@@ -405,7 +408,7 @@ def cmd_jogar(comando, jogo):
         
         if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
             print(f"{DOS_BRANCO}A gaveta principal de prêmios se abre com um barulho metálico.{RESET}")
-            if len(jogo.inventario) < MAX_INVENTARIO:
+            if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                 jogo.inventario.append("chave da cozinha")
                 print(f"{DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{RESET}")
             else:
@@ -414,7 +417,7 @@ def cmd_jogar(comando, jogo):
             
         if item_secreto:
             print(f"{DOS_BRANCO}Um compartimento de emergência se abriu na base da máquina!{RESET}")
-            if len(jogo.inventario) < MAX_INVENTARIO:
+            if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                 jogo.inventario.append(item_secreto)
                 print(f"{DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{RESET}")
             else:
@@ -502,10 +505,10 @@ def cmd_jogar(comando, jogo):
         pausar(2)
         
         if pontos == 5:
-            digitar("Obrigado por voltar pela gente, Rogério...", 0.09, DOS_VERDE)
+            digitar("Obrigado por voltar pela gente, Rogério...", 0.08, DOS_VERDE)
             if "bateria nova" not in jogo.inventario and "bateria nova" not in sala["itens"]:
                 print(f"{DOS_BRANCO}A gaveta inferior abre com uma 'bateria nova'!{RESET}")
-                if len(jogo.inventario) < MAX_INVENTARIO:
+                if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                     jogo.inventario.append("bateria nova")
                     print(f"{DOS_VERDE}🎒 Você a guardou na mochila!{RESET}")
                 else:
@@ -591,7 +594,9 @@ def processar_comando(comando, jogo, mapa):
     elif comando == "inventario" or comando == "i":
         if len(jogo.inventario) > 0: 
             itens_inv = [f"{DOS_VERDE}{i}{RESET}" for i in jogo.inventario]
-            print(f"🎒 Seu inventário: {', '.join(itens_inv)}")
+            # O Inventário de Deus é infinito!
+            texto_inv = "∞" if getattr(jogo, 'god_mode', False) else f"{len(jogo.inventario)}/{MAX_INVENTARIO}"
+            print(f"🎒 Seu inventário ({texto_inv}): {', '.join(itens_inv)}")
         else: 
             print("🎒 Seu inventário está vazio.")
         pausar(2); return False
