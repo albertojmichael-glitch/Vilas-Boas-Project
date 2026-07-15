@@ -45,6 +45,7 @@ class GameState:
     estado_atual: str = "MENU"
     mapa: Dict[str, Any] = field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
     minigame_atual: Any = None
+    god_mode: bool = False
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -105,3 +106,29 @@ def carregar_jogo(estado: GameState) -> bool:
     except Exception as e:
         print(f"{DOS_VERMELHO}Erro desconhecido ao carregar: {e}{RESET}")
         return False
+
+
+# ==========================================
+# NOVO SISTEMA DE CONQUISTAS GLOBAIS
+# ==========================================
+ARQUIVO_CONQUISTAS = Path("conquistas.json")
+
+def registrar_final(nome_final: str) -> bool:
+    """Registra um final no disco. Retorna True se todos os 4 finais foram alcançados."""
+    conquistas = []
+    if ARQUIVO_CONQUISTAS.exists():
+        try:
+            conquistas = json.loads(ARQUIVO_CONQUISTAS.read_text(encoding="utf-8"))
+        except:
+            pass
+    
+    if nome_final not in conquistas:
+        conquistas.append(nome_final)
+        try:
+            ARQUIVO_CONQUISTAS.write_text(json.dumps(conquistas, ensure_ascii=False), encoding="utf-8")
+        except:
+            pass
+    
+    finais_necessarios = ["mediocre", "bons_sonhos", "bom", "verdadeiro"]
+    # Checa se o jogador tem os 4 finais na conta dele
+    return all(f in conquistas for f in finais_necessarios)

@@ -127,6 +127,11 @@ class MinigameMinotauro:
                 return "morte"
                 
             passos = 2 if random.randint(1, 100) <= self.chance_sprint else 1 
+            
+            if passos == 2:
+                print(f"\n{DOS_VERMELHO}⚠️ O CHÃO TREME! VOCÊ ESCUTA PASSOS PESADOS CORRENDO NA SUA DIREÇÃO!{RESET}")
+                pausar(1.5)
+                
             for _ in range(passos):
                 self.mover_minotauro()
                 

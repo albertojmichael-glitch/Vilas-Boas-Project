@@ -6,7 +6,8 @@ import re
 import random
 import uuid
 
-from state import GameState
+# --- IMPORTAMOS O NOVO REGISTRADOR DE FINAIS ---
+from state import GameState, registrar_final
 from commands import processar_comando, normalizar
 from main import atualizar_eventos_de_tempo
 from minigames import MinigameMinotauro, MinigameSeguranca
@@ -182,13 +183,75 @@ def imprimir_contexto_sala():
             print(f"🧭 Saídas: {ui.DOS_VERMELHO}Nenhuma saída aparente...{ui.RESET}")
 
         print(f"\n{ui.DOS_BRANCO}[ SISTEMA OPERACIONAL VILLAS BOAS v20.08 ]{ui.RESET}")
-        print(f"{ui.DOS_BRANCO}[ HP: {ui.DOS_VERMELHO}{jogo.hp}/3{ui.DOS_BRANCO} | LUZ: {ui.DOS_AMARELO}{jogo.turnos_luz}{ui.DOS_BRANCO} | INV: {len(jogo.inventario)}/{MAX_INVENTARIO} ]{ui.RESET}")
+        
+        # Mostra o status visual de GOD MODE se estiver ativado
+        vida_visual = "9999" if jogo.god_mode else f"{jogo.hp}/3"
+        luz_visual = "9999" if jogo.god_mode else str(jogo.turnos_luz)
+        print(f"{ui.DOS_BRANCO}[ HP: {ui.DOS_VERMELHO}{vida_visual}{ui.DOS_BRANCO} | LUZ: {ui.DOS_AMARELO}{luz_visual}{ui.DOS_BRANCO} | INV: {len(jogo.inventario)}/{MAX_INVENTARIO} ]{ui.RESET}")
 
 def dar_tela_de_morte():
     jogo.estado_atual = "FIM"
     print(f"{ui.DOS_VERMELHO}{CAVEIRA_MORTE}{ui.RESET}")
     ui.digitar("💀 GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, ui.DOS_VERMELHO)
     ui.digitar("=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, ui.DOS_AMARELO)
+
+def rodar_final_web(tipo_final):
+    """Roda a narrativa de final na Web e verifica se liberou o God Mode"""
+    jogo.estado_atual = "FIM"
+    print("@@CLEAR@@")
+    
+    liberou_deus = False
+    
+    if tipo_final == "saida":
+        ui.digitar("[ FINAL MEDÍOCRE ]", 0.05, ui.DOS_VERDE)
+        liberou_deus = registrar_final("mediocre")
+        
+    elif tipo_final == "cama":
+        ui.digitar("[ FINAL BONS SONHOS ]", 0.05, ui.DOS_BRANCO)
+        liberou_deus = registrar_final("bons_sonhos")
+        
+    elif tipo_final == "final_bom":
+        ui.digitar("Voce acende o isqueiro e ilumina o local. A luz do fogo traz calma...", 0.04, ui.DOS_VERDE)
+        ui.digitar("- Por que não deu certo? O que eu fiz de errado?", 0.05, ui.DOS_AMARELO)
+        ui.digitar("- 'Ainda estou aqui...'", 0.09, ui.DOS_VERMELHO)
+        ui.digitar("- Amor? É voce? Mesmo???", 0.05, ui.DOS_AMARELO)
+        ui.digitar("- 'Eu espero que ainda seja eu...'", 0.09, ui.DOS_VERMELHO)
+        ui.digitar("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas.", 0.05, ui.DOS_AMARELO)
+        ui.digitar("- ... *Caroline abraça Rogério*", 0.09, ui.DOS_VERMELHO)
+        ui.digitar("- 'Vamos nos encontrar no céu, meu bem.'", 0.09, ui.DOS_VERMELHO)
+        print(f"\n{ui.DOS_BRANCO}[ FINAL BOM ]{ui.RESET}")
+        liberou_deus = registrar_final("bom")
+        
+    elif tipo_final == "verdadeiro":
+        ui.digitar("Voce se aproxima do animatronico... dela. E encaixa os fios na sua fiação...", 0.05, ui.DOS_BRANCO)
+        ui.digitar("Voce acende o isqueiro. Os olhos de plastico parecem te encarar.", 0.05, ui.DOS_BRANCO)
+        ui.digitar("Os olhos piscam em vermelho, ela tenta fazer algo... mas não consegue.\n", 0.05, ui.DOS_BRANCO)
+        ui.digitar("- Por que não deu certo? O que eu fiz de errado?", 0.05, ui.DOS_AMARELO)
+        ui.digitar("- '... voce fez dar certo'", 0.08, ui.DOS_VERMELHO)
+        ui.digitar("- Caro... Caroline? É você?", 0.05, ui.DOS_AMARELO)
+        ui.digitar("*(Você abraça a carcaça de pelugem rosa)*", 0.04, ui.DOS_BRANCO)
+        ui.digitar("- Meu corpo ficou em silencio, não sinto mais raiva.", 0.07, ui.DOS_VERDE)
+        ui.digitar("*(O fogo se alastra pelo restaurante, a fumaça chega no hall)*", 0.04, ui.DOS_BRANCO)
+        ui.digitar("- Me sinta pela ultima vez.", 0.07, ui.DOS_VERDE)
+        ui.digitar("*(Voce sente mãos invisíveis em seus ombros, um alivio inunda sua mente)*", 0.04, ui.DOS_BRANCO)
+        ui.digitar("- Obrigada por me deixar assim pela ultima vez.", 0.07, ui.DOS_VERDE)
+        ui.digitar("- Eu te amo.", 0.06, ui.DOS_AMARELO)
+        ui.digitar("*(O animatronico cai no chão, o fogo cobre o metal e o plástico)*", 0.05, ui.DOS_BRANCO)
+        ui.digitar("\n[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.", 0.05, ui.DOS_VERDE)
+        ui.digitar("Você se levanta e caminha para a saída antes que o teto desabe.", 0.05, ui.DOS_BRANCO)
+        print(f"\n{ui.DOS_BRANCO}[ FINAL VERDADEIRO ]{ui.RESET}")
+        liberou_deus = registrar_final("verdadeiro")
+
+    if liberou_deus:
+        print(f"\n{ui.DOS_AMARELO}=================================================={ui.RESET}")
+        ui.digitar(">>> MENSAGEM DO SISTEMA <<<", 0.05, ui.DOS_VERMELHO)
+        ui.digitar("VOCÊ DESVENDOU TODAS AS VERDADES DESTA NOITE.", 0.05, ui.DOS_VERMELHO)
+        ui.digitar("O CÓDIGO DE MANUTENÇÃO FOI LIBERADO.", 0.05, ui.DOS_VERMELHO)
+        print(f"{ui.DOS_AMARELO}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {ui.DOS_BRANCO}2007{ui.RESET}")
+        print(f"{ui.DOS_AMARELO}=================================================={ui.RESET}")
+        
+    ui.digitar("\n=== APERTE F5 PARA REINICIAR ===", 0.05, ui.DOS_AMARELO)
+
 
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
@@ -263,6 +326,22 @@ def receber_comando():
                 print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
                 imprimir_contexto_sala()
+            
+            # --- O CÓDIGO SECRETO 2007 (GOD MODE) ---
+            elif comando == "2007":
+                print("@@CLEAR@@")
+                jogo.dificuldade_escolhida = "GOD MODE"
+                jogo.god_mode = True
+                jogo.hp = 9999
+                jogo.furia_noite = 0
+                jogo.energia_min_noite = 9999
+                jogo.energia_max_noite = 9999
+                jogo.turnos_luz = 9999
+                jogo.estado_atual = "JOGO"
+                print(f"{ui.DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{ui.RESET}\n")
+                print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{ui.RESET}")
+                imprimir_contexto_sala()
+                
             else:
                 print(f"{ui.DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE 1 OU 2.{ui.RESET}")
 
@@ -321,10 +400,14 @@ def receber_comando():
                 
                 if jogo.sala_atual == "morte":
                     dar_tela_de_morte()
-                elif jogo.sala_atual in ["saida", "cama", "final_bom"] or (jogo.sala_atual == "hall de entrada" and jogo.incendio and jogo.noite_vencida):
-                    jogo.estado_atual = "FIM"
-                    ui.digitar("FIM DE JOGO.", 0.05, ui.DOS_VERDE)
-                    ui.digitar("=== APERTE F5 PARA REINICIAR ===", 0.05, ui.DOS_AMARELO)
+                elif jogo.sala_atual == "saida":
+                    rodar_final_web("saida")
+                elif jogo.sala_atual == "cama":
+                    rodar_final_web("cama")
+                elif jogo.sala_atual == "final_bom":
+                    rodar_final_web("final_bom")
+                elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'incendio', False) and getattr(jogo, 'noite_vencida', False):
+                    rodar_final_web("verdadeiro")
                 else:
                     imprimir_contexto_sala()
 
@@ -527,6 +610,18 @@ def receber_comando():
                     imprimir_contexto_sala()
                 else:
                     jogo.minigame_atual.imprimir_status()
+        
+        # --- A BARREIRA INQUEBRÁVEL DO MODO DEUS ---
+        # Se a pessoa estiver usando a God Mode, não importa o que o Python diga,
+        # Nós forçamos o retorno da Vida e da Luz pro máximo no servidor Web!
+        if jogo.god_mode:
+            jogo.hp = 9999
+            jogo.turnos_luz = 9999
+            if jogo.minigame_atual:
+                if isinstance(jogo.minigame_atual, MinigameMinotauro):
+                    jogo.minigame_atual.bateria = 9999
+                elif isinstance(jogo.minigame_atual, MinigameSeguranca):
+                    jogo.minigame_atual.energia = 9999
 
     except Exception as e:
         print(f"\n[ERRO DE SISTEMA]: {e}")
