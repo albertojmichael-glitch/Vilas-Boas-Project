@@ -15,7 +15,7 @@ class MinigameMinotauro:
         self.mx, self.my = random.choice([-1, 0, 1]), random.choice([2, 3]) 
         self.tesoura_chao = True
         self.fios_cortados = False
-        self.chance_sprint = jogo.chance_sprint_minotauro
+        self.chance_sprint = getattr(jogo, 'chance_sprint_minotauro', 15)
         self.bateria = 15
         
         print("\n" + "="*50)
@@ -65,12 +65,19 @@ class MinigameMinotauro:
         self.my = max(0, min(3, self.my))
 
     def processar_turno(self, acao, jogo):
+        # --- MODO DEUS: O SOCO FATAL ---
+        if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
+            print(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
+            print(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
+            pausar(2)
+            return "vitoria_minotauro"
+
         turno_gasto = False
         
         if acao == "ir esquerda":
             if self.px > -1: self.px -= 1
             else: print("Você bate a cara na parede...")
-            turno_gasto = True  # Agora gasta turno de qualquer jeito!
+            turno_gasto = True 
 
         elif acao == "ir direita":
             if self.px < 1: self.px += 1
@@ -111,15 +118,21 @@ class MinigameMinotauro:
         else: print("Ação inválida no momento.")
 
         if not self.fios_cortados and self.px == self.mx and self.py == self.my:
-            print("\n Você sente sua visão borrar, enquanto os olhos vermelhos te encaram, voce não sente mais nada.")
-            pausar(2)
-            print("\n No vazio, você morre sozinho, sem poder salvar ninguem. ")
-            pausar(2)
-            return "morte"
+            # --- MODO DEUS: IMUNIDADE ---
+            if getattr(jogo, 'god_mode', False):
+                print(f"\n{DOS_AMARELO}[GOD MODE] Você tromba de frente com o Minotauro. Ele tenta te arranhar, mas suas garras quebram na sua pele divina! Ele foge chorando.{RESET}")
+                pausar(2)
+                return "vitoria_minotauro"
+            else:
+                print("\n Você sente sua visão borrar, enquanto os olhos vermelhos te encaram, voce não sente mais nada.")
+                pausar(2)
+                print("\n No vazio, você morre sozinho, sem poder salvar ninguem. ")
+                pausar(2)
+                return "morte"
 
         if turno_gasto and not self.fios_cortados:
             self.bateria -= 1
-            if self.bateria <= 0:
+            if self.bateria <= 0 and not getattr(jogo, 'god_mode', False):
                 print("\n A sua lanterna apaga, você entra em desespero e começa a bater na parte da bateria, fazendo barulho.")
                 pausar(2)
                 print("\n Você sente uma mão atravessando seu estomago por trás, não há nada a se fazer")
@@ -128,17 +141,24 @@ class MinigameMinotauro:
                 
             passos = 2 if random.randint(1, 100) <= self.chance_sprint else 1 
             
+            # --- O AVISO DE SPRINT VOLTOU ---
             if passos == 2:
                 print(f"\n{DOS_VERMELHO}⚠️ O CHÃO TREME! VOCÊ ESCUTA PASSOS PESADOS CORRENDO NA SUA DIREÇÃO!{RESET}")
                 pausar(1.5)
-                
+
             for _ in range(passos):
                 self.mover_minotauro()
                 
             if self.px == self.mx and self.py == self.my:
-                print("\n o minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro")
-                pausar(2)
-                return "morte"
+                # --- MODO DEUS: IMUNIDADE AO SER ATROPELADO ---
+                if getattr(jogo, 'god_mode', False):
+                    print(f"\n{DOS_AMARELO}[GOD MODE] O Minotauro pula em cima de você, mas é repelido por um escudo de energia! Ele desiste e foge.{RESET}")
+                    pausar(2)
+                    return "vitoria_minotauro"
+                else:
+                    print("\n o minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro")
+                    pausar(2)
+                    return "morte"
                 
         return "continuar"
 
@@ -149,7 +169,7 @@ class MinigameMinotauro:
 class MinigameSeguranca:
     def __init__(self, jogo):
         self.turno = 0
-        self.energia = random.randint(jogo.energia_min_noite, jogo.energia_max_noite) 
+        self.energia = random.randint(getattr(jogo, 'energia_min_noite', 70), getattr(jogo, 'energia_max_noite', 100)) 
         self.porta_fechada = False
         self.erro_camera = False
         self.erro_relogio = False
@@ -161,7 +181,7 @@ class MinigameSeguranca:
         self.caroline_caminho = random.choice(["porta", "tubulacao"])  
         self.indio_janela = False
         self.alberto_troll = False
-        self.furia = jogo.furia_noite
+        self.furia = getattr(jogo, 'furia_noite', 1)
         self.gerador_reserva_usado = False
         self.turnos_gerador_ativo = 0
         self.usos_sistema_turno = 0
@@ -203,6 +223,11 @@ class MinigameSeguranca:
         print("\nAção (ouvir | cameras | ver tubulacao | iluminar tubulacao | fechar porta | abrir porta | olhar vidro | Ligar Gerador | consertar [sistema] | esperar)")
 
     def processar_turno(self, acao, jogo):
+        # --- MODO DEUS: PULO DO TEMPO ---
+        if acao in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False):
+            print(f"{DOS_AMARELO}[GOD MODE] O tempo se contorce. O relógio salta para as 06:00.{RESET}")
+            self.turno = 24
+            
         turno_passou = False
         acao_valida = True
 
@@ -279,7 +304,6 @@ class MinigameSeguranca:
                     print("e o chão de linóleo imundo refletindo a pouca luz que resta.")
                     print("Nenhum movimento... Além das sombras, há apenas o seu reflexo devolvendo o olhar.")
 
-        
         elif acao == "ligar gerador" or acao == "Ligar gerador":
             if self.apagao >0:
                 print("Tarde demais, o sistema principal já foi totalmente desligado")
@@ -360,7 +384,7 @@ class MinigameSeguranca:
                 if self.jon_pos >= 3 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 4): print("🔴 Sensor fica vermelho, há um movimento nos dutos.")
                 else: print("🟢 Sensor não detecta nada")
 
-        elif acao == "esperar":
+        elif acao in ["esperar", "pular noite", "pular", "set time 06:00"]:
             print("Você deixa o tempo passar...")
             turno_passou = True
             self.turno += 1
@@ -369,7 +393,7 @@ class MinigameSeguranca:
             print("Comando inválido.")
             acao_valida = False
 
-        if acao_valida and acao != "esperar":
+        if acao_valida and acao not in ["esperar", "pular noite", "pular", "set time 06:00"]:
             if random.random() <= 0.10:
                 quem = random.choice(["rick", "jon", "caroline"])
                 if quem == "rick": self.rick_pos += 1
@@ -393,16 +417,12 @@ class MinigameSeguranca:
 
             if chance_evento <= 3:
                 print(f"\n{DOS_AMARELO} Toc.. Toc.. Você escuta batidas fracas na janela, você não sabe se há algo ali, o vidro está muito sujo.{RESET}")
-
             elif chance_evento <= 7:
                 print(f"\n{DOS_AMARELO} Você escuta ruidos vindo da ventilação... Parece que algo está arranhando o aluminio. {RESET}")
-
             elif chance_evento <= 9:
                 print(f"\n{DOS_VERMELHO} 'Rogerio'... Você escuta algo chamar seu nome vindo do fundo do corredor.{RESET}")
-
             elif chance_evento <= 10:
                 print(f"\n{DOS_VERMELHO} Pelo canto do seu olho, você jura ter visto algo acenando da janela, você não sabe se é algo real ou não.{RESET}")
-
             elif chance_evento <= 12:
                 print(f"\n{DOS_VERMELHO} Você jura ter visto algo na ventilação... Será que é coisa da sua cabeça?{RESET}")
         
@@ -419,7 +439,6 @@ class MinigameSeguranca:
 
             if self.turno == 12:
                 print(f"\n{DOS_AMARELO} [SISTEMA] O antigo gerador está superaquecendo, cada acão custará mais energia a partir de agora.{RESET}")
-
             elif self.turno == 22:
                 print(f"\n {DOS_AMARELO} [SISTEMA] [AVISO CRITICO!!!] O gerador superaqueceu! Geradores reservas ligados, dreno de energia aumentou!{RESET}")
             
@@ -427,7 +446,7 @@ class MinigameSeguranca:
                 self.energia -= 2
                 print(" A pesada porta de metal consome energia contínua... (-2% Energia)")
 
-            if self.energia <= 0 and self.apagao == 0:
+            if self.energia <= 0 and self.apagao == 0 and not getattr(jogo, 'god_mode', False):
                 print("\n [ ENERGIA ESGOTADA ] Tudo fica escuro. A porta abre sozinha...")
                 self.porta_fechada = False; self.apagao = 1; pausar(2)
 
@@ -446,9 +465,14 @@ class MinigameSeguranca:
             jon_ataque = (self.jon_pos >= 5)
             
             if (rick_ataque and not self.porta_fechada) or (carol_porta_ataque and not self.porta_fechada) or jon_ataque or carol_duto_ataque:
-                print("\n Um animatronico conseguiu entrar.")
-                pausar(2)
-                return "morte"
+                # --- MODO DEUS: IMUNIDADE NA SEGURANÇA ---
+                if getattr(jogo, 'god_mode', False):
+                    print(f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara com um olhar mortal. Ele pede desculpas e sai de fininho.{RESET}")
+                    self.rick_pos = 0; self.caroline_pos = 0; self.jon_pos = 0
+                else:
+                    print("\n Um animatronico conseguiu entrar.")
+                    pausar(2)
+                    return "morte"
             
             if self.rick_pos == 3 and not self.porta_fechada and random.random() < 0.25:
                 self.rick_pos = 1 
@@ -488,7 +512,7 @@ class MinigameSeguranca:
             jogo.mapa["entrada"]["descrição"] = "As luzes não piscam mais."
             jogo.noite_vencida = True
 
-            if jogo.fios_cortados_inventario:
+            if getattr(jogo, 'fios_cortados_inventario', False):
                 pausar(2)
                 radar = "   .---.\n /   |   \\\n|----O----|\n \\   |   /\n   '---'"
                 digitar("\nVocê saca o dispositivo.", 0.03, DOS_AMARELO)
