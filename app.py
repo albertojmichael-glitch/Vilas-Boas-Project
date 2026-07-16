@@ -21,7 +21,6 @@ from utils import extrair_argumentos, atualizar_eventos_de_tempo
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
                    dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
 
-# --- GARANTIA ABSOLUTA DE DIRETÓRIO PARA O RENDER ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 ARTE_COFRE = r'''                                                                              
@@ -49,7 +48,9 @@ class WebUIHandler(UIHandler):
         pass
         
     def exibir(self, texto):
-        print(texto)
+        # AQUI É O SEGREDO DO MINIGAME!
+        # Agora o texto "instantâneo" vai ser desenhado a 2 milissegundos por letra!
+        self.animar(texto, 0.002)
         
     def animar(self, texto, tempo=0.03, cor="", jogo=None):
         cor_nome = "verde"
@@ -85,7 +86,6 @@ def ansi_para_html(texto_ansi):
     if aberto: html.append("</span>")
     return "".join(html)
 
-# --- BLINDAGEM DE ARQUIVOS ESTÁTICOS (Mata a Tela Branca) ---
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
 CORS(app, supports_credentials=True)
@@ -93,19 +93,29 @@ CORS(app, supports_credentials=True)
 SESSION_DIR = Path(BASE_DIR) / "sessions"
 SESSION_DIR.mkdir(exist_ok=True)
 
+# AQUI VAI O CACHE DE MEMÓRIA PARA SALVAR O MINIGAME!
+MEMORIA_SESSOES = {}
+
 def obter_estado():
     sid = session.get("sid")
     if not sid:
         sid = str(uuid.uuid4())
         session["sid"] = sid
         
+    # Tenta puxar direto da memória RAM rápida
+    if sid in MEMORIA_SESSOES:
+        jogo = MEMORIA_SESSOES[sid]
+        jogo.ui_handler = WebUIHandler()
+        return jogo
+        
+    # Se falhar (ex: servidor reiniciou), puxa do disco
     session_file = SESSION_DIR / f"{sid}.json"
-    
     if session_file.exists():
         try:
             dados = json.loads(session_file.read_text(encoding="utf-8"))
             jogo = GameState.from_dict(dados)
             jogo.ui_handler = WebUIHandler()
+            MEMORIA_SESSOES[sid] = jogo
             return jogo
         except: pass
         
@@ -115,6 +125,8 @@ def obter_estado():
 
 def salvar_sessao(sid, jogo):
     if not sid: return
+    # Salva na memória e no disco
+    MEMORIA_SESSOES[sid] = jogo
     session_file = SESSION_DIR / f"{sid}.json"
     session_file.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
 
