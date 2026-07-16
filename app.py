@@ -13,6 +13,8 @@ from minigames import MinigameMinotauro, MinigameSeguranca
 from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, UIHandler
 from utils import extrair_argumentos
+from pathlib import Path
+from state import GameStateEnum
 
 # Importa a lógica UI unificada
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
@@ -83,23 +85,37 @@ def ansi_para_html(texto_ansi):
     return "".join(html)
 
 app = Flask(__name__, static_folder=".", static_url_path="")
-# --- SECRET KEY PROTEGIDA (REQUISITO GITHUB) ---
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
 CORS(app, supports_credentials=True)
 
 partidas = {}
 
+SESSION_DIR = Path("sessions")
+SESSION_DIR.mkdir(exist_ok=True)
+
 def obter_estado():
     sid = session.get("sid")
-    if not sid or sid not in partidas:
+    if not sid:
         sid = str(uuid.uuid4())
         session["sid"] = sid
-        partidas[sid] = GameState(ui_handler=WebUIHandler())
+        
+    session_file = SESSION_DIR / f"{sid}.json"
     
-    jogo = partidas[sid]
-    if not isinstance(jogo.ui_handler, WebUIHandler):
-        jogo.ui_handler = WebUIHandler()
+    if session_file.exists():
+        try:
+            dados = json.loads(session_file.read_text(encoding="utf-8"))
+            jogo = GameState.from_dict(dados)
+            jogo.ui_handler = WebUIHandler()
+            return jogo
+        except: pass
+        
+    jogo = GameState(ui_handler=WebUIHandler())
+    salvar_sessao(sid, jogo)
     return jogo
+
+def salvar_sessao(sid, jogo):
+    session_file = SESSION_DIR / f"{sid}.json"
+    session_file.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
 
 @app.route("/")
 def raiz():

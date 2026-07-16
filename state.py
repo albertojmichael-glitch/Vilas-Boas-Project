@@ -1,18 +1,42 @@
-import copy
 import json
+import copy
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
+from enum import Enum
+from pydantic import BaseModel, Field, PrivateAttr
 from typing import List, Dict, Any
 from data import MAPA_ORIGINAL
 
-class QuitGameException(Exception):
-    pass
+# --- POINT 10: EXCEPTION HIERARCHY ---
+class GameException(Exception): pass
+class QuitGameException(GameException): pass
+class InvalidCommandError(GameException): pass
 
-@dataclass
-class GameState:
-    ui_handler: Any = None 
+# --- POINT 10: ENUMS PARA EVITAR MAGIC STRINGS ---
+class GameStateEnum(str, Enum):
+    MENU = "MENU"
+    JOGO = "JOGO"
+    AGUARDANDO_DIR = "AGUARDANDO_DIR"
+    FIM = "FIM"
+    COMBATE_ANIMATRONICO = "COMBATE_ANIMATRONICO"
+    MINIGAME_MINOTAURO = "MINIGAME_MINOTAURO"
+    MINIGAME_SEGURANCA = "MINIGAME_SEGURANCA"
+    MINIGAME_COFRE = "MINIGAME_COFRE"
+    MINIGAME_JON = "MINIGAME_JON"
+    MINIGAME_CONSERTOS_CABECA = "MINIGAME_CONSERTOS_CABECA"
+    MINIGAME_CONSERTOS_TRONCO = "MINIGAME_CONSERTOS_TRONCO"
+    MINIGAME_CONSERTOS_PERNAS = "MINIGAME_CONSERTOS_PERNAS"
+    MINIGAME_JULGAMENTO_Q1 = "MINIGAME_JULGAMENTO_Q1"
+    MINIGAME_JULGAMENTO_Q2 = "MINIGAME_JULGAMENTO_Q2"
+    MINIGAME_JULGAMENTO_Q3 = "MINIGAME_JULGAMENTO_Q3"
+    MINIGAME_JULGAMENTO_Q4 = "MINIGAME_JULGAMENTO_Q4"
+    MINIGAME_JULGAMENTO_V1 = "MINIGAME_JULGAMENTO_V1"
+    MINIGAME_JULGAMENTO_V2 = "MINIGAME_JULGAMENTO_V2"
+    MINIGAME_JULGAMENTO_V3 = "MINIGAME_JULGAMENTO_V3"
+
+# --- POINT 3: PYDANTIC MODELS FOR VALIDATION ---
+class GameState(BaseModel):
     hp: int = 3
-    inventario: List[str] = field(default_factory=lambda: ["lanterna"])
+    inventario: List[str] = Field(default_factory=lambda: ["lanterna"])
     turnos_luz: int = 3
     turnos_no_escuro: int = 0
     turnos_enjoado: int = 0
@@ -31,18 +55,32 @@ class GameState:
     turnos_fuga: int = 5
     isqueiro_usos: int = 3
     posicao_perseguidor: str = "palco"
-    estado_atual: str = "MENU"
-    minigame_atual: Any = None
+    estado_atual: str = GameStateEnum.MENU.value 
     god_mode: bool = False
     alberto_desativado: bool = False 
-    fast_mode: bool = False  
-    mapa: Dict[str, Any] = field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
+    fast_mode: bool = False
+    mapa: Dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
     
+    # Atributos não-serializáveis ocultos do Pydantic
+    _ui_handler: Any = PrivateAttr(default=None)
+    _minigame_atual: Any = PrivateAttr(default=None)
+
+    def __init__(self, ui_handler=None, **data):
+        super().__init__(**data)
+        self._ui_handler = ui_handler
+
+    @property
+    def ui_handler(self): return self._ui_handler
+    @ui_handler.setter
+    def ui_handler(self, v): self._ui_handler = v
+
+    @property
+    def minigame_atual(self): return self._minigame_atual
+    @minigame_atual.setter
+    def minigame_atual(self, v): self._minigame_atual = v
+
     def to_dict(self):
-        d = asdict(self)
-        d.pop('ui_handler', None)
-        d.pop('minigame_atual', None)
-        return d
+        return self.model_dump()
         
     @classmethod
     def from_dict(cls, dados):
@@ -55,8 +93,7 @@ def carregar_conquistas() -> List[str]:
     if ARQUIVO_CONQUISTAS.exists():
         try:
             return json.loads(ARQUIVO_CONQUISTAS.read_text(encoding="utf-8"))
-        except:
-            pass
+        except: pass
     return []
 
 def registrar_final(nome_final: str) -> bool:
@@ -65,30 +102,24 @@ def registrar_final(nome_final: str) -> bool:
         conquistas.append(nome_final)
         try:
             ARQUIVO_CONQUISTAS.write_text(json.dumps(conquistas, ensure_ascii=False), encoding="utf-8")
-        except:
-            pass
-    finais_necessarios = ["mediocre", "bons_sonhos", "bom", "verdadeiro"]
-    return all(f in conquistas for f in finais_necessarios)
+        except: pass
+    return all(f in conquistas for f in ["mediocre", "bons_sonhos", "bom", "verdadeiro"])
 
-# --- UNIFICAÇÃO DA API DE SAVE/LOAD (Sem Disquete!) ---
 def salvar_autosave(estado: GameState):
-    if getattr(estado, 'estado_atual', '') != "JOGO": return
+    if estado.estado_atual != GameStateEnum.JOGO.value: return
     try:
         dados = estado.to_dict()
         AUTOSAVE_FILE.write_text(json.dumps(dados, ensure_ascii=False, indent=4), encoding="utf-8")
         return True
-    except:
-        return False
+    except: return False
 
 def carregar_autosave(estado: GameState) -> bool:
     if AUTOSAVE_FILE.exists():
         try:
             dados = json.loads(AUTOSAVE_FILE.read_text(encoding="utf-8"))
             novo_estado = GameState.from_dict(dados)
-            for key, value in asdict(novo_estado).items():
-                if key not in ['ui_handler', 'minigame_atual']:
-                    setattr(estado, key, value)
+            for key, value in novo_estado.to_dict().items():
+                setattr(estado, key, value)
             return True
-        except:
-            pass
+        except: pass
     return False
