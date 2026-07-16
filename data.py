@@ -164,12 +164,14 @@ MAPA_ORIGINAL = {
     "balcão": {
         "descrição": "O lugar onde costumavam servir lanches. A máquina registradora está aberta e vazia, exceto por restos de doces mofados.",
         "esquerda": "corredor",
-        "itens": ["doce", "tesoura quebrada", "pano"]
+        "itens": ["doce", "tesoura quebrada", "pano"],
+        "inspecionaveis": {}
     },
     "palco": {
         "descrição": "Um palco mal iluminado. O chão está sujo. Atrás das cortinas vermelhas há uma porta dupla para a Sala de Jantar.",
         "frente": "sala de jantar",
-        "itens": ["pedra", "fita isolante"]
+        "itens": ["pedra", "fita isolante"],
+        "inspecionaveis": {}
     },
     "01": {
         "descrição": "A sala de festas 01. Mesas emborcadas e cadeiras quebradas. Tem uma cadeira intacta no canto, de frente aos monitores de Segurança antigos.",
@@ -184,12 +186,14 @@ MAPA_ORIGINAL = {
     },
     "cadeira": {
         "descrição": "O sistema de segurança se liga. O ar gela.",
-        "itens": []
+        "itens": [],
+        "inspecionaveis": {}
     },
     "02": {
         "descrição": "A porta da Sala de Festas 02. Ela está trancada com um cadeado pesado. Talvez precise da chave da cozinha.",
         "direita": "corredor",
-        "itens": []
+        "itens": [],
+        "inspecionaveis": {}
     },
     "cozinha privada": {
         "descrição": "Uma cozinha industrial imunda. O cheiro do mofo é insuportável. No canto das sombras está o temido animatrônico 'Alberto Troll'.",
@@ -202,17 +206,20 @@ MAPA_ORIGINAL = {
     "03": {
         "descrição": "A porta 03. O caminho para a sala de energia. Está emperrada.",
         "atrás": "corredor",
-        "itens": []
+        "itens": [],
+        "inspecionaveis": {}
     },
     "sala do gerador": {
         "descrição": "A antiga sala de energia (porta 03). O gerador principal está aqui. Há fios soltos e um painel exposto.",
         "atrás": "corredor",
-        "itens": ["bateria nova", "disquete"]
+        "itens": ["bateria nova", "disquete"],
+        "inspecionaveis": {}
     },
     "sala de jantar": {
         "descrição": "Um espaço enorme. As paredes são cheias de desenhos infantis macabros, do lado direito parece ter as antigas máquinas de fliperama.",
         "atrás": "palco", "direita": "sala de fliperamas", "esquerda": "porta dos fundos",
-        "itens": ["papel", "recorte 2"]
+        "itens": ["papel", "recorte 2"],
+        "inspecionaveis": {}
     },
     "sala de fliperamas": {
         "descrição": "Uma sala poeirenta iluminada apenas pelos letreiros de neon piscantes de 3 velhas máquinas de fliperama ligadas ('jon', 'consertos', 'julgamento').",
@@ -225,33 +232,42 @@ MAPA_ORIGINAL = {
     "porta dos fundos": {
         "descrição": "Uma pesada porta de metal enferrujado que dá acesso aos fundos do restaurante.",
         "direita": "sala de jantar",
-        "itens": []
+        "itens": [],
+        "inspecionaveis": {}
     },
     "sala dos fundos": {
         "descrição": "Um corredor estreito e gélido. A frente há uma porta blindada para a verdadeira 'Sala de Energia'.",
         "frente": "sala de energia", "atrás": "sala de jantar",
-        "itens": ["recorte 1", "isqueiro", "fosforo", "garrafa vazia"]
+        "itens": ["recorte 1", "isqueiro", "fosforo", "garrafa vazia"],
+        "inspecionaveis": {}
     },
     "sala de energia": {
         "descrição": "O painel principal. Fios de alta tensão cobrem a parede.",
         "atrás": "sala dos fundos",
-        "itens": ["fios cortados"]
+        "itens": ["fios cortados"],
+        "inspecionaveis": {}
+
     },
+
     "morte": {
         "descrição": "Você está morto. O escuro engoliu sua alma.",
-        "itens": []
+        "itens": [],
+        "inspecionaveis": {}
     },
     "saida": {
         "descrição": "A luz da lua ilumina o estacionamento através da porta aberta.",
-        "itens": []
+        "itens": [],
+        "inspecionaveis": {}
     },
     "cama": {
         "descrição": "Você sente o cheiro dela.",
-        "itens": []
+        "itens": [],
+        "inspecionaveis": {}
     },
     "final_bom": {
         "descrição": "Um silêncio em paz domina o restaurante.",
-        "itens": []
+        "itens": [],
+        "inspecionaveis": {}
     }
 }
 

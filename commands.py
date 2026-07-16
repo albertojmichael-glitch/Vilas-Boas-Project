@@ -1,35 +1,9 @@
-import time
 import random
-import unicodedata
-import difflib
-import shlex
-
+from utils import normalizar, extrair_argumentos, encontrar_melhor_match
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, default_ui
-from data import MAX_INVENTARIO, COFRE_SENHA, descricoes_itens, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
-from state import salvar_jogo, carregar_jogo, QuitGameException
-
-def normalizar(texto):
-    texto_sem_acento = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
-    return texto_sem_acento.strip().lower()
-
-def extrair_argumentos(comando_bruto):
-    try:
-        args = shlex.split(comando_bruto)
-        return [normalizar(a) for a in args]
-    except ValueError:
-        return [normalizar(a) for a in comando_bruto.split()]
-
-def encontrar_melhor_match(termo, lista_opcoes, cutoff=0.7):
-    if not termo or not lista_opcoes: return None
-    for op in lista_opcoes:
-        if termo == op: return op
-    for op in lista_opcoes:
-        if op.startswith(termo) or termo.startswith(op): return op
-    for op in lista_opcoes:
-        if termo in op or op in termo: return op
-    sugestoes = difflib.get_close_matches(termo, lista_opcoes, n=1, cutoff=cutoff)
-    if sugestoes: return sugestoes[0]
-    return None
+from data import MAX_INVENTARIO, COFRE_SENHA, descricoes_itens
+from state import salvar_autosave, carregar_autosave, QuitGameException
+from views import imprimir_contexto_sala
 
 def cmd_ir(comando, jogo, mapa):
     ui = jogo.ui_handler or default_ui
@@ -95,7 +69,7 @@ def cmd_ir(comando, jogo, mapa):
             return True
         
         if jogo.sala_atual == "saida":
-            if jogo.noite_vencida and getattr(jogo, 'fios_cortados_inventario', False) and not getattr(jogo, 'incendio', False):
+            if getattr(jogo, 'noite_vencida', False) and getattr(jogo, 'fios_cortados_inventario', False) and not getattr(jogo, 'incendio', False):
                 ui.exibir(f"\n{DOS_VERDE}[DISPOSITIVO]: NÍVEL 2 - PRESENÇA PRÓXIMA.{RESET}")
                 ui.exibir(f"{DOS_AMARELO}'Eu preciso terminar isso antes...', você murmura para si mesmo.{RESET}")
                 ui.exibir(f"{DOS_AMARELO}Você vira as costas para a saída. A Sala de Energia espera.{RESET}")
@@ -212,7 +186,10 @@ def cmd_abrir_cofre(jogo):
     ui = jogo.ui_handler or default_ui
     if jogo.sala_atual == "01":
         ui.exibir(f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo.{RESET}")
+        
+        # --- UI OBTER INPUT resolve o bloqueio do CLI vs Web! ---
         senha = ui.obter_input(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}").strip()
+        
         if senha == COFRE_SENHA: 
             ui.exibir(f"{DOS_VERDE}CLICK! A pesada porta de metal se abre.{RESET}")
             sala = jogo.mapa[jogo.sala_atual]
@@ -434,7 +411,7 @@ def processar_comando(comando, jogo, mapa):
     verbos_validos = ["ir", "pegar", "largar", "usar", "combinar", "juntar", "examinar", "jogar", "abrir", "salvar", "carregar", "ajuda", "comandos", "inventario", "olhar", "cls", "limpar", "clear", "clean", "whoami", "sair", "tp", "gerar", "atacar", "bater", "chutar", "lutar", "pular", "desligar", "desativar"]
     
     if verbo_bruto not in verbos_validos:
-        sugestoes = difflib.get_close_matches(verbo_bruto, verbos_validos, n=1, cutoff=0.7)
+        sugestoes = difflib.get_close_matches(verbo_bruto, verbos_validos, n=1, cutoff=0.75)
         if sugestoes:
             verbo_corrigido = sugestoes[0]
             comando = f"{verbo_corrigido} {resto}".strip()
@@ -470,7 +447,7 @@ def processar_comando(comando, jogo, mapa):
             if jogo.sala_atual == "cozinha privada":
                 if not getattr(jogo, 'alberto_desativado', False):
                     ui.exibir(f"{DOS_VERDE}Você gira a chave de manutenção nas costas do Alberto Troll.{RESET}")
-                    ui.exibir(f"{DOS_AMARELO}Os olhos dele apagam com um clique metálico. O sistema dele foi desativado da rede principal.{RESET}")
+                    ui.exibir(f"{DOS_AMARELO}Os olhos dele apagam com um clique metálico. O sistema dele foi desativado.{RESET}")
                     jogo.alberto_desativado = True
                 else:
                     ui.exibir("Ele já está desativado. Não mexa mais do que o necessário.")
@@ -497,25 +474,20 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(f"{DOS_BRANCO}Você não tem armas. Suas mãos estão tremendo demais para lutar.{RESET}")
         ui.pausar(1.5)
         return False
-
     elif comando == "salvar":
-        # Remove a necessidade de Disquete!
         salvar_autosave(jogo)
-        ui.exibir(f"{DOS_VERDE}💾 Progresso salvo no sistema de Autosave.{RESET}")
+        ui.exibir(f"{DOS_VERDE}💾 Progresso salvo no sistema unificado de Autosave.{RESET}")
         ui.pausar(1.5)
         return False
     elif comando == "carregar":
         if carregar_autosave(jogo):
             ui.exibir(f"{DOS_VERDE}💾 Jogo carregado com sucesso do Autosave.{RESET}")
             ui.pausar(1.5)
-            # Força o mapa a reimprimir
-            from views import imprimir_contexto_sala
             imprimir_contexto_sala(jogo)
         else:
             ui.exibir(f"{DOS_AMARELO}Nenhum Autosave encontrado no disco.{RESET}")
             ui.pausar(1.5)
         return False
-        
     elif comando == "ajuda" or comando == "comandos":
         ui.exibir(f"\n{DOS_AMARELO}--- COMANDOS DO SISTEMA ---{RESET}")
         ui.exibir("Mover: 'ir [direcao]' ou apenas o nome da sala! | Itens: 'pegar', 'largar', 'usar', 'combinar'")
@@ -539,10 +511,10 @@ def processar_comando(comando, jogo, mapa):
     elif comando in ["cls", "limpar", "clear", "clean"]:
         ui.limpar(); return False
     elif comando == "whoami":
-        ui.animar("Sou eu, Rogério.", 0.08, DOS_VERMELHO)
+        ui.animar("Sou eu, Rogério.", 0.08, DOS_VERMELHO, jogo)
         ui.pausar(2); return False
     elif comando == "format c:":
-        ui.animar("FORMATAÇÃO INICIADA...", 0.05, DOS_VERMELHO)
+        ui.animar("FORMATAÇÃO INICIADA...", 0.05, DOS_VERMELHO, jogo)
         ui.exibir(f"{DOS_VERMELHO}ERRO CRÍTICO 0x0000: PRESENÇA ULTERIOR PRESA NO DISCO.{RESET}")
         ui.pausar(2); return False
     elif comando == "sair":

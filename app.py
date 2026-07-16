@@ -10,10 +10,11 @@ import uuid
 from state import GameState, salvar_autosave, carregar_autosave, AUTOSAVE_FILE
 from commands import processar_comando, normalizar
 from minigames import MinigameMinotauro, MinigameSeguranca
-from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, CAVEIRA_MORTE, MAX_INVENTARIO
+from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, UIHandler
+from utils import extrair_argumentos
 
-# Importa toda a lógica visual que acabamos de deduplicar!
+# Importa a lógica UI unificada
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
                    dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
 
@@ -40,7 +41,7 @@ class WebUIHandler(UIHandler):
         print("@@CLEAR@@")
     
     def pausar(self, segs):
-        pass # A web gerencia o timing pelo JSON
+        pass
         
     def exibir(self, texto):
         print(texto)
@@ -56,14 +57,11 @@ class WebUIHandler(UIHandler):
         print(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
         
     def obter_input(self, prompt_text):
-        return "" # A Web gerencia o input via rotas separadas
+        return "" 
 
 def ansi_para_html(texto_ansi):
     mapa_cores = {
-        DOS_VERDE: "verde",
-        DOS_BRANCO: "branco",
-        DOS_AMARELO: "amarelo",
-        DOS_VERMELHO: "vermelho",
+        DOS_VERDE: "verde", DOS_BRANCO: "branco", DOS_AMARELO: "amarelo", DOS_VERMELHO: "vermelho",
     }
     padrao = re.compile("(" + "|".join(re.escape(c) for c in list(mapa_cores.keys()) + [RESET]) + ")")
     partes = padrao.split(texto_ansi)
@@ -85,6 +83,7 @@ def ansi_para_html(texto_ansi):
     return "".join(html)
 
 app = Flask(__name__, static_folder=".", static_url_path="")
+# --- SECRET KEY PROTEGIDA (REQUISITO GITHUB) ---
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
 CORS(app, supports_credentials=True)
 
@@ -109,8 +108,7 @@ def raiz():
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
     sid = session.get("sid")
-    if sid and sid in partidas:
-        del partidas[sid]  
+    if sid and sid in partidas: del partidas[sid]  
     jogo = obter_estado()
     jogo.estado_atual = "AGUARDANDO_DIR"
     
@@ -119,8 +117,7 @@ def iniciar_jogo():
     imprimir_tela_boot(jogo.ui_handler)
     sys.stdout = sys.__stdout__
     
-    texto_html = ansi_para_html(captura.getvalue())
-    return jsonify({"linhas": [l for l in texto_html.split('\n') if l.strip() != ""]})
+    return jsonify({"linhas": [l for l in ansi_para_html(captura.getvalue()).split('\n') if l.strip() != ""]})
 
 @app.route('/comando', methods=['POST'])
 def receber_comando():
@@ -155,7 +152,7 @@ def receber_comando():
                 ui.exibir(f"{DOS_AMARELO}       3 file(s)        68.097 bytes{RESET}")
                 ui.exibir(f"{DOS_AMARELO}       4 dir(s)        655.360 bytes free{RESET}\n")
                 jogo.estado_atual = "MENU"
-                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
+                imprimir_menu_dificuldade(ui)
             else:
                 ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
                 ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
@@ -163,7 +160,7 @@ def receber_comando():
         elif jogo.estado_atual == "MENU":
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
-                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
+                imprimir_menu_dificuldade(ui)
             elif comando == "4" and AUTOSAVE_FILE.exists():
                 ui.limpar()
                 if carregar_autosave(jogo):
@@ -171,7 +168,7 @@ def receber_comando():
                     imprimir_contexto_sala(jogo)
                 else:
                     ui.exibir(f"{DOS_VERMELHO}Falha ao ler o Autosave.{RESET}")
-                    imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
+                    imprimir_menu_dificuldade(ui)
             elif comando in ["1", "2", "3"]:
                 ui.limpar()
                 if comando == "1":
@@ -215,11 +212,11 @@ def receber_comando():
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
                 imprimir_contexto_sala(jogo)
-            elif jogo.sala_atual == "sala de energia" and not jogo.fios_cortados_inventario:
+            elif jogo.sala_atual == "sala de energia" and not getattr(jogo, 'fios_cortados_inventario', False):
                 jogo.minigame_atual = MinigameMinotauro(jogo)
                 jogo.estado_atual = "MINIGAME_MINOTAURO"
                 jogo.minigame_atual.imprimir_status()
-            elif jogo.sala_atual == "cadeira" and not jogo.noite_vencida:
+            elif jogo.sala_atual == "cadeira" and not getattr(jogo, 'noite_vencida', False):
                 jogo.minigame_atual = MinigameSeguranca(jogo)
                 jogo.estado_atual = "MINIGAME_SEGURANCA"
                 jogo.minigame_atual.imprimir_status()
@@ -271,10 +268,8 @@ def receber_comando():
                 elif jogo.sala_atual == "cama":
                     rodar_final("cama", jogo)
                 elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
-                    if getattr(jogo, 'incendio', False):
-                        rodar_final("verdadeiro", jogo)
-                    else:
-                        rodar_final("final_bom", jogo)
+                    if getattr(jogo, 'incendio', False): rodar_final("verdadeiro", jogo)
+                    else: rodar_final("final_bom", jogo)
                 elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
                     pass 
                 else:
@@ -288,10 +283,10 @@ def receber_comando():
             elif comando == "1994": 
                 ui.exibir(f"{DOS_VERDE}CLICK! A pesada porta de metal se abre.{RESET}")
                 sala = jogo.mapa[jogo.sala_atual]
-                if "itens" not in sala: sala["itens"] = []
+                sala.setdefault("itens", [])
                 
                 if "chave dos fundos" not in jogo.inventario and "chave dos fundos" not in sala["itens"]:
-                    if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
+                    if len(jogo.inventario) < 3 or getattr(jogo, 'god_mode', False):
                         ui.exibir(f"{DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{RESET}")
                         jogo.inventario.append("chave dos fundos")
                     else:
@@ -308,11 +303,7 @@ def receber_comando():
 
         elif jogo.estado_atual == "MINIGAME_JON":
             passo = jogo.jon_passos_dados
-            if comando in ["cls", "limpar", "clear", "clean"]:
-                ui.limpar()
-                ui.exibir(f"{DOS_BRANCO}{ARTE_PORCO}{RESET}")
-                ui.exibir(f"Passo {passo + 1}/4 - Direção (F/E/D): ")
-            elif comando in ["f", "e", "d", "frente", "esquerda", "direita"]:
+            if comando in ["f", "e", "d", "frente", "esquerda", "direita"]:
                 letra = comando[0]
                 if letra == jogo.jon_caminho_certo[passo]:
                     ui.exibir(f"{DOS_BRANCO}Jon rasteja em silêncio pelos dutos...{RESET}")
@@ -330,8 +321,7 @@ def receber_comando():
                     ui.exibir(f"\n{DOS_VERMELHO}CRUNCH! Jon caiu num triturador ativo! leva um choque brutal!{RESET}")
                     jogo.hp -= 1
                     jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
-                    if jogo.hp <= 0:
-                        dar_tela_de_morte(jogo)
+                    if jogo.hp <= 0: dar_tela_de_morte(jogo)
                     else:
                         jogo.estado_atual = "JOGO"
                         imprimir_contexto_sala(jogo)
@@ -352,36 +342,24 @@ def receber_comando():
             cabeca = jogo.web_consertos.get("cabeca", "1")
             tronco = jogo.web_consertos.get("tronco", "1")
             pernas = comando
-            item_secreto = None
+            item_secreto = "remedio" if (cabeca == "2" and pernas == "2") else None
             
-            if cabeca == "2" and pernas == "2":
-                ui.exibir("> AVISO: Peças incompatíveis. Anomalia detectada.")
-                item_secreto = "remedio"
-            elif cabeca == "1" and tronco == "2":
-                ui.exibir("> Encaixando peças do modelo padrão 'Urso Robusto'...")
-            else:
-                ui.exibir("> Erro de harmonia visual. Soldando peças à força...")
-                
             ui.exibir(f"\n{DOS_VERDE}CONSERTO CONCLUÍDO! O ANIMATRÔNICO SORRI PARA VOCÊ!{RESET}")
             sala = jogo.mapa[jogo.sala_atual]
-            if "itens" not in sala: sala["itens"] = []
+            sala.setdefault("itens", [])
             
             if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
-                ui.exibir(f"{DOS_BRANCO}A gaveta principal de prêmios se abre com um barulho metálico.{RESET}")
-                if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
+                if len(jogo.inventario) < 3 or getattr(jogo, 'god_mode', False):
                     jogo.inventario.append("chave da cozinha")
                     ui.exibir(f"{DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{RESET}")
                 else:
-                    ui.exibir(f"{DOS_AMARELO}🎒 Sua mochila está cheia! A CHAVE DA COZINHA caiu no chão.{RESET}")
                     sala["itens"].append("chave da cozinha")
 
             if item_secreto:
-                ui.exibir(f"{DOS_BRANCO}Um compartimento de emergência se abriu na base da máquina!{RESET}")
-                if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
+                if len(jogo.inventario) < 3 or getattr(jogo, 'god_mode', False):
                     jogo.inventario.append(item_secreto)
                     ui.exibir(f"{DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{RESET}")
                 else:
-                    ui.exibir(f"{DOS_AMARELO}🎒 Sua mochila está cheia! O item {item_secreto.upper()} caiu no chão.{RESET}")
                     sala["itens"].append(item_secreto)
                 
             jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
@@ -429,20 +407,16 @@ def receber_comando():
                 jogo.estado_atual = "MINIGAME_JULGAMENTO_V3"
                 ui.exibir("Digite o 3º nome: ")
             else:
-                if len(jogo.web_julgamento["vitimas"]) == 0:
-                    jogo.web_julgamento["pontos"] += 1
+                if len(jogo.web_julgamento["vitimas"]) == 0: jogo.web_julgamento["pontos"] += 1
                 if jogo.web_julgamento["pontos"] == 5:
                     ui.animar("Obrigado por voltar pela gente, Rogério...", 0.08, DOS_VERDE, jogo)
                     sala = jogo.mapa[jogo.sala_atual]
-                    if "itens" not in sala: sala["itens"] = []
-                    
+                    sala.setdefault("itens", [])
                     if "bateria nova" not in jogo.inventario and "bateria nova" not in sala["itens"]:
-                        ui.exibir(f"{DOS_BRANCO}A gaveta inferior abre com uma 'bateria nova'!{RESET}")
-                        if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
+                        if len(jogo.inventario) < 3 or getattr(jogo, 'god_mode', False):
                             jogo.inventario.append("bateria nova")
-                            ui.exibir(f"{DOS_VERDE}🎒 Você a guardou na mochila.{RESET}")
+                            ui.exibir(f"{DOS_VERDE}🎒 Você guardou uma bateria nova na mochila.{RESET}")
                         else:
-                            ui.exibir(f"{DOS_AMARELO}🎒 Mochila cheia! A bateria nova caiu no chão.{RESET}")
                             sala["itens"].append("bateria nova")
                 else:
                     ui.animar("Quem é você? A tela desliga. Você perdeu a absolvição.", 0.05, DOS_VERMELHO, jogo)
@@ -452,40 +426,27 @@ def receber_comando():
                 imprimir_contexto_sala(jogo)
 
         elif jogo.estado_atual in ["MINIGAME_MINOTAURO", "MINIGAME_SEGURANCA"]:
-            if comando in ["cls", "limpar", "clear", "clean"]:
-                ui.limpar()
-                jogo.minigame_atual.imprimir_status()
-                
-            elif comando in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_SEGURANCA":
-                ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você altera os ponteiros do universo. O relógio salta para as 06:00 instantaneamente.{RESET}")
+            if comando in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_SEGURANCA":
+                ui.exibir(f"{DOS_AMARELO}[GOD MODE] O tempo se contorce. O relógio salta para as 06:00 instantaneamente.{RESET}")
                 jogo.minigame_atual.turno = 24 
                 resultado = jogo.minigame_atual.processar_turno("esperar", jogo) 
-                
                 if resultado == "vitoria_seguranca":
                     jogo.minigame_atual = None
                     jogo.sala_atual = "01"
                     jogo.estado_atual = "JOGO"
-                    ui.exibir(f"{DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{RESET}")
                     imprimir_contexto_sala(jogo)
 
             elif comando in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_MINOTAURO":
-                ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
-                ui.exibir(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
+                ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre e dá uma voadora no peito do Minotauro! Ele foge.{RESET}")
                 jogo.minigame_atual = None
                 jogo.sala_atual = "sala dos fundos"
                 jogo.estado_atual = "JOGO"
-                ui.exibir(f"{DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{RESET}")
                 imprimir_contexto_sala(jogo)
-                
             else:
-                mapa_direcoes = {
-                    "f": "ir frente", "frente": "ir frente",
-                    "t": "ir atrás", "tras": "ir atrás", "atras": "ir atrás", "atrás": "ir atrás",
-                    "e": "ir esquerda", "esquerda": "ir esquerda",
-                    "d": "ir direita", "direita": "ir direita"
-                }
-                if comando in mapa_direcoes:
-                    comando = mapa_direcoes[comando]
+                partes = extrair_argumentos(comando)
+                verbo = partes[0] if partes else ""
+                mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
+                if verbo in mapa_direcoes: comando = mapa_direcoes[verbo]
                 
                 resultado = jogo.minigame_atual.processar_turno(comando, jogo)
                 
@@ -493,20 +454,17 @@ def receber_comando():
                     jogo.minigame_atual = None
                     jogo.sala_atual = "morte"
                     dar_tela_de_morte(jogo)
-
                 elif resultado == "vitoria_minotauro":
                     jogo.minigame_atual = None
                     jogo.sala_atual = "sala dos fundos" 
                     jogo.estado_atual = "JOGO"
-                    jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída e bloqueada pelos destroços."
-                    ui.exibir(f"{DOS_VERDE}Você escapou da Sala de Energia com os fios! A porta cedeu atrás de você e travou para sempre.{RESET}")
+                    jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
+                    ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você e travou para sempre.{RESET}")
                     imprimir_contexto_sala(jogo)
-
                 elif resultado == "vitoria_seguranca":
                     jogo.minigame_atual = None
                     jogo.sala_atual = "01" 
                     jogo.estado_atual = "JOGO"
-                    ui.exibir(f"{DOS_VERDE}Você sobreviveu à noite! Se levantando da cadeira...{RESET}")
                     imprimir_contexto_sala(jogo)
                 else:
                     jogo.minigame_atual.imprimir_status()
@@ -515,10 +473,8 @@ def receber_comando():
             jogo.hp = 9999
             jogo.turnos_luz = 9999
             if jogo.minigame_atual:
-                if isinstance(jogo.minigame_atual, MinigameMinotauro):
-                    jogo.minigame_atual.bateria = 9999
-                elif isinstance(jogo.minigame_atual, MinigameSeguranca):
-                    jogo.minigame_atual.energia = 9999
+                if isinstance(jogo.minigame_atual, MinigameMinotauro): jogo.minigame_atual.bateria = 9999
+                elif isinstance(jogo.minigame_atual, MinigameSeguranca): jogo.minigame_atual.energia = 9999
                     
         if jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
             salvar_autosave(jogo)
@@ -528,8 +484,7 @@ def receber_comando():
     finally:
         sys.stdout = stdout_original
 
-    texto_html = ansi_para_html(captura.getvalue())
-    return jsonify({"linhas": [linha for linha in texto_html.split('\n') if linha.strip() != ""]})
+    return jsonify({"linhas": [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
