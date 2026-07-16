@@ -254,12 +254,15 @@ MAPA_ORIGINAL = {
     "sala do gerador": {
         "descrição": "A antiga sala de energia (porta 03). O gerador principal está aqui. Há fios soltos e um painel exposto.",
         "atrás": "corredor",
-        "itens": []
+        "itens": ["bateria nova", "disquete"]
     },
     "cozinha privada": {
-        "descrição": "Uma cozinha industrial imunda. O cheiro do mofo é insuportável.",
+        "descrição": "Uma cozinha industrial imunda. O cheiro do mofo é insuportável. No canto das sombras está o temido animatrônico 'Alberto Troll'.",
+        "inspecionaveis": {
+            "alberto": "Um animatrônico bizarro e assustador. Nas costas dele há um painel escrito: [ DESLIGAR ALBERTO ]."
+        },
         "atrás": "corredor",
-        "itens": ["fita isolante"]
+        "itens": ["remedio", "sanduiche estragado", "fita adesiva"]
     },
     "duas salas de festas" : {
         "descrição": "voce avança e encontra duas salas festas, a sala 1 e sala 2, a sala 1 parece mais calma",
@@ -369,5 +372,6 @@ descricoes_itens = {
     "jornal completo": "Os três recortes unidos. Conta a história das três vítimas de 1994.",
     "lanterna": "Sua lanterna velha de plástico vermelha, você esqueceu de trocar a bateria antes de sair de casa.",
     "disquete": "Um disquete de 5¼ polegadas. Serve para salvar os dados do sistema no terminal.",
-    "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir."
+    "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir.",
+    "sanduiche estragado": "Um sanduíche de presunto de 2007. A carne já virou uma gosma cinza."
 }

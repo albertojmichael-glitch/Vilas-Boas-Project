@@ -43,9 +43,10 @@ class GameState:
     isqueiro_usos: int = 3
     posicao_perseguidor: str = "palco"
     estado_atual: str = "MENU"
-    mapa: Dict[str, Any] = field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
     minigame_atual: Any = None
     god_mode: bool = False
+    alberto_desativado: bool = False
+    mapa: Dict[str, Any] = field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
 
     def to_dict(self) -> dict:
         d = asdict(self)

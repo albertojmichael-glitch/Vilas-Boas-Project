@@ -116,13 +116,16 @@ class MinigameMinotauro:
             if self.px == 0 and self.py == 3 and not self.fios_cortados:
                 if "tesoura" in jogo.inventario:
                     print(f"\n{DOS_VERMELHO}Você corta os fios principais! Faíscas voam e as poucas luzes estouram!{RESET}")
+                    print(f"{DOS_VERMELHO}Sua tesoura quebra com a força do choque elétrico!{RESET}")
                     print(f"{DOS_VERMELHO}O Minotauro solta um RUGIDO DE FÚRIA ensurdecedor! Ele sabe onde você está!{RESET}")
                     print(f"{DOS_VERMELHO}CORRA DE VOLTA PARA A PORTA!{RESET}")
+                    jogo.inventario.remove("tesoura")
+                    jogo.inventario.append("tesoura quebrada")
                     self.fios_cortados = True
                     jogo.fios_cortados_inventario = True
                     turno_gasto = True
                 else: 
-                    print("Você precisa de uma ferramenta para cortar os fios!"); turno_gasto = True
+                    print("Você precisa de uma tesoura inteira para cortar os fios"); turno_gasto = True
             else: 
                 print("Não há mais fios aqui."); turno_gasto = True
                 
@@ -522,7 +525,8 @@ class MinigameSeguranca:
             
             if self.turno >= 12 and (self.turno >= 20 or random.randint(1, 100) > 70): self.indio_janela = True
             else: self.indio_janela = False
-            if random.randint(1, 100) > 80: self.alberto_troll = True
+            if random.randint(1, 100) > 80 and not getattr(jogo, 'alberto_desativado', False): 
+                self.alberto_troll = True
 
             print("\n[A atualizar sistema...]")
             pausar(3.5)
