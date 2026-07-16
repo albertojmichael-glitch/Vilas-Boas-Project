@@ -6,7 +6,8 @@ import re
 import random
 import uuid
 
-from state import GameState, registrar_final
+# --- IMPORTAÇÕES ATUALIZADAS ---
+from state import GameState, registrar_final, carregar_conquistas, salvar_autosave, carregar_autosave, AUTOSAVE_FILE
 from commands import processar_comando, normalizar
 from main import atualizar_eventos_de_tempo
 from minigames import MinigameMinotauro, MinigameSeguranca
@@ -42,7 +43,6 @@ def web_digitar(texto, tempo_base=0.03, cor="", jogo_ref=None):
     elif cor == ui.DOS_AMARELO: cor_nome = "amarelo"
     elif cor == ui.DOS_VERMELHO: cor_nome = "vermelho"
     
-    # Se o Modo Rápido estiver ativo na sessão atual, tempo de digitação é zero!
     estado = obter_estado()
     if getattr(estado, 'fast_mode', False):
         tempo_base = 0
@@ -121,10 +121,35 @@ def imprimir_menu_dificuldade():
     ui.digitar("==================================================", 0.005, ui.DOS_VERDE)
     ui.digitar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.02, ui.DOS_BRANCO)
     
+    # --- UI DE CONQUISTAS ---
+    conquistas = carregar_conquistas()
+    c_med = "[X]" if "mediocre" in conquistas else "[ ]"
+    c_son = "[X]" if "bons_sonhos" in conquistas else "[ ]"
+    c_bom = "[X]" if "bom" in conquistas else "[ ]"
+    c_ver = "[X]" if "verdadeiro" in conquistas else "[ ]"
+    qtd = len(set(conquistas) & {"mediocre", "bons_sonhos", "bom", "verdadeiro"})
+
+    print(f"{ui.DOS_AMARELO}🏆 FINAIS ALCANÇADOS: {qtd}/4{ui.RESET}")
+    print(f"{ui.DOS_BRANCO}{c_med} Medíocre  {c_son} Bons Sonhos  {c_bom} Bom  {c_ver} Verdadeiro{ui.RESET}\n")
+    
     print(f"{ui.DOS_BRANCO}[1] INICIAR MODO: NORMAL (Para iniciantes){ui.RESET}")
     print(f"{ui.DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){ui.RESET}")
-    print(f"{ui.DOS_AMARELO}[3] INICIAR MODO: RÁPIDO (Skip Delays de Digitação){ui.RESET}\n")
-    print(f"{ui.DOS_VERDE}SELECIONE UMA OPÇÃO (1-3): {ui.RESET}")
+    print(f"{ui.DOS_AMARELO}[3] INICIAR MODO: RÁPIDO (Skip Delays de Digitação){ui.RESET}")
+    
+    # --- OPÇÃO AUTOSAVE ---
+    if AUTOSAVE_FILE.exists():
+        print(f"{ui.DOS_VERDE}[4] CONTINUAR JOGO (Autosave Encontrado){ui.RESET}\n")
+        print(f"{ui.DOS_VERDE}SELECIONE UMA OPÇÃO (1-4): {ui.RESET}")
+    else:
+        print(f"\n{ui.DOS_VERDE}SELECIONE UMA OPÇÃO (1-3): {ui.RESET}")
+
+def imprimir_tutorial():
+    print(f"\n{ui.DOS_AMARELO}--- DICAS DE SOBREVIVÊNCIA (TUTORIAL) ---{ui.RESET}")
+    print(f"{ui.DOS_BRANCO}1. Mova-se digitando {ui.DOS_VERDE}ir frente{ui.DOS_BRANCO}, ou apenas o nome da sala (Ex: {ui.DOS_VERDE}sala de jantar{ui.DOS_BRANCO}).{ui.RESET}")
+    print(f"{ui.DOS_BRANCO}2. Interaja com objetos digitando {ui.DOS_VERDE}pegar [item]{ui.DOS_BRANCO} ou {ui.DOS_VERDE}examinar [item]{ui.DOS_BRANCO}.{ui.RESET}")
+    print(f"{ui.DOS_BRANCO}3. Você pode encurtar comandos usando {ui.DOS_VERDE}p chave{ui.DOS_BRANCO} em vez de {ui.DOS_VERDE}pegar chave{ui.DOS_BRANCO}.{ui.RESET}")
+    print(f"{ui.DOS_BRANCO}4. Digite {ui.DOS_VERDE}ajuda{ui.DOS_BRANCO} a qualquer momento para ver o manual do sistema.{ui.RESET}")
+    print(f"{ui.DOS_AMARELO}-----------------------------------------{ui.RESET}\n")
 
 def dar_dica_jon(passo_certo):
     dicas = {
@@ -133,8 +158,7 @@ def dar_dica_jon(passo_certo):
         "d": "O cheiro podre de carne estragada fica mais forte no caminho destro."
     }
     if random.random() <= 0.25:
-        erradas = [v for k, v in dicas.items() if k != passo_certo]
-        print(f"\n{ui.DOS_VERMELHO}[SENSÓRIO CONFUSO]: {random.choice(erradas)}{ui.RESET}")
+        print(f"\n{ui.DOS_VERMELHO}[SENSÓRIO CONFUSO]: {random.choice([v for k, v in dicas.items() if k != passo_certo])}{ui.RESET}")
     else:
         print(f"\n{ui.DOS_AMARELO}[SENSÓRIO]: {dicas[passo_certo]}{ui.RESET}")
 
@@ -298,7 +322,6 @@ def receber_comando():
                 print("@@CLEAR@@")
                 print(f"{ui.DOS_BRANCO} Volume in drive A is VILLASBOAS{ui.RESET}")
                 print(f"{ui.DOS_BRANCO} Directory of A:\\{ui.RESET}\n")
-                
                 print(f"{ui.DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{ui.RESET}")
                 print(f"{ui.DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{ui.RESET}")
                 print(f"{ui.DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{ui.RESET}")
@@ -308,7 +331,6 @@ def receber_comando():
                 print(f"{ui.DOS_VERDE}VALID    &lt;DIR&gt;        2.7801  24-07-2007  4:00a{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}       3 file(s)        68.097 bytes{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}       4 dir(s)        655.360 bytes free{ui.RESET}\n")
-                
                 jogo.estado_atual = "MENU"
                 imprimir_menu_dificuldade()
             else:
@@ -319,34 +341,39 @@ def receber_comando():
             if comando in ["cls", "limpar", "clear", "clean"]:
                 print("@@CLEAR@@")
                 imprimir_menu_dificuldade()
-            elif comando == "1":
+                
+            # --- CARREGAR O AUTOSAVE ---
+            elif comando == "4" and AUTOSAVE_FILE.exists():
                 print("@@CLEAR@@")
-                jogo.dificuldade_escolhida = "NORMAL"
-                jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
+                if carregar_autosave(jogo):
+                    print(f"{ui.DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO ÚLTIMO AUTOSAVE.{ui.RESET}\n")
+                    imprimir_contexto_sala()
+                else:
+                    print(f"{ui.DOS_VERMELHO}Falha ao ler o Autosave.{ui.RESET}")
+                    imprimir_menu_dificuldade()
+                    
+            elif comando in ["1", "2", "3"]:
+                print("@@CLEAR@@")
+                if comando == "1":
+                    jogo.dificuldade_escolhida = "NORMAL"
+                    jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
+                    print(f"{ui.DOS_VERDE}MODO NORMAL SELECIONADO. INICIANDO JOGO.EXE...{ui.RESET}\n")
+                elif comando == "2":
+                    jogo.dificuldade_escolhida = "PESADELO"
+                    jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
+                    print(f"{ui.DOS_VERMELHO}MODO PESADELO SELECIONADO. BOA SORTE.{ui.RESET}\n")
+                elif comando == "3":
+                    jogo.dificuldade_escolhida = "NORMAL"
+                    jogo.fast_mode = True
+                    jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
+                    print(f"{ui.DOS_AMARELO}MODO RÁPIDO SELECIONADO. DELAYS DE DIGITAÇÃO DESATIVADOS.{ui.RESET}\n")
+
                 jogo.estado_atual = "JOGO"
-                print(f"{ui.DOS_VERDE}MODO NORMAL SELECIONADO. INICIANDO JOGO.EXE...{ui.RESET}\n")
+                imprimir_tutorial()
                 print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
                 imprimir_contexto_sala()
-            elif comando == "2":
-                print("@@CLEAR@@")
-                jogo.dificuldade_escolhida = "PESADELO"
-                jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
-                jogo.estado_atual = "JOGO"
-                print(f"{ui.DOS_VERMELHO}MODO PESADELO SELECIONADO. BOA SORTE.{ui.RESET}\n")
-                print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
-                print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
-                imprimir_contexto_sala()
-            elif comando == "3":
-                print("@@CLEAR@@")
-                jogo.dificuldade_escolhida = "NORMAL"
-                jogo.fast_mode = True
-                jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
-                jogo.estado_atual = "JOGO"
-                print(f"{ui.DOS_AMARELO}MODO RÁPIDO SELECIONADO. DELAYS DE DIGITAÇÃO DESATIVADOS.{ui.RESET}\n")
-                print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
-                print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
-                imprimir_contexto_sala()
+
             elif comando == "2007":
                 print("@@CLEAR@@")
                 jogo.dificuldade_escolhida = "GOD MODE"
@@ -416,7 +443,7 @@ def receber_comando():
             elif comando in ["salvar", "carregar"]:
                 print("@@CLEAR@@")
                 print(f"{ui.DOS_AMARELO}>>> MENSAGEM DO SISTEMA: O drive de disquete virtual está offline.{ui.RESET}")
-                print(f"{ui.DOS_AMARELO}Na versão Web do sistema, você deve sobreviver a noite de uma vez só!{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}Na versão Web, nós usamos o sistema de Autosave. Aperte F5 para Continuar.{ui.RESET}")
                 imprimir_contexto_sala()
             else:
                 gastou_turno = processar_comando(comando, jogo, jogo.mapa)
@@ -428,13 +455,11 @@ def receber_comando():
                     rodar_final_web("saida")
                 elif jogo.sala_atual == "cama":
                     rodar_final_web("cama")
-                    
                 elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
                     if getattr(jogo, 'incendio', False):
                         rodar_final_web("verdadeiro")
                     else:
                         rodar_final_web("final_bom")
-                        
                 elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
                     pass 
                 else:
@@ -658,9 +683,7 @@ def receber_comando():
                     jogo.minigame_atual = None
                     jogo.sala_atual = "sala dos fundos" 
                     jogo.estado_atual = "JOGO"
-                    
                     jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída e bloqueada pelos destroços."
-                    
                     print(f"{ui.DOS_VERDE}Você escapou da Sala de Energia com os fios! A porta cedeu atrás de você e travou para sempre.{ui.RESET}")
                     imprimir_contexto_sala()
 
@@ -681,6 +704,10 @@ def receber_comando():
                     jogo.minigame_atual.bateria = 9999
                 elif isinstance(jogo.minigame_atual, MinigameSeguranca):
                     jogo.minigame_atual.energia = 9999
+                    
+        # --- SALVAMENTO INVISÍVEL A CADA AÇÃO ---
+        if jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
+            salvar_autosave(jogo)
 
     except Exception as e:
         print(f"\n[ERRO DE SISTEMA]: {e}")

@@ -111,18 +111,23 @@ def carregar_jogo(estado: GameState) -> bool:
 
 
 # ==========================================
-# NOVO SISTEMA DE CONQUISTAS GLOBAIS
+# NOVO SISTEMA DE CONQUISTAS E AUTOSAVE
 # ==========================================
 ARQUIVO_CONQUISTAS = Path("conquistas.json")
+AUTOSAVE_FILE = Path("autosave.json")
+
+def carregar_conquistas() -> List[str]:
+    """Lê os finais alcançados para exibir no Menu Principal."""
+    if ARQUIVO_CONQUISTAS.exists():
+        try:
+            return json.loads(ARQUIVO_CONQUISTAS.read_text(encoding="utf-8"))
+        except:
+            pass
+    return []
 
 def registrar_final(nome_final: str) -> bool:
     """Registra um final no disco. Retorna True se todos os 4 finais foram alcançados."""
-    conquistas = []
-    if ARQUIVO_CONQUISTAS.exists():
-        try:
-            conquistas = json.loads(ARQUIVO_CONQUISTAS.read_text(encoding="utf-8"))
-        except:
-            pass
+    conquistas = carregar_conquistas()
     
     if nome_final not in conquistas:
         conquistas.append(nome_final)
@@ -132,5 +137,28 @@ def registrar_final(nome_final: str) -> bool:
             pass
     
     finais_necessarios = ["mediocre", "bons_sonhos", "bom", "verdadeiro"]
-    # Checa se o jogador tem os 4 finais na conta dele
     return all(f in conquistas for f in finais_necessarios)
+
+def salvar_autosave(estado: GameState):
+    """Salva o jogo silenciosamente a cada turno."""
+    # Não salva durante minigames para não corromper o loop!
+    if getattr(estado, 'estado_atual', '') != "JOGO": return
+    
+    try:
+        dados = estado.to_dict()
+        AUTOSAVE_FILE.write_text(json.dumps(dados, ensure_ascii=False, indent=4), encoding="utf-8")
+    except:
+        pass
+
+def carregar_autosave(estado: GameState) -> bool:
+    """Carrega o último progresso salvo se o jogador quiser continuar."""
+    if AUTOSAVE_FILE.exists():
+        try:
+            dados = json.loads(AUTOSAVE_FILE.read_text(encoding="utf-8"))
+            novo_estado = GameState.from_dict(dados)
+            for key, value in asdict(novo_estado).items():
+                setattr(estado, key, value)
+            return True
+        except:
+            pass
+    return False
