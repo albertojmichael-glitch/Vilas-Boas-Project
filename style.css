@@ -133,3 +133,20 @@ ul li {
         border-top: 2px solid #33ff00;
     }
 }
+
+/* --- SPINNER DE CARREGAMENTO --- */
+.spinner-container {
+    display: none;
+    color: #ffcc00;
+    margin-top: 10px;
+    align-items: center;
+    gap: 10px;
+}
+.spinner {
+    width: 15px; height: 15px;
+    border: 3px solid #ffcc00;
+    border-top: 3px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

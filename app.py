@@ -512,8 +512,8 @@ def receber_comando():
                 elif isinstance(jogo.minigame_atual, MinigameSeguranca): jogo.minigame_atual.energia = 9999
                     
         if jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
-            salvar_autosave(jogo)
-
+            salvar_sessao(session.get("sid"), jogo)
+        
     except Exception as e:
         ui.exibir(f"\n[ERRO DE SISTEMA]: {e}")
     finally:
