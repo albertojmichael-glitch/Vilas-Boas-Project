@@ -22,6 +22,7 @@ class QuitGameException(Exception):
 # ==========================================
 @dataclass
 class GameState:
+    ui_handler: Any = None
     hp: int = 3
     inventario: List[str] = field(default_factory=lambda: ["lanterna"])
     turnos_luz: int = 3

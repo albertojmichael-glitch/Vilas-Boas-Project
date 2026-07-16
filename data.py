@@ -144,117 +144,52 @@ ARTE_PIANO = r'''
 # ==========================================
 MAPA_ORIGINAL = {
     "entrada": {
-        "descrição": "você está na entrada do restaurante, está muito escuro, e as luzes piscam de forma ordenada, cheira mal",
-        "frente": "sala de jantar",
+        "descrição": "A porta principal do Villas-Boas por onde você entrou. Está trancada e as luzes piscam fracamente.",
+        "frente": "corredor",
+        "itens": [],
         "inspecionaveis": {
-            "poster": "Um pôster desbotado com os animatrônicos sorrindo: 'Bem-vindo ao Vilas Boas! Trazendo alegria desde 1982.'"
-        },
-        "direita": "hall de entrada",
-        "atrás": "saida", 
-        "esquerda": "parede velha",
-        "itens": ["tabua pequena de madeira"]
-    },
-    "hall de entrada": {
-        "descrição": "voce entra no hall de entrada, está um pouco mais claro, tem mesas de jantar, um balcão, e uma sala no fundo",
-        "frente": "quarto de refrigeração",
-        "direita": "balcão",
-        "esquerda": "mesas de jantar",
-        "atrás": "entrada",
-        "itens": ["papel", "recorte 1"]
-    },
-    "balcão": {
-        "descrição": "tem presentes, confetes, doces de áçucar e pelucias",
-        "frente": "balcão",
-        "direita": "balcão",
-        "atrás": "hall de entrada",
-        "esquerda": "balcão",
-        "itens": ["tesoura quebrada", "pelucias", "doce", "moeda velha", "disquete"]
-    },
-    "quarto de refrigeração": {
-        "descrição": "voce entra no quarto, está muito frio e os ventiladores fazem um barulho alto, tem um tubo de ventilação no centro da sala",
-        "frente": "tubo de ventilação",
-        "direita": "parede de ventiladores",
-        "atrás": "hall de entrada",
-        "esquerda": "parede de ventiladores",
-        "itens": ["bateria nova"]
-    },
-    "tubo de ventilação": {
-        "descrição": "você rasteja pelo aluminio gelado, você sente muito frio",
-        "frente": "morte", 
-        "direita": "aluminio",
-        "atrás": "quarto de refrigeração",
-        "esquerda": "aluminio",
-        "itens": []
-    },
-    "sala de jantar": {
-        "descrição": "tem varias mesas de jantar com confetes, é um lugar bem grande, está bem sujo",
-        "inspecionaveis": {
-            "jornal": "Caso Vilas Boas: Três desaparecimentos em 1994, seguem sem solução",
-            "mesas": "Tem pedaços de papel, confetes coloridos, sujeira e algumas baratas."
-        },
-        "frente": "duas salas de festas",
-        "direita": "corredor",
-        "atrás": "entrada",
-        "esquerda": "porta dos fundos", 
-        "itens": ["confete", "isqueiro"]
-    },
-    "porta dos fundos": {
-        "descrição": "Uma pesada porta de metal. Está trancada a chave.",
-        "atrás": "sala de jantar",
-        "frente": "Você empurra, mas não cede.",
-        "itens": []
+            "porta": "A porta está trancada por fora. Uma grossa corrente de aço te impede de sair."
+        }
     },
     "corredor": {
-        "descrição": "tem quatro portas, 01-sala de segurança | 02-porta trancada | 03-porta emperrada | 04-sala de intervalo",
-        "01": "01",
-        "02": "02",
-        "03": "03",
-        "04": "04",
-        "atrás": "sala de jantar",
-        "frente": "parede",
-        "itens": []
+        "descrição": "Um corredor longo e sujo com cheiro de pizza azeda. Tem o balcão à direita, as salas de festa 01 e 02 à esquerda, sala do gerador (03) a frente, e o palco aos fundos.",
+        "atrás": "entrada", "frente": "03", "direita": "balcão", "esquerda": "01",
+        "01": "01", "02": "02", "03": "03", "palco": "palco",
+        "itens": [],
+        "inspecionaveis": {
+            "02": "Uma pesada porta de ferro, parece estar trancada",
+            "03": "Uma porta velha de madeira emperrada, a maçaneta parece quebrada."
+        }
+    },
+    "balcão": {
+        "descrição": "O lugar onde costumavam servir lanches. A máquina registradora está aberta e vazia, exceto por restos de doces mofados.",
+        "esquerda": "corredor",
+        "itens": ["doce", "tesoura quebrada", "pano"]
+    },
+    "palco": {
+        "descrição": "Um palco mal iluminado. O chão está sujo. Atrás das cortinas vermelhas há uma porta dupla para a Sala de Jantar.",
+        "frente": "sala de jantar",
+        "itens": ["pedra", "fita isolante"]
     },
     "01": {
-        "descrição": "voce entra na sala de segurança, tem um tubo de ventilação do canto esquerdo da sala, e tem uma mesa com ferramentas de segurança",
-        "frente": "cadeira", 
-        "cadeira": "cadeira",
-        "atrás": "corredor",
+        "descrição": "A sala de festas 01. Mesas emborcadas e cadeiras quebradas. Tem uma cadeira intacta no canto, de frente aos monitores de Segurança antigos.",
+        "direita": "corredor", "frente": "cadeira",
+        "itens": ["tabua pequena de madeira"],
         "inspecionaveis": {
-            "papeis": "Tem muitos papeis encima da segunda mesa, emails e memorandos... algo chama atenção '1994..' são de 2007",
+            "cadeira": "Uma cadeira de plástico resistente virada para um painel de segurança.",
+            "cofre": "Um cofre de ferro robusto com um teclado numérico.",
+            "monitores": "Os antigos monitores de câmera de segurança."
         },
-        "esquerda": "nada",
-        "direita": "nada",
-        "cofre_important": "cofre",
-        "itens": ["recorte 3", "disquete"]
+        "cofre_important": True
+    },
+    "cadeira": {
+        "descrição": "O sistema de segurança se liga. O ar gela.",
+        "itens": []
     },
     "02": {
-        "descrição": "porta trancada",
-        "atrás": "corredor",
-        "frente": "A porta te impede de avançar.",
-        "esquerda": "parede",
+        "descrição": "A porta da Sala de Festas 02. Ela está trancada com um cadeado pesado. Talvez precise da chave da cozinha.",
         "direita": "corredor",
         "itens": []
-    },
-    "03": {
-        "descrição": "porta emperrada",
-        "atrás": "corredor",
-        "frente": "Você força a porta com o braço, nada acontece.",
-        "esquerda": "corredor",
-        "direita": "parede",
-        "itens": []
-    },
-    "04": {
-        "descrição": "voce força a porta e consegue entrar, está escuro e você enxerga apenas a tubulação funcionando",
-        "atrás": "corredor",
-        "frente": "cama", 
-        "esquerda": "parede",
-        "direita": "parede",
-        "itens": ["pano", "fosforo", "garrafa vazia"]
-    },
-    "sala do gerador": {
-        "descrição": "A antiga sala de energia (porta 03). O gerador principal está aqui. Há fios soltos e um painel exposto.",
-        "atrás": "corredor",
-        "itens": ["bateria nova", "disquete"]
     },
     "cozinha privada": {
         "descrição": "Uma cozinha industrial imunda. O cheiro do mofo é insuportável. No canto das sombras está o temido animatrônico 'Alberto Troll'.",
@@ -262,85 +197,61 @@ MAPA_ORIGINAL = {
             "alberto": "Um animatrônico bizarro e assustador. Nas costas dele há um painel escrito: [ DESLIGAR ALBERTO ]."
         },
         "atrás": "corredor",
-        "itens": ["remedio", "sanduiche estragado", "fita adesiva"]
+        "itens": ["remedio", "sanduiche estragado"]
     },
-    "duas salas de festas" : {
-        "descrição": "voce avança e encontra duas salas festas, a sala 1 e sala 2, a sala 1 parece mais calma",
-        "atrás": "sala de jantar",
-        "sala 1": "sala 1",
-        "sala 2": "sala 2",
-        "esquerda": "corredor",
-        "direita": "parede",
-        "itens": ["pedra"]
+    "03": {
+        "descrição": "A porta 03. O caminho para a sala de energia. Está emperrada.",
+        "atrás": "corredor",
+        "itens": []
     },
-    "sala 1": {
-        "descrição": "voce entra na sala de festas 1, está tudo parado e calmo. A uma sala de fliperamas a sua esquerda",
-        "atrás": "duas salas de festas", 
-        "frente": "palco",
-        "direita": "sala 2",
-        "esquerda": "sala de fliperamas",
-        "itens": ["recorte 2"]
+    "sala do gerador": {
+        "descrição": "A antiga sala de energia (porta 03). O gerador principal está aqui. Há fios soltos e um painel exposto.",
+        "atrás": "corredor",
+        "itens": ["bateria nova", "disquete"]
+    },
+    "sala de jantar": {
+        "descrição": "Um espaço enorme. As paredes são cheias de desenhos infantis macabros, do lado direito parece ter as antigas máquinas de fliperama.",
+        "atrás": "palco", "direita": "sala de fliperamas", "esquerda": "porta dos fundos",
+        "itens": ["papel", "recorte 2"]
     },
     "sala de fliperamas": {
-        "descrição": "O chão tem carpete neon sujo. Há três máquinas funcionando: 'fome de jon', 'consertos' e 'julgamento'. Digite 'jogar [nome]'.",
-        "direita": "sala 1",
-        "itens": []
+        "descrição": "Uma sala poeirenta iluminada apenas pelos letreiros de neon piscantes de 3 velhas máquinas de fliperama ligadas ('jon', 'consertos', 'julgamento').",
+        "esquerda": "sala de jantar",
+        "itens": ["moeda velha", "recorte 3"],
+        "inspecionaveis": {
+            "maquinas": "Existem três máquinas com as telas acesas: 'jon', 'consertos' e 'julgamento'."
+        }
     },
-    "sala 2": {
-        "descrição": "voce da de cara com um animatronico enorme no escuro! O zumbido cresce. Você tem poucos segundos para recuar!",
-        "esquerda": "sala 1",
-        "atrás": "duas salas de festas",
-        "frente": "morte", 
-        "direita": "morte", 
-        "itens": []
-    },
-    "palco": {
-        "descrição": "Você sobe no palco fedorento. As cortinas estão rasgadas. Algo terrível te observa nas sombras...",
-        "atrás": "sala 1",
-        "frente": "morte", 
+    "porta dos fundos": {
+        "descrição": "Uma pesada porta de metal enferrujado que dá acesso aos fundos do restaurante.",
+        "direita": "sala de jantar",
         "itens": []
     },
     "sala dos fundos": {
-        "descrição": "Um corredor denso e escuro. Há 5 portas com placas: 'pelucias', 'equipamento', 'animatronicos', 'mercadorias' e 'energia'.",
-        "atrás": "sala de jantar",
-        "esquerda": "cozinha principal",
-        "pelucias": "sala de pelucias",
-        "equipamento": "sala de equipamento",
-        "animatronicos": "sala de animatronicos",
-        "mercadorias": "sala de mercadorias",
-        "energia": "sala de energia", 
-        "itens": []
-    },
-    "cozinha principal": {
-        "descrição": "A antiga cozinha que preparava comida. Tem uma caixa de primeiros socorros aberta.",
-        "direita": "sala dos fundos",
-        "itens": ["remedio", "pizza mofada"]
-    },
-    "sala de pelucias": {
-        "descrição": "Uma sala cheia de pelúcias apodrecidas. Melhor não ficar aqui.",
-        "atrás": "sala dos fundos",
-        "itens": []
-    },
-    "sala de equipamento": {
-        "descrição": "Apenas ferramentas velhas e graxa seca pelo chão.",
-        "atrás": "sala dos fundos",
-        "itens": ["bateria nova", "disquete"]
-    },
-    "sala de animatronicos": {
-        "descrição": "Várias carcaças de metal desmontadas. Uma delas vira a cabeça devagar para você! Você bate a porta.",
-        "atrás": "sala dos fundos",
-        "itens": []
-    },
-    "sala de mercadorias": {
-        "descrição": "Caixas de papelão mofadas com camisetas do restaurante.",
-        "atrás": "sala dos fundos",
-        "itens": []
+        "descrição": "Um corredor estreito e gélido. A frente há uma porta blindada para a verdadeira 'Sala de Energia'.",
+        "frente": "sala de energia", "atrás": "sala de jantar",
+        "itens": ["recorte 1", "isqueiro", "fosforo", "garrafa vazia"]
     },
     "sala de energia": {
-        "descrição": "Que quarto deprimente...",
-        "inspecionaveis": {
-            "celular quebrado": "Parece ser dela..."
-        }
+        "descrição": "O painel principal. Fios de alta tensão cobrem a parede.",
+        "atrás": "sala dos fundos",
+        "itens": ["fios cortados"]
+    },
+    "morte": {
+        "descrição": "Você está morto. O escuro engoliu sua alma.",
+        "itens": []
+    },
+    "saida": {
+        "descrição": "A luz da lua ilumina o estacionamento através da porta aberta.",
+        "itens": []
+    },
+    "cama": {
+        "descrição": "Você sente o cheiro dela.",
+        "itens": []
+    },
+    "final_bom": {
+        "descrição": "Um silêncio em paz domina o restaurante.",
+        "itens": []
     }
 }
 
