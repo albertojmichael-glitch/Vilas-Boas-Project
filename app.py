@@ -16,12 +16,12 @@ from commands import processar_comando, normalizar
 from minigames import MinigameMinotauro, MinigameSeguranca
 from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, CAVEIRA_MORTE, MAX_INVENTARIO
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, UIHandler
-from utils import extrair_argumentos
+from utils import extrair_argumentos, atualizar_eventos_de_tempo # <-- O IMPORT CORRIGIDO!
 
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
                    dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
 
-# --- GARANTIA DE DIRETÓRIO ABSOLUTO (Evita o Erro 404 de CSS/JS no Render) ---
+# Garante arquivos servidos no root no Render
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 ARTE_COFRE = r'''                                                                              
@@ -42,34 +42,23 @@ ARTE_COFRE = r'''
     +*********************************************************************+'''
 
 class WebUIHandler(UIHandler):
-    """Adaptador de injeção de dependência para a WEB."""
-    def limpar(self):
-        print("@@CLEAR@@")
-    
-    def pausar(self, segs):
-        pass
-        
-    def exibir(self, texto):
-        print(texto)
-        
+    def limpar(self): print("@@CLEAR@@")
+    def pausar(self, segs): pass
+    def exibir(self, texto): print(texto)
     def animar(self, texto, tempo=0.03, cor="", jogo=None):
         cor_nome = "verde"
         if cor == DOS_BRANCO: cor_nome = "branco"
         elif cor == DOS_AMARELO: cor_nome = "amarelo"
         elif cor == DOS_VERMELHO: cor_nome = "vermelho"
-        
         if jogo and getattr(jogo, 'fast_mode', False): tempo = 0
         ms = int(tempo * 1000)
         print(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
-        
-    def obter_input(self, prompt_text):
-        return "" 
+    def obter_input(self, prompt_text): return "" 
 
 def ansi_para_html(texto_ansi):
     mapa_cores = { DOS_VERDE: "verde", DOS_BRANCO: "branco", DOS_AMARELO: "amarelo", DOS_VERMELHO: "vermelho" }
     padrao = re.compile("(" + "|".join(re.escape(c) for c in list(mapa_cores.keys()) + [RESET]) + ")")
     partes = padrao.split(texto_ansi)
-
     html = []
     aberto = False
     for parte in partes:
@@ -78,19 +67,15 @@ def ansi_para_html(texto_ansi):
             html.append(f'<span class="{mapa_cores[parte]}">')
             aberto = True
         elif parte == RESET:
-            if aberto:
-                html.append("</span>")
-                aberto = False
-        else:
-            html.append(parte)
+            if aberto: html.append("</span>"); aberto = False
+        else: html.append(parte)
     if aberto: html.append("</span>")
     return "".join(html)
 
-app = Flask(__name__, static_folder=BASE_DIR, static_url_path="")
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
+app = Flask(__name__) # Sem param static problemático
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982")
 CORS(app, supports_credentials=True)
 
-# --- SESSÕES EM DISCO COM CAMINHO ABSOLUTO ---
 SESSION_DIR = Path(BASE_DIR) / "sessions"
 SESSION_DIR.mkdir(exist_ok=True)
 
@@ -99,9 +84,7 @@ def obter_estado():
     if not sid:
         sid = str(uuid.uuid4())
         session["sid"] = sid
-        
     session_file = SESSION_DIR / f"{sid}.json"
-    
     if session_file.exists():
         try:
             dados = json.loads(session_file.read_text(encoding="utf-8"))
@@ -109,7 +92,6 @@ def obter_estado():
             jogo.ui_handler = WebUIHandler()
             return jogo
         except: pass
-        
     jogo = GameState(ui_handler=WebUIHandler())
     salvar_sessao(sid, jogo)
     return jogo
@@ -120,48 +102,23 @@ def salvar_sessao(sid, jogo):
 
 def gerar_resposta_json(captura, jogo):
     linhas = [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]
-    
-    saidas = []
-    hp = "..."
-    luz = "..."
-    inv = []
-    sala = "BOOT"
-
-    # Se o jogo existir, popula a HUD corretamente
+    saidas, hp, luz, inv, sala = [], "...", "...", [], "BOOT"
     if jogo:
         if getattr(jogo, 'estado_atual', "") not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
             chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
             saidas = [k.title() for k in jogo.mapa[jogo.sala_atual].keys() if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
-
         hp = jogo.hp if not getattr(jogo, 'god_mode', False) else "∞"
         luz = jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞"
         inv = jogo.inventario
         sala = jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA"
+    return jsonify({"linhas": linhas, "estado": {"hp": hp, "luz": luz, "inventario": inv, "sala": sala, "saidas": saidas}})
 
-    return jsonify({
-        "linhas": linhas,
-        "estado": {
-            "hp": hp,
-            "luz": luz,
-            "inventario": inv,
-            "sala": sala,
-            "saidas": saidas
-        }
-    })
-
-# --- ROTAS EXPLÍCITAS PARA EVITAR 404 NO RENDER ---
 @app.route("/")
-def raiz():
-    return send_from_directory(BASE_DIR, "index.html")
-
+def raiz(): return send_from_directory(BASE_DIR, "index.html")
 @app.route("/style.css")
-def serve_css():
-    return send_from_directory(BASE_DIR, "style.css")
-
+def serve_css(): return send_from_directory(BASE_DIR, "style.css")
 @app.route("/script.js")
-def serve_js():
-    return send_from_directory(BASE_DIR, "script.js")
-
+def serve_js(): return send_from_directory(BASE_DIR, "script.js")
 
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
@@ -171,7 +128,6 @@ def iniciar_jogo():
         if session_file.exists():
             try: session_file.unlink() 
             except: pass
-            
     jogo = obter_estado()
     jogo.estado_atual = "AGUARDANDO_DIR"
     
@@ -207,17 +163,17 @@ def receber_comando():
                 ui.limpar()
                 ui.exibir(f"{DOS_BRANCO} Volume in drive A is VILLASBOAS{RESET}")
                 ui.exibir(f"{DOS_BRANCO} Directory of A:\\{RESET}\n")
-                ui.exibir(f"{DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{RESET}")
-                ui.exibir(f"{DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{RESET}")
-                ui.exibir(f"{DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{RESET}")
-                ui.exibir(f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;        197.78  24-07-2007  4:00a{RESET}")
-                ui.exibir(f"{DOS_VERDE}SAVES    &lt;DIR&gt;        358.21  23-07-2008  4:00a{RESET}")
-                ui.exibir(f"{DOS_VERDE}PICTURE  &lt;DIR&gt;        666.00  05-11-1994  4:00a{RESET}")
-                ui.exibir(f"{DOS_VERDE}VALID    &lt;DIR&gt;        2.7801  24-07-2007  4:00a{RESET}")
+                ui.animar(f"{DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;        197.78  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}SAVES    &lt;DIR&gt;        358.21  23-07-2008  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}PICTURE  &lt;DIR&gt;        666.00  05-11-1994  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}VALID    &lt;DIR&gt;        2.7801  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
                 ui.exibir(f"{DOS_AMARELO}       3 file(s)        68.097 bytes{RESET}")
                 ui.exibir(f"{DOS_AMARELO}       4 dir(s)        655.360 bytes free{RESET}\n")
                 jogo.estado_atual = "MENU"
-                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
+                imprimir_menu_dificuldade(ui)
             else:
                 ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
                 ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
@@ -225,7 +181,7 @@ def receber_comando():
         elif jogo.estado_atual == "MENU":
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
-                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
+                imprimir_menu_dificuldade(ui)
             elif comando == "4" and AUTOSAVE_FILE.exists():
                 ui.limpar()
                 if carregar_autosave(jogo):
@@ -233,7 +189,7 @@ def receber_comando():
                     imprimir_contexto_sala(jogo)
                 else:
                     ui.exibir(f"{DOS_VERMELHO}Falha ao ler o Autosave.{RESET}")
-                    imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
+                    imprimir_menu_dificuldade(ui)
             elif comando in ["1", "2", "3"]:
                 ui.limpar()
                 if comando == "1":
@@ -252,8 +208,8 @@ def receber_comando():
 
                 jogo.estado_atual = "JOGO"
                 imprimir_tutorial(ui)
-                ui.exibir(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}")
-                ui.exibir(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}")
+                ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
+                ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.04, jogo=jogo)
                 imprimir_contexto_sala(jogo)
             elif comando == "2007":
                 ui.limpar()
@@ -283,7 +239,7 @@ def receber_comando():
                 jogo.minigame_atual.imprimir_status()
             elif comando == "abrir cofre" and jogo.sala_atual == "01":
                 jogo.estado_atual = "MINIGAME_COFRE"
-                ui.exibir(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}")
+                ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.002, jogo=jogo) # <-- ANIMAÇÃO DE ASCII AQUI!
                 ui.exibir(f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo.{RESET}")
                 ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
             elif (comando == "jogar jon" or comando == "jogar fome de jon") and jogo.sala_atual == "sala de fliperamas":
@@ -291,7 +247,7 @@ def receber_comando():
                 jogo.jon_passos_dados = 0
                 jogo.jon_caminho_certo = [random.choice(["f", "e", "d"]) for _ in range(4)]
                 ui.limpar()
-                ui.exibir(f"{DOS_BRANCO}{ARTE_PORCO}{RESET}")
+                ui.animar(f"{DOS_BRANCO}{ARTE_PORCO}{RESET}", 0.002, jogo=jogo) # <-- ANIMAÇÃO DE ASCII AQUI!
                 ui.animar("--- A FOME DE JON ---", 0.03, DOS_VERDE, jogo)
                 ui.exibir(f"{DOS_BRANCO}Guie o Porco Jon pelos dutos baseando-se nos seus sentidos.{RESET}")
                 ui.exibir("Comandos: [F] Frente | [E] Esquerda | [D] Direita")
@@ -305,7 +261,7 @@ def receber_comando():
                     jogo.estado_atual = "MINIGAME_CONSERTOS_CABECA"
                     jogo.web_consertos = {}
                     ui.limpar()
-                    ui.exibir(f"{DOS_BRANCO}{ARTE_ROBO}{RESET}")
+                    ui.animar(f"{DOS_BRANCO}{ARTE_ROBO}{RESET}", 0.002, jogo=jogo) # <-- ANIMAÇÃO DE ASCII AQUI!
                     ui.animar("--- CONSERTOS & SORRISOS ---", 0.03, DOS_VERDE, jogo)
                     ui.exibir("Bem-vindo, Mecânico! Vamos montar nosso novo Festeiro!")
                     ui.exibir(f"\n{DOS_AMARELO}[ FASE 1: SELEÇÃO DE PEÇAS ]{RESET}")
@@ -314,7 +270,7 @@ def receber_comando():
                 jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1"
                 jogo.web_julgamento = {"pontos": 0, "vitimas": ["angela", "joao", "renato"]}
                 ui.limpar()
-                ui.exibir(f"{DOS_BRANCO}{ARTE_PIANO}{RESET}")
+                ui.animar(f"{DOS_BRANCO}{ARTE_PIANO}{RESET}", 0.002, jogo=jogo) # <-- ANIMAÇÃO DE ASCII AQUI!
                 ui.animar("--- O JULGAMENTO DO PIANISTA ---", 0.03, DOS_VERDE, jogo)
                 ui.exibir(f"{DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{RESET}")
                 ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{RESET}")
@@ -339,7 +295,7 @@ def receber_comando():
         elif jogo.estado_atual == "MINIGAME_COFRE":
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
-                ui.exibir(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}")
+                ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.002, jogo=jogo)
                 ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
             elif comando == "1994": 
                 ui.exibir(f"{DOS_VERDE}CLICK! A pesada porta de metal se abre.{RESET}")
@@ -542,17 +498,13 @@ def receber_comando():
             salvar_autosave(jogo)
 
     except Exception as e:
-        # --- A BLINDAGEM CONTRA ERROS DE CONEXÃO ---
-        # Se ocorrer um bug interno, o JSON continua sendo enviado com a mensagem de erro!
         print(f"\n{DOS_VERMELHO}[ERRO INTERNO DO SISTEMA]: O sistema falhou ao processar a ação.{RESET}")
         print(f"{DOS_AMARELO}Detalhes técnicos: {e}{RESET}")
-        traceback.print_exc() # Imprime no Log do Render para você debugar depois
+        traceback.print_exc()
     finally:
         sys.stdout = stdout_original
 
-    # Sempre salva a sessão no final para não perder o "sid"
     if jogo: salvar_sessao(session.get("sid"), jogo)
-    
     return gerar_resposta_json(captura, jogo)
 
 if __name__ == '__main__':

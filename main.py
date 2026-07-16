@@ -6,87 +6,9 @@ from ui import default_ui, DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RES
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial, 
                    imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
 from minigames import MinigameMinotauro, MinigameSeguranca
-from utils import extrair_argumentos
+from utils import extrair_argumentos, atualizar_eventos_de_tempo 
 
-# ==========================================
-# EVENTOS DE TEMPO E MOVIMENTAÇÃO DO MAPA
-# ==========================================
-def atualizar_eventos_de_tempo(jogo):
-    ui = jogo.ui_handler or default_ui
-    
-    # Modo Deus ignora as restrições de tempo
-    if getattr(jogo, 'god_mode', False):
-        jogo.hp = 9999
-        jogo.turnos_luz = 9999
-        return
-
-    if jogo.turnos_luz > 0:
-        jogo.turnos_luz -= 1
-        jogo.turnos_no_escuro = 0
-        if jogo.turnos_luz == 0:
-            ui.exibir("\n A escuridão volta a dominar... Sua fonte de luz se apagou")
-            ui.pausar(1.5)
-    else:
-        jogo.turnos_no_escuro += 1
-        if jogo.turnos_no_escuro == 3: 
-            ui.exibir("\n As sombras parecem se mexer nos cantos da sua visão...")
-        elif jogo.turnos_no_escuro == 5: 
-            ui.exibir("\n Você escuta alguém sussurrando seu nome bem baixinho na escuridão...")
-            
-        chance_sombra = min(1 + (jogo.turnos_no_escuro * 2), 20) 
-        if random.randint(1, 100) <= chance_sombra:
-            ui.exibir("\n" + "="*50)
-            ui.exibir("Na escuridão total, dois olhos brancos se abrem a centímetros do seu rosto.")
-            ui.exibir("'Você não devia ter voltado, Rogério.'")
-            ui.pausar(4)
-            ui.exibir("\n[ FINAL ???: MENTE FRATURADA ]")
-            jogo.sala_atual = "morte"
-
-    if getattr(jogo, 'incendio', False):
-        jogo.turnos_fuga -= 1
-        ui.exibir(f"\n O RESTAURANTE ESTÁ DESMORONANDO ({jogo.turnos_fuga} turnos para fugir)")
-        if jogo.turnos_fuga <= 0:
-            ui.exibir("\n O teto desaba sobre você. O fogo consome o que restou.")
-            jogo.sala_atual = "morte"
-
-    if jogo.turnos_enjoado > 0:
-        ui.exibir("\n Você está enjoado e com tontura... Seus olhos embaçam.")
-        if jogo.turnos_luz > 0: jogo.turnos_luz -= 1
-        jogo.turnos_enjoado -= 1
-
-    if jogo.dificuldade_escolhida == "NORMAL":
-        jogo.turnos_mesma_sala += 1
-        if jogo.turnos_mesma_sala == jogo.turnos_perseguidor_aviso:
-            ui.exibir("\n Você escuta ruídos metálicos pesados ecoando no corredor próximo...")
-        elif jogo.turnos_mesma_sala == jogo.turnos_perseguidor_morte:
-            ui.exibir("\n" + "="*50 + "\nVocê ficou muito tempo parado. A porta é arrombada\n" + "="*50)
-            ui.pausar(4)
-            jogo.sala_atual = "morte"
-            
-    elif jogo.dificuldade_escolhida == "PESADELO":
-        if jogo.posicao_perseguidor != "morte" and jogo.sala_atual not in ["saida", "cama", "final_bom", "morte", "tubo de ventilação"]: 
-            sala_monstro = jogo.mapa.get(jogo.posicao_perseguidor, {})
-            conexoes = [v for k, v in sala_monstro.items() if k not in ["descrição", "itens", "inspecionaveis"] and v in jogo.mapa and v not in ["morte", "saida", "cama"]]
-            
-            if conexoes and random.random() < 0.40: 
-                jogo.posicao_perseguidor = random.choice(conexoes)
-            
-            if jogo.posicao_perseguidor == jogo.sala_atual:
-                ui.exibir("\n" + "="*50)
-                ui.exibir(f"{DOS_VERMELHO}A porta quebra. Ela te encontrou{RESET}")
-                ui.pausar(3)
-                jogo.sala_atual = "morte"
-            else:
-                conexoes_jogador = [v for k, v in jogo.mapa[jogo.sala_atual].items() if k not in ["descrição", "itens", "inspecionaveis"] and isinstance(v, str)]
-                if jogo.posicao_perseguidor in conexoes_jogador:
-                    ui.exibir(f"\n{DOS_AMARELO} O chão vibra. Você ouve passos de metal maciço na sala ao lado...{RESET}")
-
-
-# ==========================================
-# MOTOR PRINCIPAL (GAME LOOP)
-# ==========================================
 if __name__ == "__main__":
-    # Inicializa o estado do jogo injetando o UI Padrão do Terminal (desacoplado)
     jogo = GameState(ui_handler=default_ui)
     ui = default_ui
     
@@ -102,7 +24,6 @@ if __name__ == "__main__":
             comando_bruto = ui.obter_input(f"\n{DOS_VERDE}C:\\> {RESET}")
             comando = normalizar(comando_bruto)
             
-            # --- TELA DE BOOT ---
             if jogo.estado_atual == "AGUARDANDO_DIR":
                 if comando in ["cls", "limpar", "clear", "clean"]:
                     ui.limpar()
@@ -111,13 +32,13 @@ if __name__ == "__main__":
                     ui.limpar()
                     ui.exibir(f"{DOS_BRANCO} Volume in drive A is VILLASBOAS{RESET}")
                     ui.exibir(f"{DOS_BRANCO} Directory of A:\\{RESET}\n")
-                    ui.exibir(f"{DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{RESET}")
-                    ui.exibir(f"{DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{RESET}")
-                    ui.exibir(f"{DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{RESET}")
-                    ui.exibir(f"{DOS_VERDE}DESKTOP  <DIR>        197.78  24-07-2007  4:00a{RESET}")
-                    ui.exibir(f"{DOS_VERDE}SAVES    <DIR>        358.21  23-07-2008  4:00a{RESET}")
-                    ui.exibir(f"{DOS_VERDE}PICTURE  <DIR>        666.00  05-11-1994  4:00a{RESET}")
-                    ui.exibir(f"{DOS_VERDE}VALID    <DIR>        2.7801  24-07-2007  4:00a{RESET}")
+                    ui.animar(f"{DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}DESKTOP  <DIR>        197.78  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}SAVES    <DIR>        358.21  23-07-2008  4:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}PICTURE  <DIR>        666.00  05-11-1994  4:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}VALID    <DIR>        2.7801  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
                     ui.exibir(f"{DOS_AMARELO}       3 file(s)        68.097 bytes{RESET}")
                     ui.exibir(f"{DOS_AMARELO}       4 dir(s)        655.360 bytes free{RESET}\n")
                     jogo.estado_atual = "MENU"
@@ -126,7 +47,6 @@ if __name__ == "__main__":
                     ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
                     ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
-            # --- TELA DE MENU ---
             elif jogo.estado_atual == "MENU":
                 if comando in ["cls", "limpar", "clear", "clean"]:
                     ui.limpar()
@@ -157,8 +77,8 @@ if __name__ == "__main__":
 
                     jogo.estado_atual = "JOGO"
                     imprimir_tutorial(ui)
-                    ui.exibir(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}")
-                    ui.exibir(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}")
+                    ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
+                    ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.04, jogo=jogo)
                     imprimir_contexto_sala(jogo)
                 elif comando == "2007":
                     ui.limpar()
@@ -174,13 +94,10 @@ if __name__ == "__main__":
                 else:
                     ui.exibir(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}")
 
-            # --- CORPO PRINCIPAL DO JOGO ---
             elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
                 if comando in ["cls", "limpar", "clear", "clean"]:
                     ui.limpar()
                     imprimir_contexto_sala(jogo)
-                
-                # Checagem de ativação de Minigames pelo mapa
                 elif jogo.sala_atual == "sala de energia" and not getattr(jogo, 'fios_cortados_inventario', False):
                     jogo.minigame_atual = MinigameMinotauro(jogo)
                     jogo.estado_atual = "MINIGAME_MINOTAURO"
@@ -190,10 +107,8 @@ if __name__ == "__main__":
                     jogo.estado_atual = "MINIGAME_SEGURANCA"
                     jogo.minigame_atual.imprimir_status()
                 else:
-                    # Passa o comando para o Parser Inteligente e abstraído no CLI
                     gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
-                    if gastou_turno: 
-                        atualizar_eventos_de_tempo(jogo)
+                    if gastou_turno: atualizar_eventos_de_tempo(jogo)
                     
                     if jogo.sala_atual == "morte":
                         dar_tela_de_morte(jogo)
@@ -202,16 +117,13 @@ if __name__ == "__main__":
                     elif jogo.sala_atual == "cama":
                         rodar_final("cama", jogo)
                     elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
-                        if getattr(jogo, 'incendio', False):
-                            rodar_final("verdadeiro", jogo)
-                        else:
-                            rodar_final("final_bom", jogo)
+                        if getattr(jogo, 'incendio', False): rodar_final("verdadeiro", jogo)
+                        else: rodar_final("final_bom", jogo)
                     elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
                         pass 
                     else:
                         imprimir_contexto_sala(jogo)
                         
-            # --- LÓGICA DE MINIGAMES DE SOBREVIVÊNCIA ---
             elif jogo.estado_atual in ["MINIGAME_MINOTAURO", "MINIGAME_SEGURANCA"]:
                 if comando in ["cls", "limpar", "clear", "clean"]:
                     ui.limpar()
@@ -258,7 +170,6 @@ if __name__ == "__main__":
                     else:
                         jogo.minigame_atual.imprimir_status()
 
-            # Godmode contínuo
             if getattr(jogo, 'god_mode', False):
                 jogo.hp = 9999
                 jogo.turnos_luz = 9999
@@ -266,7 +177,6 @@ if __name__ == "__main__":
                     if isinstance(jogo.minigame_atual, MinigameMinotauro): jogo.minigame_atual.bateria = 9999
                     elif isinstance(jogo.minigame_atual, MinigameSeguranca): jogo.minigame_atual.energia = 9999
                         
-            # Salva no disco invisivelmente a cada turno!
             if jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
                 salvar_autosave(jogo)
 

@@ -1,26 +1,25 @@
-
 import random
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from data import CAVEIRA_MORTE, MAX_INVENTARIO
 from state import registrar_final, carregar_conquistas, AUTOSAVE_FILE
 
 def imprimir_tela_boot(ui):
-    ui.animar("VILLAS-BOAS INDUSTRIES (C) 1982", 0.01, DOS_BRANCO)
-    ui.animar("BIOS VERSION 1.04 - RELEASE 02/11/1982", 0.01, DOS_BRANCO)
-    ui.animar("RAM CHECK: 640KB OK", 0.01, DOS_VERDE)
-    ui.animar("DRIVE A: READY", 0.01, DOS_VERDE)
-    ui.animar("CARREGANDO 'COMMAND.COM'....... OK\n", 0.05, DOS_VERDE)
+    ui.animar("VILLAS-BOAS INDUSTRIES (C) 1982", 0.04, DOS_BRANCO)
+    ui.animar("BIOS VERSION 1.04 - RELEASE 02/11/1982", 0.04, DOS_BRANCO)
+    ui.animar("RAM CHECK: 640KB OK", 0.03, DOS_VERDE)
+    ui.animar("DRIVE A: READY", 0.03, DOS_VERDE)
+    ui.animar("CARREGANDO 'COMMAND.COM'....... OK\n", 0.06, DOS_VERDE)
     ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
-def imprimir_menu_dificuldade(ui, tem_autosave=False):
-    ui.animar("==================================================", 0.005, DOS_VERDE)
-    ui.animar("__     _____ _     _        _ ____   ___   ____ ", 0.005, DOS_VERDE)
-    ui.animar("\\ \\   / /_ _| |   | |      / / ___| / _ \\ / ___|", 0.005, DOS_VERDE)
-    ui.animar(" \\ \\ / / | || |   | |     / /\\___ \\| | | |\\___ \\", 0.005, DOS_VERDE)
-    ui.animar("  \\ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.005, DOS_VERDE)
-    ui.animar("   \\_/  |___|_____|_____/_/  |____/ \\___/ |____/", 0.005, DOS_VERDE)
-    ui.animar("==================================================", 0.005, DOS_VERDE)
-    ui.animar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.02, DOS_BRANCO)
+def imprimir_menu_dificuldade(ui):
+    ui.animar("==================================================", 0.01, DOS_VERDE)
+    ui.animar("__     _____ _     _        _ ____   ___   ____ ", 0.01, DOS_VERDE)
+    ui.animar("\\ \\   / /_ _| |   | |      / / ___| / _ \\ / ___|", 0.01, DOS_VERDE)
+    ui.animar(" \\ \\ / / | || |   | |     / /\\___ \\| | | |\\___ \\", 0.01, DOS_VERDE)
+    ui.animar("  \\ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.01, DOS_VERDE)
+    ui.animar("   \\_/  |___|_____|_____/_/  |____/ \\___/ |____/", 0.01, DOS_VERDE)
+    ui.animar("==================================================", 0.01, DOS_VERDE)
+    ui.animar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.03, DOS_BRANCO)
 
     conquistas = carregar_conquistas()
     c_med = "[X]" if "mediocre" in conquistas else "[ ]"
@@ -36,7 +35,7 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False):
     ui.exibir(f"{DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){RESET}")
     ui.exibir(f"{DOS_AMARELO}[3] INICIAR MODO: RÁPIDO (Skip Delays de Digitação){RESET}")
 
-    if tem_autosave:
+    if AUTOSAVE_FILE.exists():
         ui.exibir(f"{DOS_VERDE}[4] CONTINUAR JOGO (Autosave Encontrado){RESET}\n")
         ui.exibir(f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-4): {RESET}")
     else:
@@ -44,7 +43,7 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False):
 
 def imprimir_tutorial(ui):
     ui.exibir(f"\n{DOS_AMARELO}--- DICAS DE SOBREVIVÊNCIA (TUTORIAL) ---{RESET}")
-    ui.exibir(f"{DOS_BRANCO}1. Mova-se digitando {DOS_VERDE}ir frente{DOS_BRANCO}, ou apenas o nome da sala (Ex: {DOS_VERDE}sala de jantar{DOS_BRANCO}).{RESET}")
+    ui.exibir(f"{DOS_BRANCO}1. Mova-se digitando {DOS_VERDE}ir frente{DOS_BRANCO}, ou apenas o nome da sala.{RESET}")
     ui.exibir(f"{DOS_BRANCO}2. Use aspas para nomes compostos: {DOS_VERDE}pegar \"tabua pequena de madeira\"{DOS_BRANCO}.{RESET}")
     ui.exibir(f"{DOS_BRANCO}3. Você pode usar atalhos como {DOS_VERDE}p chave{DOS_BRANCO} em vez de {DOS_VERDE}pegar chave{DOS_BRANCO}.{RESET}")
     ui.exibir(f"{DOS_BRANCO}4. Digite {DOS_VERDE}ajuda{DOS_BRANCO} a qualquer momento para ver o manual do sistema.{RESET}")
@@ -56,10 +55,8 @@ def dar_dica_jon(passo_certo, ui):
         "e": "Um som agudo de metal arranhando reverbera pela parede canhota do duto.",
         "d": "O cheiro podre de carne estragada fica mais forte no caminho destro."
     }
-    if random.random() <= 0.25:
-        ui.exibir(f"\n{DOS_VERMELHO}[SENSÓRIO CONFUSO]: {random.choice([v for k, v in dicas.items() if k != passo_certo])}{RESET}")
-    else:
-        ui.exibir(f"\n{DOS_AMARELO}[SENSÓRIO]: {dicas[passo_certo]}{RESET}")
+    if random.random() <= 0.25: ui.exibir(f"\n{DOS_VERMELHO}[SENSÓRIO CONFUSO]: {random.choice([v for k, v in dicas.items() if k != passo_certo])}{RESET}")
+    else: ui.exibir(f"\n{DOS_AMARELO}[SENSÓRIO]: {dicas[passo_certo]}{RESET}")
 
 def falar_pianista(acertou, ui, jogo):
     if acertou:
@@ -95,10 +92,8 @@ def imprimir_contexto_sala(jogo):
 
         chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
         saidas = [k for k in sala.keys() if k not in chaves_ignoradas and isinstance(sala[k], str)]
-        if saidas:
-            ui.exibir(f"🧭 Saídas: {DOS_AMARELO}{', '.join(saidas).title()}{RESET}")
-        else:
-            ui.exibir(f"🧭 Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}")
+        if saidas: ui.exibir(f"🧭 Saídas: {DOS_AMARELO}{', '.join(saidas).title()}{RESET}")
+        else: ui.exibir(f"🧭 Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}")
 
         ui.exibir(f"\n{DOS_BRANCO}[ SISTEMA OPERACIONAL VILLAS BOAS v20.08 ]{RESET}")
         vida_visual = "9999" if jogo.god_mode else f"{jogo.hp}/3"
@@ -109,7 +104,7 @@ def imprimir_contexto_sala(jogo):
 def dar_tela_de_morte(jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
-    ui.exibir(f"{DOS_VERMELHO}{CAVEIRA_MORTE}{RESET}")
+    ui.animar(f"{DOS_VERMELHO}{CAVEIRA_MORTE}{RESET}", 0.002, jogo=jogo)
     ui.animar("💀 GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, DOS_VERMELHO, jogo)
     ui.animar("=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)
 
@@ -127,40 +122,16 @@ def rodar_final(tipo_final, jogo):
         liberou_deus = registrar_final("bons_sonhos")
     elif tipo_final == "final_bom":
         ui.animar("Você acende o isqueiro e ilumina o local. A luz do fogo traz calma...", 0.04, DOS_VERDE, jogo)
-        ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- 'Ainda estou aqui...'", 0.09, DOS_VERMELHO, jogo)
-        ui.animar("- Amor? É voce? Mesmo???", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- 'Eu espero que ainda seja eu...'", 0.09, DOS_VERMELHO, jogo)
-        ui.animar("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas.", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- ... *Caroline abraça Rogério*", 0.09, DOS_VERMELHO, jogo)
-        ui.animar("- 'Vamos nos encontrar no céu, meu bem.'", 0.09, DOS_VERMELHO, jogo)
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL BOM ]{RESET}")
         liberou_deus = registrar_final("bom")
     elif tipo_final == "verdadeiro":
         ui.animar("Voce se aproxima do animatronico... dela. E encaixa os fios na sua fiação...", 0.05, DOS_BRANCO, jogo)
-        ui.animar("Voce acende o isqueiro. Os olhos de plastico parecem te encarar.", 0.05, DOS_BRANCO, jogo)
-        ui.animar("Os olhos piscam em vermelho, ela tenta fazer algo... mas não consegue.\n", 0.05, DOS_BRANCO, jogo)
-        ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- '... voce fez dar certo'", 0.08, DOS_VERMELHO, jogo)
-        ui.animar("- Caro... Caroline? É você?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("*(Você abraça a carcaça de pelugem rosa)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Meu corpo ficou em silencio, não sinto mais raiva.", 0.07, DOS_VERDE, jogo)
-        ui.animar("*(O fogo se alastra pelo restaurante, a fumaça chega no hall)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Me sinta pela ultima vez.", 0.07, DOS_VERDE, jogo)
-        ui.animar("*(Voce sente mãos invisíveis em seus ombros, um alivio inunda sua mente)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Obrigada por me deixar assim pela ultima vez.", 0.07, DOS_VERDE, jogo)
-        ui.animar("- Eu te amo.", 0.06, DOS_AMARELO, jogo)
-        ui.animar("*(O animatronico cai no chão, o fogo cobre o metal e o plástico)*", 0.05, DOS_BRANCO, jogo)
-        ui.animar("\n[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.", 0.05, DOS_VERDE, jogo)
-        ui.animar("Você se levanta e caminha para a saída antes que o teto desabe.", 0.05, DOS_BRANCO, jogo)
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL VERDADEIRO ]{RESET}")
         liberou_deus = registrar_final("verdadeiro")
 
     if liberou_deus:
         ui.exibir(f"\n{DOS_AMARELO}=================================================={RESET}")
-        ui.animar(">>> MENSAGEM DO SISTEMA <<<", 0.05, DOS_VERMELHO, jogo)
         ui.animar("VOCÊ DESVENDOU TODAS AS VERDADES DESTA NOITE.", 0.05, DOS_VERMELHO, jogo)
-        ui.animar("O CÓDIGO DE MANUTENÇÃO FOI LIBERADO.", 0.05, DOS_VERMELHO, jogo)
         ui.exibir(f"{DOS_AMARELO}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {DOS_BRANCO}2007{RESET}")
         ui.exibir(f"{DOS_AMARELO}=================================================={RESET}")
         
