@@ -25,7 +25,7 @@ function atualizarSidebar(estado) {
     if (estado.hp === "∞") {
         hpEl.textContent = "∞";
     } else {
-        const coracoes = "❤️".repeat(Math.max(0, estado.hp)) + "🖤".repeat(Math.max(0, 3 - estado.hp));
+        const coracoes = "[█] ".repeat(Math.max(0, estado.hp)) + "[ ] ".repeat(Math.max(0, 3 - estado.hp))
         hpEl.textContent = coracoes;
     }
     
