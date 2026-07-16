@@ -16,7 +16,7 @@ from commands import processar_comando, normalizar
 from minigames import MinigameMinotauro, MinigameSeguranca
 from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, CAVEIRA_MORTE, MAX_INVENTARIO
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, UIHandler
-from utils import extrair_argumentos, atualizar_eventos_de_tempo # <-- O IMPORT CORRIGIDO!
+from utils import extrair_argumentos, atualizar_eventos_de_tempo
 
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
                    dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
