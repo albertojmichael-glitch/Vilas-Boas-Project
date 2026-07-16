@@ -46,14 +46,13 @@ def cmd_ir(comando, jogo, mapa):
 
             jogo.sala_atual = destino
 
-            # --- O SISTEMA DE ENCONTRO MORTAL (UX / COMBATE) ---
             if jogo.dificuldade_escolhida == "PESADELO" and jogo.sala_atual == jogo.posicao_perseguidor:
                 limpar_tela()
                 print("\n" + "="*50)
                 print(f"{DOS_VERMELHO}Quando voce entra na sala, passos pesados e cheiro de fuligem invadem o ar.{RESET}")
                 print(f"{DOS_VERMELHO}Uma mão robótica gigante segura o seu pescoço e te levanta do chão!{RESET}")
                 print(f"{DOS_AMARELO}Você tem UMA AÇÃO para reagir antes que ele quebre o seu pescoço!{RESET}")
-                jogo.estado_atual = "COMBATE_ANIMATRONICO" # Inicia a luta
+                jogo.estado_atual = "COMBATE_ANIMATRONICO" 
                 pausar(2)
                 return True
             
@@ -122,7 +121,6 @@ def cmd_largar(comando, jogo, mapa):
 
 def cmd_examinar(comando, jogo, mapa):
     alvo_bruto = comando.replace("examinar ", "").replace("ex ", "").strip()
-    
     palavras_ignoradas = [" o ", " a ", " um ", " uma ", " os ", " as "]
     alvo_limpo = f" {alvo_bruto} "
     for palavra in palavras_ignoradas:
@@ -308,7 +306,6 @@ def processar_comando(comando, jogo, mapa):
     comando = comando.strip()
     if not comando: return False
 
-    # --- LÓGICA DO ENCONTRO MORTAL (O TURNO DE REAÇÃO) ---
     if getattr(jogo, 'estado_atual', "") == "COMBATE_ANIMATRONICO":
         if comando in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
             print(f"{DOS_AMARELO}[GOD MODE] Você solta um soco devastador direto na mandíbula de metal do animatrônico!{RESET}")
@@ -333,11 +330,17 @@ def processar_comando(comando, jogo, mapa):
     if comando in mapa_direcoes:
         comando = mapa_direcoes[comando]
 
+    # --- A MÁGICA DA NAVEGAÇÃO RÁPIDA ---
+    # Se o que o cara digitou for exatamente o nome de uma saída da sala, colocamos o "ir" invisível pra ele!
+    if jogo.sala_atual in mapa:
+        saidas_validas = [str(k).lower() for k in mapa[jogo.sala_atual].keys() if k not in ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]]
+        if comando.lower() in saidas_validas:
+            comando = f"ir {comando.lower()}"
+
     partes = comando.split(" ", 1)
     verbo_bruto = partes[0]
     resto = partes[1] if len(partes) > 1 else ""
 
-    # Adicionado os comandos de trapaça aqui!
     verbos_validos = ["ir", "pegar", "largar", "usar", "combinar", "juntar", "examinar", "ex", "jogar", "abrir", "salvar", "carregar", "ajuda", "comandos", "inventario", "i", "olhar", "o", "cls", "limpar", "clear", "clean", "whoami", "sair", "tp", "gerar", "atacar", "bater", "chutar", "lutar", "pular"]
     
     if verbo_bruto not in verbos_validos:
@@ -372,7 +375,6 @@ def processar_comando(comando, jogo, mapa):
     elif comando == "abrir cofre":
         cmd_abrir_cofre(jogo); return True
     
-    # --- COMANDOS SECRETOS (GOD MODE) ---
     elif comando.startswith("tp ") and getattr(jogo, 'god_mode', False):
         destino = comando.replace("tp ", "").strip()
         jogo.sala_atual = destino
@@ -384,7 +386,6 @@ def processar_comando(comando, jogo, mapa):
         print(f"{DOS_AMARELO}[GOD MODE] O item '{item}' materializou-se na sua mochila.{RESET}")
         return True
 
-    # --- O EASTER EGG DO SOCO MÁGICO FORA DE COMBATE ---
     elif verbo_bruto in ["atacar", "bater", "chutar", "lutar"]:
         if getattr(jogo, 'god_mode', False):
             print(f"{DOS_AMARELO}[GOD MODE] Você dá um soco no ar! A pressão rompe as partículas de poeira ao seu redor. Você se sente incrivelmente forte.{RESET}")
@@ -399,7 +400,7 @@ def processar_comando(comando, jogo, mapa):
         carregar_jogo(jogo); return False
     elif comando == "ajuda" or comando == "comandos":
         print(f"\n{DOS_AMARELO}--- COMANDOS DO SISTEMA ---{RESET}")
-        print("Mover: 'ir [direcao]' | Itens: 'pegar', 'largar', 'usar', 'combinar'")
+        print("Mover: 'ir [direcao]' ou apenas o nome da sala! | Itens: 'pegar', 'largar', 'usar', 'combinar'")
         print("Ações: 'examinar', 'jogar', 'abrir cofre' | Outros: 'i', 'cls'")
         if getattr(jogo, 'god_mode', False):
             print(f"{DOS_VERMELHO}--- CÓDIGOS DE DEUS ---{RESET}")

@@ -294,9 +294,13 @@ def receber_comando():
                 print("@@CLEAR@@")
                 print(f"{ui.DOS_BRANCO} Volume in drive A is VILLASBOAS{ui.RESET}")
                 print(f"{ui.DOS_BRANCO} Directory of A:\\{ui.RESET}\n")
-                print(f"{ui.DOS_VERDE}COMMAND  COM     47.845   02-11-82   6:00a{ui.RESET}")
-                print(f"{ui.DOS_VERDE}SEGURA   SYS      2.048   02-11-82   6:00a{ui.RESET}")
-                print(f"{ui.DOS_VERDE}NOTURNO  EXE     18.204   02-11-82   6:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}COMMAND  COM     47.845   02-11-1982 6:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}SEGURA   SYS      2.048   02-11-1982 6:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}NOTURNO  EXE     18.204   02-11-1982 6:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}Desktop <DIR>    197.78   24-07-2007 4:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}Saves   <DIR>    358.21   23-07-2008 4:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}Picture <DIR>    666.00   05-11-1994 4:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}Valid   <DIR>    2.7801   24-07-2007 4:00a{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}       3 file(s)     68.097 bytes{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}       0 dir(s)    655.360 bytes free{ui.RESET}\n")
                 jogo.estado_atual = "MENU"
@@ -576,7 +580,7 @@ def receber_comando():
                             print(f"{ui.DOS_AMARELO}🎒 Mochila cheia! A bateria nova caiu no chão.{ui.RESET}")
                             sala["itens"].append("bateria nova")
                 else:
-                    ui.digitar("Quem é você? A tela desliga. Você perdeu a absolvição.", 0.05, ui.DOS_VERMELHO)
+                    ui.digitar("Quem é você? A tela desliga. Você perdeu a absolvição.", 0.09, ui.DOS_VERMELHO)
                     
                 jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                 jogo.estado_atual = "JOGO"
@@ -591,7 +595,7 @@ def receber_comando():
             elif comando in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_SEGURANCA":
                 print(f"{ui.DOS_AMARELO}[GOD MODE] Você altera os ponteiros do universo. O relógio salta para as 06:00 instantaneamente.{ui.RESET}")
                 jogo.minigame_atual.turno = 24 # Força o fim da noite no Minigame!
-                resultado = jogo.minigame_atual.processar_turno("esperar", jogo) # Engana ele com 'esperar' pra ativar o Win
+                resultado = jogo.minigame_atual.processar_turno("esperar", jogo) # Engana ele com esperar pra ativar o Win
                 
                 if resultado == "vitoria_seguranca":
                     jogo.minigame_atual = None
@@ -605,7 +609,7 @@ def receber_comando():
                 print(f"{ui.DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{ui.RESET}")
                 jogo.minigame_atual = None
-                jogo.sala_atual = "01"
+                jogo.sala_atual = "sala dos fundos"
                 jogo.estado_atual = "JOGO"
                 print(f"{ui.DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{ui.RESET}")
                 imprimir_contexto_sala()
@@ -626,11 +630,17 @@ def receber_comando():
                     jogo.minigame_atual = None
                     jogo.sala_atual = "morte"
                     dar_tela_de_morte()
-                elif resultado in ["vitoria_minotauro", "vitoria_seguranca"]:
+                elif resultado == "vitoria_minotauro":
                     jogo.minigame_atual = None
-                    jogo.sala_atual = "01"
+                    jogo.sala_atual = "sala dos fundos" 
                     jogo.estado_atual = "JOGO"
-                    print(f"{ui.DOS_VERDE}Você sobreviveu ao evento! Voltando ao sistema principal...{ui.RESET}")
+                    print(f"{ui.DOS_VERDE}Você escapou da Sala de Energia com os fios!{ui.RESET}")
+                    imprimir_contexto_sala()
+                elif resultado == "vitoria_seguranca":
+                    jogo.minigame_atual = None
+                    jogo.sala_atual = "01" 
+                    jogo.estado_atual = "JOGO"
+                    print(f"{ui.DOS_VERDE}Você sobreviveu à noite! Se levantando da cadeira...{ui.RESET}")
                     imprimir_contexto_sala()
                 else:
                     jogo.minigame_atual.imprimir_status()
