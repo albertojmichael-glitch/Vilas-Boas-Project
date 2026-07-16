@@ -7,12 +7,15 @@ import re
 import random
 import uuid
 
-from state import GameState, registrar_final, carregar_conquistas, salvar_autosave, carregar_autosave, AUTOSAVE_FILE
+from state import GameState, salvar_autosave, carregar_autosave, AUTOSAVE_FILE
 from commands import processar_comando, normalizar
 from minigames import MinigameMinotauro, MinigameSeguranca
-from main import atualizar_eventos_de_tempo
 from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, CAVEIRA_MORTE, MAX_INVENTARIO
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, UIHandler
+
+# Importa toda a lógica visual que acabamos de deduplicar!
+from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
+                   dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
 
 ARTE_COFRE = r'''                                                                              
        .-----:-:--:-:-:::--:::::::::::-:::-::::::-::-------:::-:------::        
@@ -32,7 +35,7 @@ ARTE_COFRE = r'''
     +*********************************************************************+'''
 
 class WebUIHandler(UIHandler):
-    """Adaptador que transforma os prints do Python em Comandos JSON para o Frontend."""
+    """Adaptador de injeção de dependência para a WEB."""
     def limpar(self):
         print("@@CLEAR@@")
     
@@ -48,14 +51,12 @@ class WebUIHandler(UIHandler):
         elif cor == DOS_AMARELO: cor_nome = "amarelo"
         elif cor == DOS_VERMELHO: cor_nome = "vermelho"
         
-        # Modo rápido da UI
         if jogo and getattr(jogo, 'fast_mode', False): tempo = 0
-            
         ms = int(tempo * 1000)
         print(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
         
     def obter_input(self, prompt_text):
-        return "" # A Web gerencia o input via botões na tela do Cofre
+        return "" # A Web gerencia o input via rotas separadas
 
 def ansi_para_html(texto_ansi):
     mapa_cores = {
@@ -84,8 +85,6 @@ def ansi_para_html(texto_ansi):
     return "".join(html)
 
 app = Flask(__name__, static_folder=".", static_url_path="")
-
-# Chave protegida para produção
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
 CORS(app, supports_credentials=True)
 
@@ -99,7 +98,6 @@ def obter_estado():
         partidas[sid] = GameState(ui_handler=WebUIHandler())
     
     jogo = partidas[sid]
-    # Garante que o WebUI esteja ativo para essa sessão!
     if not isinstance(jogo.ui_handler, WebUIHandler):
         jogo.ui_handler = WebUIHandler()
     return jogo
@@ -107,173 +105,6 @@ def obter_estado():
 @app.route("/")
 def raiz():
     return send_from_directory(".", "index.html")
-
-def imprimir_tela_boot(ui_handler):
-    ui_handler.animar("VILLAS-BOAS INDUSTRIES (C) 1982", 0.01, DOS_BRANCO)
-    ui_handler.animar("BIOS VERSION 1.04 - RELEASE 02/11/1982", 0.01, DOS_BRANCO)
-    ui_handler.animar("RAM CHECK: 640KB OK", 0.01, DOS_VERDE)
-    ui_handler.animar("DRIVE A: READY", 0.01, DOS_VERDE)
-    ui_handler.animar("CARREGANDO 'COMMAND.COM'....... OK\n", 0.05, DOS_VERDE)
-    ui_handler.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
-
-def imprimir_menu_dificuldade(ui_handler):
-    ui_handler.animar("==================================================", 0.005, DOS_VERDE)
-    ui_handler.animar("__     _____ _     _        _ ____   ___   ____ ", 0.005, DOS_VERDE)
-    ui_handler.animar("\\ \\   / /_ _| |   | |      / / ___| / _ \\ / ___|", 0.005, DOS_VERDE)
-    ui_handler.animar(" \\ \\ / / | || |   | |     / /\\___ \\| | | |\\___ \\", 0.005, DOS_VERDE)
-    ui_handler.animar("  \\ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.005, DOS_VERDE)
-    ui_handler.animar("   \\_/  |___|_____|_____/_/  |____/ \\___/ |____/", 0.005, DOS_VERDE)
-    ui_handler.animar("==================================================", 0.005, DOS_VERDE)
-    ui_handler.animar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.02, DOS_BRANCO)
-    
-    conquistas = carregar_conquistas()
-    c_med = "[X]" if "mediocre" in conquistas else "[ ]"
-    c_son = "[X]" if "bons_sonhos" in conquistas else "[ ]"
-    c_bom = "[X]" if "bom" in conquistas else "[ ]"
-    c_ver = "[X]" if "verdadeiro" in conquistas else "[ ]"
-    qtd = len(set(conquistas) & {"mediocre", "bons_sonhos", "bom", "verdadeiro"})
-
-    ui_handler.exibir(f"{DOS_AMARELO}🏆 FINAIS ALCANÇADOS: {qtd}/4{RESET}")
-    ui_handler.exibir(f"{DOS_BRANCO}{c_med} Medíocre  {c_son} Bons Sonhos  {c_bom} Bom  {c_ver} Verdadeiro{RESET}\n")
-    
-    ui_handler.exibir(f"{DOS_BRANCO}[1] INICIAR MODO: NORMAL (Para iniciantes){RESET}")
-    ui_handler.exibir(f"{DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){RESET}")
-    ui_handler.exibir(f"{DOS_AMARELO}[3] INICIAR MODO: RÁPIDO (Skip Delays de Digitação){RESET}")
-    
-    if AUTOSAVE_FILE.exists():
-        ui_handler.exibir(f"{DOS_VERDE}[4] CONTINUAR JOGO (Autosave Encontrado){RESET}\n")
-        ui_handler.exibir(f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-4): {RESET}")
-    else:
-        ui_handler.exibir(f"\n{DOS_VERDE}SELECIONE UMA OPÇÃO (1-3): {RESET}")
-
-def imprimir_tutorial(ui_handler):
-    ui_handler.exibir(f"\n{DOS_AMARELO}--- DICAS DE SOBREVIVÊNCIA (TUTORIAL) ---{RESET}")
-    ui_handler.exibir(f"{DOS_BRANCO}1. Mova-se digitando {DOS_VERDE}ir frente{DOS_BRANCO}, ou apenas o nome da sala (Ex: {DOS_VERDE}sala de jantar{DOS_BRANCO}).{RESET}")
-    ui_handler.exibir(f"{DOS_BRANCO}2. Interaja com objetos digitando {DOS_VERDE}pegar [item]{DOS_BRANCO} ou {DOS_VERDE}examinar [item]{DOS_BRANCO}.{RESET}")
-    ui_handler.exibir(f"{DOS_BRANCO}3. Você pode encurtar comandos usando {DOS_VERDE}p chave{DOS_BRANCO} em vez de {DOS_VERDE}pegar chave{DOS_BRANCO}.{RESET}")
-    ui_handler.exibir(f"{DOS_BRANCO}4. Digite {DOS_VERDE}ajuda{DOS_BRANCO} a qualquer momento para ver o manual do sistema.{RESET}")
-    ui_handler.exibir(f"{DOS_AMARELO}-----------------------------------------{RESET}\n")
-
-def dar_dica_jon(passo_certo, ui_handler):
-    dicas = {
-        "f": "Uma corrente de ar gelado bate direto no seu rosto.",
-        "e": "Um som agudo de metal arranhando reverbera pela parede canhota do duto.",
-        "d": "O cheiro podre de carne estragada fica mais forte no caminho destro."
-    }
-    if random.random() <= 0.25:
-        ui_handler.exibir(f"\n{DOS_VERMELHO}[SENSÓRIO CONFUSO]: {random.choice([v for k, v in dicas.items() if k != passo_certo])}{RESET}")
-    else:
-        ui_handler.exibir(f"\n{DOS_AMARELO}[SENSÓRIO]: {dicas[passo_certo]}{RESET}")
-
-def falar_pianista(acertou, ui_handler):
-    if acertou:
-        ui_handler.exibir(f"{DOS_BRANCO}A máquina toca uma nota suave e agradável.{RESET}")
-        ui_handler.animar(f'"{random.choice(["Você lembra bem, Rogério. Isso é bom.", "O ritmo continua. Você ainda tem ouvido para isso.", "Correto. Ele sempre soube que você voltaria.", "Sim... exatamente como aconteceu."])}"', 0.04, DOS_AMARELO)
-    else:
-        ui_handler.exibir(f"{DOS_VERMELHO}Acorde dissonante.{RESET}")
-        ui_handler.animar(f'"{random.choice(["Errado. As teclas pretas não perdoam mentiras.", "Você deveria lembrar melhor do que isso, Rogério.", "Uma nota fora do lugar... como você, aquela noite.", "Isso não é o que consta no registro do restaurante."])}"', 0.04, DOS_AMARELO)
-
-def imprimir_contexto_sala(jogo):
-    if jogo.estado_atual == "COMBATE_ANIMATRONICO": return
-    ui_handler = jogo.ui_handler
-    
-    if not jogo.minigame_atual and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
-        sala = jogo.mapa[jogo.sala_atual]
-        ui_handler.exibir("\n" + "="*50)
-        ui_handler.exibir(f"📍 VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}")
-        
-        descricao_colorida = sala['descrição']
-        for inspecionavel in sala.get("inspecionaveis", {}):
-            descricao_colorida = descricao_colorida.replace(inspecionavel, f"{DOS_AMARELO}{inspecionavel}{RESET}")
-        for item in sala.get("itens", []):
-            descricao_colorida = descricao_colorida.replace(item, f"{DOS_VERDE}{item}{RESET}")
-            
-        ui_handler.exibir(f"👁️  Visão: {descricao_colorida}")
-
-        if len(sala.get("itens", [])) > 0:
-            if jogo.turnos_luz > 0:
-                itens_formatados = [f"{DOS_VERDE}{item}{RESET}" for item in sala['itens']]
-                ui_handler.exibir(f"📦 Itens no chão: {', '.join(itens_formatados)}")
-            else:
-                ui_handler.exibir(f"📦 {DOS_BRANCO}Deve ter algo no chão, mas escuro demais para ver o quê.{RESET}")
-
-        chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
-        saidas = [k for k in sala.keys() if k not in chaves_ignoradas and isinstance(sala[k], str)]
-        if saidas:
-            ui_handler.exibir(f"🧭 Saídas: {DOS_AMARELO}{', '.join(saidas).title()}{RESET}")
-        else:
-            ui_handler.exibir(f"🧭 Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}")
-
-        ui_handler.exibir(f"\n{DOS_BRANCO}[ SISTEMA OPERACIONAL VILLAS BOAS v20.08 ]{RESET}")
-        
-        vida_visual = "9999" if jogo.god_mode else f"{jogo.hp}/3"
-        luz_visual = "9999" if jogo.god_mode else str(jogo.turnos_luz)
-        inv_visual = "∞" if jogo.god_mode else f"{len(jogo.inventario)}/{MAX_INVENTARIO}"
-        ui_handler.exibir(f"{DOS_BRANCO}[ HP: {DOS_VERMELHO}{vida_visual}{DOS_BRANCO} | LUZ: {DOS_AMARELO}{luz_visual}{DOS_BRANCO} | INV: {inv_visual} ]{RESET}")
-
-def dar_tela_de_morte(jogo):
-    jogo.estado_atual = "FIM"
-    ui = jogo.ui_handler
-    ui.exibir(f"{DOS_VERMELHO}{CAVEIRA_MORTE}{RESET}")
-    ui.animar("💀 GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, DOS_VERMELHO, jogo)
-    ui.animar("=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)
-
-def rodar_final_web(tipo_final, jogo):
-    jogo.estado_atual = "FIM"
-    ui = jogo.ui_handler
-    ui.limpar()
-    
-    liberou_deus = False
-    
-    if tipo_final == "saida":
-        ui.animar("[ FINAL MEDÍOCRE ]", 0.05, DOS_VERDE, jogo)
-        liberou_deus = registrar_final("mediocre")
-        
-    elif tipo_final == "cama":
-        ui.animar("[ FINAL BONS SONHOS ]", 0.05, DOS_BRANCO, jogo)
-        liberou_deus = registrar_final("bons_sonhos")
-        
-    elif tipo_final == "final_bom":
-        ui.animar("Voce acende o isqueiro e ilumina o local. A luz do fogo traz calma...", 0.04, DOS_VERDE, jogo)
-        ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- 'Ainda estou aqui...'", 0.09, DOS_VERMELHO, jogo)
-        ui.animar("- Amor? É voce? Mesmo???", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- 'Eu espero que ainda seja eu...'", 0.09, DOS_VERMELHO, jogo)
-        ui.animar("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas.", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- ... *Caroline abraça Rogério*", 0.09, DOS_VERMELHO, jogo)
-        ui.animar("- 'Vamos nos encontrar no céu, meu bem.'", 0.09, DOS_VERMELHO, jogo)
-        ui.exibir(f"\n{DOS_BRANCO}[ FINAL BOM ]{RESET}")
-        liberou_deus = registrar_final("bom")
-        
-    elif tipo_final == "verdadeiro":
-        ui.animar("Voce se aproxima do animatronico... dela. E encaixa os fios na sua fiação...", 0.05, DOS_BRANCO, jogo)
-        ui.animar("Voce acende o isqueiro. Os olhos de plastico parecem te encarar.", 0.05, DOS_BRANCO, jogo)
-        ui.animar("Os olhos piscam em vermelho, ela tenta fazer algo... mas não consegue.\n", 0.05, DOS_BRANCO, jogo)
-        ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- '... voce fez dar certo'", 0.08, DOS_VERMELHO, jogo)
-        ui.animar("- Caro... Caroline? É você?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("*(Você abraça a carcaça de pelugem rosa)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Meu corpo ficou em silencio, não sinto mais raiva.", 0.07, DOS_VERDE, jogo)
-        ui.animar("*(O fogo se alastra pelo restaurante, a fumaça chega no hall)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Me sinta pela ultima vez.", 0.07, DOS_VERDE, jogo)
-        ui.animar("*(Voce sente mãos invisíveis em seus ombros, um alivio inunda sua mente)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Obrigada por me deixar assim pela ultima vez.", 0.07, DOS_VERDE, jogo)
-        ui.animar("- Eu te amo.", 0.06, DOS_AMARELO, jogo)
-        ui.animar("*(O animatronico cai no chão, o fogo cobre o metal e o plástico)*", 0.05, DOS_BRANCO, jogo)
-        ui.animar("\n[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.", 0.05, DOS_VERDE, jogo)
-        ui.animar("Você se levanta e caminha para a saída antes que o teto desabe.", 0.05, DOS_BRANCO, jogo)
-        ui.exibir(f"\n{DOS_BRANCO}[ FINAL VERDADEIRO ]{RESET}")
-        liberou_deus = registrar_final("verdadeiro")
-
-    if liberou_deus:
-        ui.exibir(f"\n{DOS_AMARELO}=================================================={RESET}")
-        ui.animar(">>> MENSAGEM DO SISTEMA <<<", 0.05, DOS_VERMELHO, jogo)
-        ui.animar("VOCÊ DESVENDOU TODAS AS VERDADES DESTA NOITE.", 0.05, DOS_VERMELHO, jogo)
-        ui.animar("O CÓDIGO DE MANUTENÇÃO FOI LIBERADO.", 0.05, DOS_VERMELHO, jogo)
-        ui.exibir(f"{DOS_AMARELO}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {DOS_BRANCO}2007{RESET}")
-        ui.exibir(f"{DOS_AMARELO}=================================================={RESET}")
-        
-    ui.animar("\n=== APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)
 
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
@@ -324,7 +155,7 @@ def receber_comando():
                 ui.exibir(f"{DOS_AMARELO}       3 file(s)        68.097 bytes{RESET}")
                 ui.exibir(f"{DOS_AMARELO}       4 dir(s)        655.360 bytes free{RESET}\n")
                 jogo.estado_atual = "MENU"
-                imprimir_menu_dificuldade(ui)
+                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
             else:
                 ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
                 ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
@@ -332,7 +163,7 @@ def receber_comando():
         elif jogo.estado_atual == "MENU":
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
-                imprimir_menu_dificuldade(ui)
+                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
             elif comando == "4" and AUTOSAVE_FILE.exists():
                 ui.limpar()
                 if carregar_autosave(jogo):
@@ -340,7 +171,7 @@ def receber_comando():
                     imprimir_contexto_sala(jogo)
                 else:
                     ui.exibir(f"{DOS_VERMELHO}Falha ao ler o Autosave.{RESET}")
-                    imprimir_menu_dificuldade(ui)
+                    imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
             elif comando in ["1", "2", "3"]:
                 ui.limpar()
                 if comando == "1":
@@ -429,11 +260,6 @@ def receber_comando():
                 ui.animar("--- O JULGAMENTO DO PIANISTA ---", 0.03, DOS_VERDE, jogo)
                 ui.exibir(f"{DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{RESET}")
                 ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{RESET}")
-            elif comando in ["salvar", "carregar"]:
-                ui.limpar()
-                ui.exibir(f"{DOS_AMARELO}>>> MENSAGEM DO SISTEMA: O drive de disquete virtual está offline.{RESET}")
-                ui.exibir(f"{DOS_AMARELO}Na versão Web, o progresso salva a cada turno automaticamente.{RESET}")
-                imprimir_contexto_sala(jogo)
             else:
                 gastou_turno = processar_comando(comando, jogo, jogo.mapa)
                 if gastou_turno: atualizar_eventos_de_tempo(jogo)
@@ -441,14 +267,14 @@ def receber_comando():
                 if jogo.sala_atual == "morte":
                     dar_tela_de_morte(jogo)
                 elif jogo.sala_atual == "saida":
-                    rodar_final_web("saida", jogo)
+                    rodar_final("saida", jogo)
                 elif jogo.sala_atual == "cama":
-                    rodar_final_web("cama", jogo)
+                    rodar_final("cama", jogo)
                 elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
                     if getattr(jogo, 'incendio', False):
-                        rodar_final_web("verdadeiro", jogo)
+                        rodar_final("verdadeiro", jogo)
                     else:
-                        rodar_final_web("final_bom", jogo)
+                        rodar_final("final_bom", jogo)
                 elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
                     pass 
                 else:
@@ -563,26 +389,26 @@ def receber_comando():
             imprimir_contexto_sala(jogo)
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q1":
-            if comando == "1994": jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui)
-            else: falar_pianista(False, ui)
+            if comando == "1994": jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui, jogo)
+            else: falar_pianista(False, ui, jogo)
             jogo.estado_atual = "MINIGAME_JULGAMENTO_Q2"
             ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 2: Qual animatrônico está atrás de você agora?{RESET}")
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q2":
-            if "caroline" in comando or "ela" in comando: jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui)
-            else: falar_pianista(False, ui)
+            if "caroline" in comando or "ela" in comando: jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui, jogo)
+            else: falar_pianista(False, ui, jogo)
             jogo.estado_atual = "MINIGAME_JULGAMENTO_Q3"
             ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 3: Em que ano tudo isso começou?{RESET}")
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q3":
-            if comando == "1982": jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui)
-            else: falar_pianista(False, ui)
+            if comando == "1982": jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui, jogo)
+            else: falar_pianista(False, ui, jogo)
             jogo.estado_atual = "MINIGAME_JULGAMENTO_Q4"
             ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 4: Quem é você?{RESET}")
 
         elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q4":
-            if "rogerio" in comando: jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui)
-            else: falar_pianista(False, ui)
+            if "rogerio" in comando: jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui, jogo)
+            else: falar_pianista(False, ui, jogo)
             jogo.estado_atual = "MINIGAME_JULGAMENTO_V1"
             ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 5: Quem são as três vítimas? Digite o 1º nome:{RESET}")
 
@@ -593,8 +419,8 @@ def receber_comando():
                     jogo.web_julgamento["vitimas"].remove(v)
                     acertou = True
             
-            if acertou: falar_pianista(True, ui)
-            else: falar_pianista(False, ui)
+            if acertou: falar_pianista(True, ui, jogo)
+            else: falar_pianista(False, ui, jogo)
             
             if jogo.estado_atual == "MINIGAME_JULGAMENTO_V1":
                 jogo.estado_atual = "MINIGAME_JULGAMENTO_V2"
@@ -694,7 +520,6 @@ def receber_comando():
                 elif isinstance(jogo.minigame_atual, MinigameSeguranca):
                     jogo.minigame_atual.energia = 9999
                     
-        # --- SALVAMENTO INVISÍVEL A CADA AÇÃO ---
         if jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
             salvar_autosave(jogo)
 

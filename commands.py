@@ -497,10 +497,25 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(f"{DOS_BRANCO}Você não tem armas. Suas mãos estão tremendo demais para lutar.{RESET}")
         ui.pausar(1.5)
         return False
+
     elif comando == "salvar":
-        salvar_jogo(jogo); return False
+        # Remove a necessidade de Disquete!
+        salvar_autosave(jogo)
+        ui.exibir(f"{DOS_VERDE}💾 Progresso salvo no sistema de Autosave.{RESET}")
+        ui.pausar(1.5)
+        return False
     elif comando == "carregar":
-        carregar_jogo(jogo); return False
+        if carregar_autosave(jogo):
+            ui.exibir(f"{DOS_VERDE}💾 Jogo carregado com sucesso do Autosave.{RESET}")
+            ui.pausar(1.5)
+            # Força o mapa a reimprimir
+            from views import imprimir_contexto_sala
+            imprimir_contexto_sala(jogo)
+        else:
+            ui.exibir(f"{DOS_AMARELO}Nenhum Autosave encontrado no disco.{RESET}")
+            ui.pausar(1.5)
+        return False
+        
     elif comando == "ajuda" or comando == "comandos":
         ui.exibir(f"\n{DOS_AMARELO}--- COMANDOS DO SISTEMA ---{RESET}")
         ui.exibir("Mover: 'ir [direcao]' ou apenas o nome da sala! | Itens: 'pegar', 'largar', 'usar', 'combinar'")
