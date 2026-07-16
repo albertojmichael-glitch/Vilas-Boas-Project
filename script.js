@@ -3,6 +3,9 @@ const inputField = document.getElementById('comando');
 const terminal = document.getElementById('terminal');
 const loadingSpinner = document.getElementById('loading');
 
+// NOVA VARIÁVEL QUE CONTROLA A LINHA DO C:\>
+const inputLineDiv = document.querySelector('.input-line'); 
+
 // Elementos da HUD
 const hpEl = document.getElementById('hud-hp');
 const luzEl = document.getElementById('hud-luz');
@@ -25,7 +28,8 @@ function atualizarSidebar(estado) {
     if (estado.hp === "∞") {
         hpEl.textContent = "∞";
     } else {
-        const coracoes = "[█] ".repeat(Math.max(0, estado.hp)) + "[ ] ".repeat(Math.max(0, 3 - estado.hp))
+        // Usando a barra de vida estilo ASCII que configuramos!
+        const coracoes = "[█] ".repeat(Math.max(0, estado.hp)) + "[ ] ".repeat(Math.max(0, 3 - estado.hp));
         hpEl.textContent = coracoes;
     }
     
@@ -71,7 +75,6 @@ function novaLinha(linha) {
 function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) {
     const p = document.createElement('p');
     
-    // --- POINT 7: ACESSIBILIDADE E LEITORES DE TELA ---
     let a11yPrefix = "";
     if (classeCor === 'vermelho') a11yPrefix = "<span style='opacity:0; position:absolute'>[PERIGO] </span>";
     if (classeCor === 'amarelo') a11yPrefix = "<span style='opacity:0; position:absolute'>[ATENÇÃO] </span>";
@@ -114,9 +117,9 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     digitar();
 }
 
-// --- POINT 4: TRATAMENTO DE ERROS DE REDE E CACHE ---
 async function fetchSeguro(url, options) {
     inputField.disabled = true;
+    inputLineDiv.style.display = 'none'; // ESCONDE O C:\> DURANTE A DIGITAÇÃO
     loadingSpinner.style.display = 'flex';
     
     try {
@@ -134,6 +137,7 @@ async function fetchSeguro(url, options) {
         outputDiv.appendChild(p);
         terminal.scrollTop = terminal.scrollHeight;
     } finally {
+        inputLineDiv.style.display = 'flex'; // MOSTRA O C:\> DE NOVO QUANDO ACABA
         inputField.disabled = false;
         inputField.focus();
     }
