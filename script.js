@@ -1,134 +1,105 @@
-const inputField = document.getElementById('cmdInput');
 const outputDiv = document.getElementById('output');
+const inputField = document.getElementById('comando');
 const terminal = document.getElementById('terminal');
-const inputLine = document.querySelector('.input-line');
-let digitando = false;
 
-function ajustarLarguraInput() {
-    const tamanho = Math.max(inputField.value.length, 1);
-    inputField.style.width = tamanho + 'ch';
-}
-inputField.addEventListener('input', ajustarLarguraInput);
+// Elementos da HUD
+const hpEl = document.getElementById('hud-hp');
+const luzEl = document.getElementById('hud-luz');
+const invEl = document.getElementById('hud-inv');
+const salaEl = document.getElementById('hud-sala');
+const saidasEl = document.getElementById('hud-saidas');
 
-document.addEventListener('click', () => {
-    if (!digitando) inputField.focus();
-});
-
-window.onload = () => {
-    travarInput();
-    fetch('/iniciar', { credentials: 'include' })
-        .then(response => response.json())
-        .then(data => {
-            outputDiv.innerHTML = ''; 
-            digitarFilaDeLinhas(data.linhas, 0);
-        })
-        .catch(error => {
-            outputDiv.innerHTML = ''; 
-            adicionarLinhaInstantaneaHTML('<span class="vermelho">FALHA DE CONEXÃO COM O SERVIDOR. LIGUE O APP.PY.</span>');
-            destravarInput();
-        });
-};
-
+// Auto-submit pelo ENTER
 inputField.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter' && !digitando) {
-        const comando = inputField.value.trim();
-        if (comando) {
-            adicionarLinhaInstantaneaHTML(`<span class="verde">C:\\> ${comando}</span>`);
-            inputField.value = '';
-            ajustarLarguraInput();
-            travarInput(); 
-            
-            fetch('/comando', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ comando: comando })
-            })
-            .then(response => response.json())
-            .then(data => {
-                digitarFilaDeLinhas(data.linhas, 0);
-            })
-            .catch(error => {
-                adicionarLinhaInstantaneaHTML('<span class="vermelho">FALHA DE CONEXÃO COM O MAINFRAME.</span>');
-                destravarInput();
-            });
-        }
+    if (e.key === 'Enter') {
+        enviarComando();
     }
 });
 
-function travarInput() {
-    digitando = true;
-    inputLine.style.display = 'none'; 
-}
+// Força foco no input sempre que clicar na tela
+document.addEventListener('click', () => {
+    inputField.focus();
+});
 
-function destravarInput() {
-    digitando = false;
-    inputLine.style.display = 'flex'; 
-    inputField.focus(); 
-    terminal.scrollTop = terminal.scrollHeight; 
-}
-
-function adicionarLinhaInstantaneaHTML(htmlString) {
-    const p = document.createElement('p');
-    p.className = 'verde'; 
-    p.innerHTML = htmlString;
-    outputDiv.appendChild(p);
-    terminal.scrollTop = terminal.scrollHeight;
-}
-
-function digitarFilaDeLinhas(linhas, index) {
-    if (index >= linhas.length) {
-        destravarInput();
-        return;
-    }
-
-    let linha = linhas[index];
+function atualizarSidebar(estado) {
+    if (!estado) return;
     
-    // Identifica o comando especial de Limpar Tela
-    let textoPuro = linha.replace(/<[^>]*>?/gm, '').trim();
-    if (textoPuro === "@@CLEAR@@") {
-        outputDiv.innerHTML = ''; // Limpa fisicamente o monitor
-        setTimeout(() => {
-            digitarFilaDeLinhas(linhas, index + 1);
-        }, 10);
-        return;
-    }
+    salaEl.textContent = estado.sala;
     
-    if (linha.startsWith("@@TYPE@@")) {
-        let parts = linha.split("@@");
-        let cor = parts[2];
-        let ms = parseInt(parts[3], 10);
-        let texto = parts.slice(4).join("@@"); 
-        
-        digitarTextoAnimadoHTML(texto, cor, ms, () => {
-            setTimeout(() => { digitarFilaDeLinhas(linhas, index + 1); }, 150);
-        });
+    // Desenha corações para a vida
+    if (estado.hp === "∞") {
+        hpEl.textContent = "∞";
     } else {
-        
-        let heArte = textoPuro.startsWith("  ") || textoPuro.startsWith("==") || textoPuro.startsWith("--") || textoPuro.startsWith("__") || textoPuro.startsWith("\\");
-        
-        if (heArte || textoPuro === "") {
-            adicionarLinhaInstantaneaHTML(linha);
-            setTimeout(() => {
-                digitarFilaDeLinhas(linhas, index + 1);
-            }, 10); 
-        } else {
-            digitarTextoAnimadoHTML(linha, 'verde', 15, () => {
-                setTimeout(() => {
-                    digitarFilaDeLinhas(linhas, index + 1);
-                }, 80); 
-            });
-        }
+        const coracoes = "❤️".repeat(Math.max(0, estado.hp)) + "🖤".repeat(Math.max(0, 3 - estado.hp));
+        hpEl.textContent = coracoes;
+    }
+    
+    luzEl.textContent = estado.luz === "∞" ? "∞" : estado.luz + " turnos";
+    
+    // Lista de Inventário
+    invEl.innerHTML = "";
+    if (estado.inventario.length === 0) {
+        invEl.innerHTML = "<li>Vazio</li>";
+    } else {
+        estado.inventario.forEach(item => {
+            let li = document.createElement('li');
+            li.textContent = "- " + item;
+            invEl.appendChild(li);
+        });
+    }
+
+    // Lista de Saídas do Mapa
+    saidasEl.innerHTML = "";
+    if (estado.saidas.length === 0) {
+        saidasEl.innerHTML = "<li>Nenhuma visível</li>";
+    } else {
+        estado.saidas.forEach(saida => {
+            let li = document.createElement('li');
+            li.textContent = "> " + saida;
+            saidasEl.appendChild(li);
+        });
     }
 }
 
-// A Máquina de Escrever capaz de ler HTML sem quebrar as cores!
+async function processarLinhas(linhas, estado) {
+    inputField.disabled = true; // Bloqueia spam de comandos
+    
+    for (let linha of linhas) {
+        await novaLinha(linha);
+    }
+    
+    atualizarSidebar(estado);
+    
+    inputField.disabled = false;
+    inputField.focus();
+}
+
+function novaLinha(linha) {
+    return new Promise((resolve) => {
+        if (linha.startsWith("@@CLEAR@@")) {
+            outputDiv.innerHTML = "";
+            resolve();
+        } else if (linha.startsWith("@@TYPE@@")) {
+            let parts = linha.split("@@");
+            let cor = parts[2];
+            let ms = parseInt(parts[3]);
+            let texto = parts.slice(4).join("@@"); // Junta caso o texto tenha "@@" dentro
+            digitarTextoAnimadoHTML(texto, cor, ms, resolve);
+        } else {
+            let p = document.createElement('p');
+            p.innerHTML = linha;
+            outputDiv.appendChild(p);
+            terminal.scrollTop = terminal.scrollHeight;
+            resolve();
+        }
+    });
+}
+
 function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) {
     const p = document.createElement('p');
-    p.className = classeCor;
+    if (classeCor) p.className = classeCor;
     outputDiv.appendChild(p);
     
-    // --- O PULO DA MÁQUINA (MODO RÁPIDO) ---
     if (velocidade === 0) {
         p.innerHTML = htmlString;
         terminal.scrollTop = terminal.scrollHeight;
@@ -152,11 +123,11 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
             if (char === '<') isTag = true;
             if (char === '>') isTag = false;
             
-            // Pula a lentidão instantaneamente se for um código HTML de cor (<span class="verde">)
-            if (isTag || htmlString.charAt(i) === '<') {
+            // Pula a lentidão instantaneamente se for um código HTML invisível
+            if (isTag || (i < htmlString.length && htmlString.charAt(i) === '<')) {
                 digitar(); 
             } else {
-                setTimeout(digitar, velocidade); // Pausa apenas nas letras lidas pelo jogador
+                setTimeout(digitar, velocidade);
             }
         } else {
             aoTerminar(); 
@@ -164,3 +135,32 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     }
     digitar();
 }
+
+async function iniciarJogo() {
+    const res = await fetch('/iniciar');
+    const data = await res.json();
+    processarLinhas(data.linhas, data.estado);
+}
+
+async function enviarComando() {
+    const comando = inputField.value;
+    if (!comando.trim()) return;
+    
+    let p = document.createElement('p');
+    p.innerHTML = `<span class="branco">> C:\\> ${comando}</span>`;
+    outputDiv.appendChild(p);
+    
+    inputField.value = '';
+    terminal.scrollTop = terminal.scrollHeight;
+
+    const res = await fetch('/comando', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comando: comando })
+    });
+    
+    const data = await res.json();
+    processarLinhas(data.linhas, data.estado);
+}
+
+window.onload = iniciarJogo;

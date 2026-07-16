@@ -105,6 +105,25 @@ def obter_estado():
 def raiz():
     return send_from_directory(".", "index.html")
 
+def gerar_resposta_json(captura, jogo):
+    linhas = [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]
+    
+    saidas = []
+    if jogo.estado_atual not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
+        chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
+        saidas = [k.title() for k in jogo.mapa[jogo.sala_atual].keys() if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
+
+    return jsonify({
+        "linhas": linhas,
+        "estado": {
+            "hp": jogo.hp if not getattr(jogo, 'god_mode', False) else "∞",
+            "luz": jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞",
+            "inventario": jogo.inventario,
+            "sala": jogo.sala_atual.upper() if jogo.estado_atual != "MENU" else "MENU PRINCIPAL",
+            "saidas": saidas
+        }
+    })
+
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
     sid = session.get("sid")
@@ -117,7 +136,7 @@ def iniciar_jogo():
     imprimir_tela_boot(jogo.ui_handler)
     sys.stdout = sys.__stdout__
     
-    return jsonify({"linhas": [l for l in ansi_para_html(captura.getvalue()).split('\n') if l.strip() != ""]})
+    return gerar_resposta_json(captura, jogo)
 
 @app.route('/comando', methods=['POST'])
 def receber_comando():
@@ -484,7 +503,7 @@ def receber_comando():
     finally:
         sys.stdout = stdout_original
 
-    return jsonify({"linhas": [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]})
+    return gerar_resposta_json(captura, jogo)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
