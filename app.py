@@ -5,6 +5,7 @@ import io
 import re
 import random
 import uuid
+import traceback
 from pathlib import Path
 
 from flask import Flask, request, jsonify, session, send_from_directory
@@ -17,9 +18,11 @@ from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, CAVEIRA_MORTE, MAX_INVENTARI
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, UIHandler
 from utils import extrair_argumentos
 
-# Importa a lógica UI unificada
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
                    dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
+
+# --- GARANTIA DE DIRETÓRIO ABSOLUTO (Evita o Erro 404 de CSS/JS no Render) ---
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 ARTE_COFRE = r'''                                                                              
        .-----:-:--:-:-:::--:::::::::::-:::-::::::-::-------:::-:------::        
@@ -83,12 +86,12 @@ def ansi_para_html(texto_ansi):
     if aberto: html.append("</span>")
     return "".join(html)
 
-app = Flask(__name__, static_folder=".", static_url_path="")
+app = Flask(__name__, static_folder=BASE_DIR, static_url_path="")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
 CORS(app, supports_credentials=True)
 
-# --- SESSÕES EM DISCO PARA EVITAR MEMORY LEAK ---
-SESSION_DIR = Path("sessions")
+# --- SESSÕES EM DISCO COM CAMINHO ABSOLUTO ---
+SESSION_DIR = Path(BASE_DIR) / "sessions"
 SESSION_DIR.mkdir(exist_ok=True)
 
 def obter_estado():
@@ -115,29 +118,50 @@ def salvar_sessao(sid, jogo):
     session_file = SESSION_DIR / f"{sid}.json"
     session_file.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
 
-# --- O CORAÇÃO DO FRONTEND (QUE EU TINHA ESQUECIDO!) ---
 def gerar_resposta_json(captura, jogo):
     linhas = [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]
     
     saidas = []
-    if getattr(jogo, 'estado_atual', "") not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
-        chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
-        saidas = [k.title() for k in jogo.mapa[jogo.sala_atual].keys() if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
+    hp = "..."
+    luz = "..."
+    inv = []
+    sala = "BOOT"
+
+    # Se o jogo existir, popula a HUD corretamente
+    if jogo:
+        if getattr(jogo, 'estado_atual', "") not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
+            chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
+            saidas = [k.title() for k in jogo.mapa[jogo.sala_atual].keys() if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
+
+        hp = jogo.hp if not getattr(jogo, 'god_mode', False) else "∞"
+        luz = jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞"
+        inv = jogo.inventario
+        sala = jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA"
 
     return jsonify({
         "linhas": linhas,
         "estado": {
-            "hp": jogo.hp if not getattr(jogo, 'god_mode', False) else "∞",
-            "luz": jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞",
-            "inventario": jogo.inventario,
-            "sala": jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA",
+            "hp": hp,
+            "luz": luz,
+            "inventario": inv,
+            "sala": sala,
             "saidas": saidas
         }
     })
 
+# --- ROTAS EXPLÍCITAS PARA EVITAR 404 NO RENDER ---
 @app.route("/")
 def raiz():
-    return send_from_directory(".", "index.html")
+    return send_from_directory(BASE_DIR, "index.html")
+
+@app.route("/style.css")
+def serve_css():
+    return send_from_directory(BASE_DIR, "style.css")
+
+@app.route("/script.js")
+def serve_js():
+    return send_from_directory(BASE_DIR, "script.js")
+
 
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
@@ -145,7 +169,7 @@ def iniciar_jogo():
     if sid:
         session_file = SESSION_DIR / f"{sid}.json"
         if session_file.exists():
-            try: session_file.unlink() # Limpa o cache antigo
+            try: session_file.unlink() 
             except: pass
             
     jogo = obter_estado()
@@ -161,16 +185,17 @@ def iniciar_jogo():
 
 @app.route('/comando', methods=['POST'])
 def receber_comando():
-    jogo = obter_estado()
-    dados = request.json
-    comando = normalizar(dados.get('comando', ''))
-    ui = jogo.ui_handler
-
+    jogo = None
     captura = io.StringIO()
     stdout_original = sys.stdout
     sys.stdout = captura
 
     try:
+        jogo = obter_estado()
+        dados = request.json
+        comando = normalizar(dados.get('comando', ''))
+        ui = jogo.ui_handler
+
         if jogo.estado_atual == "FIM":
             ui.exibir(f"{DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{RESET}")
 
@@ -517,11 +542,17 @@ def receber_comando():
             salvar_autosave(jogo)
 
     except Exception as e:
-        ui.exibir(f"\n[ERRO DE SISTEMA]: {e}")
+        # --- A BLINDAGEM CONTRA ERROS DE CONEXÃO ---
+        # Se ocorrer um bug interno, o JSON continua sendo enviado com a mensagem de erro!
+        print(f"\n{DOS_VERMELHO}[ERRO INTERNO DO SISTEMA]: O sistema falhou ao processar a ação.{RESET}")
+        print(f"{DOS_AMARELO}Detalhes técnicos: {e}{RESET}")
+        traceback.print_exc() # Imprime no Log do Render para você debugar depois
     finally:
         sys.stdout = stdout_original
 
-    salvar_sessao(session.get("sid"), jogo)
+    # Sempre salva a sessão no final para não perder o "sid"
+    if jogo: salvar_sessao(session.get("sid"), jogo)
+    
     return gerar_resposta_json(captura, jogo)
 
 if __name__ == '__main__':
