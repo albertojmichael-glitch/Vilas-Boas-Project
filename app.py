@@ -181,49 +181,50 @@ def receber_comando():
         elif jogo.estado_atual == "MENU":
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
-                imprimir_menu_dificuldade(ui)
+                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists(), jogo=jogo)
             elif comando == "4" and AUTOSAVE_FILE.exists():
                 ui.limpar()
                 if carregar_autosave(jogo):
-                    ui.exibir(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO ÚLTIMO AUTOSAVE.{RESET}\n")
+                    ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO ÚLTIMO AUTOSAVE.{RESET}\n", 0.04, jogo=jogo)
                     imprimir_contexto_sala(jogo)
                 else:
-                    ui.exibir(f"{DOS_VERMELHO}Falha ao ler o Autosave.{RESET}")
-                    imprimir_menu_dificuldade(ui)
+                    ui.animar(f"{DOS_VERMELHO}Falha ao ler o Autosave.{RESET}", 0.04, jogo=jogo)
+                    imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists(), jogo=jogo)
             elif comando in ["1", "2", "3"]:
                 ui.limpar()
                 if comando == "1":
                     jogo.dificuldade_escolhida = "NORMAL"
                     jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
-                    ui.exibir(f"{DOS_VERDE}MODO NORMAL SELECIONADO. INICIANDO JOGO.EXE...{RESET}\n")
+                    ui.animar(f"{DOS_VERDE}MODO NORMAL SELECIONADO. INICIANDO JOGO.EXE...{RESET}\n", 0.04, jogo=jogo)
                 elif comando == "2":
                     jogo.dificuldade_escolhida = "PESADELO"
                     jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
-                    ui.exibir(f"{DOS_VERMELHO}MODO PESADELO SELECIONADO. BOA SORTE.{RESET}\n")
+                    ui.animar(f"{DOS_VERMELHO}MODO PESADELO SELECIONADO. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
                 elif comando == "3":
                     jogo.dificuldade_escolhida = "NORMAL"
-                    jogo.fast_mode = True
+                    jogo.fast_mode = True # AQUI O FAST MODE DEVE FICAR!
                     jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
-                    ui.exibir(f"{DOS_AMARELO}MODO RÁPIDO SELECIONADO. DELAYS DE DIGITAÇÃO DESATIVADOS.{RESET}\n")
+                    ui.animar(f"{DOS_AMARELO}MODO RÁPIDO SELECIONADO. DELAYS DE DIGITAÇÃO DESATIVADOS.{RESET}\n", 0.04, jogo=jogo)
 
                 jogo.estado_atual = "JOGO"
-                imprimir_tutorial(ui)
+                imprimir_tutorial(ui, jogo=jogo)
                 ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
                 ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.04, jogo=jogo)
                 imprimir_contexto_sala(jogo)
+                
             elif comando == "2007":
                 ui.limpar()
                 jogo.dificuldade_escolhida = "GOD MODE"
                 jogo.god_mode = True
-                jogo.fast_mode = True
+                # A LINHA QUE QUEBRAVA A SUA IMERSÃO FOI REMOVIDA DAQUI! 
                 jogo.hp = 9999; jogo.furia_noite = 0; jogo.energia_min_noite = 9999; jogo.energia_max_noite = 9999
                 jogo.turnos_luz = 9999
                 jogo.estado_atual = "JOGO"
-                ui.exibir(f"{DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{RESET}\n")
-                ui.exibir(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{RESET}")
+                ui.animar(f"{DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{RESET}\n", 0.04, jogo=jogo)
+                ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{RESET}", 0.04, jogo=jogo)
                 imprimir_contexto_sala(jogo)
             else:
-                ui.exibir(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}")
+                ui.animar(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}", 0.04, jogo=jogo)
 
         elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
             if comando in ["cls", "limpar", "clear", "clean"]:

@@ -11,15 +11,15 @@ def imprimir_tela_boot(ui):
     ui.animar("CARREGANDO 'COMMAND.COM'....... OK\n", 0.06, DOS_VERDE)
     ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
-def imprimir_menu_dificuldade(ui):
-    ui.animar("==================================================", 0.01, DOS_VERDE)
-    ui.animar("__     _____ _     _        _ ____   ___   ____ ", 0.01, DOS_VERDE)
-    ui.animar("\\ \\   / /_ _| |   | |      / / ___| / _ \\ / ___|", 0.01, DOS_VERDE)
-    ui.animar(" \\ \\ / / | || |   | |     / /\\___ \\| | | |\\___ \\", 0.01, DOS_VERDE)
-    ui.animar("  \\ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.01, DOS_VERDE)
-    ui.animar("   \\_/  |___|_____|_____/_/  |____/ \\___/ |____/", 0.01, DOS_VERDE)
-    ui.animar("==================================================", 0.01, DOS_VERDE)
-    ui.animar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.03, DOS_BRANCO)
+def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
+    ui.animar("==================================================", 0.005, DOS_VERDE, jogo)
+    ui.animar("__     _____ _     _        _ ____   ___   ____ ", 0.005, DOS_VERDE, jogo)
+    ui.animar("\\ \\   / /_ _| |   | |      / / ___| / _ \\ / ___|", 0.005, DOS_VERDE, jogo)
+    ui.animar(" \\ \\ / / | || |   | |     / /\\___ \\| | | |\\___ \\", 0.005, DOS_VERDE, jogo)
+    ui.animar("  \\ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.005, DOS_VERDE, jogo)
+    ui.animar("   \\_/  |___|_____|_____/_/  |____/ \\___/ |____/", 0.005, DOS_VERDE, jogo)
+    ui.animar("==================================================", 0.005, DOS_VERDE, jogo)
+    ui.animar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.02, DOS_BRANCO, jogo)
 
     conquistas = carregar_conquistas()
     c_med = "[X]" if "mediocre" in conquistas else "[ ]"
@@ -28,26 +28,26 @@ def imprimir_menu_dificuldade(ui):
     c_ver = "[X]" if "verdadeiro" in conquistas else "[ ]"
     qtd = len(set(conquistas) & {"mediocre", "bons_sonhos", "bom", "verdadeiro"})
 
-    ui.exibir(f"{DOS_AMARELO}🏆 FINAIS ALCANÇADOS: {qtd}/4{RESET}")
-    ui.exibir(f"{DOS_BRANCO}{c_med} Medíocre  {c_son} Bons Sonhos  {c_bom} Bom  {c_ver} Verdadeiro{RESET}\n")
+    ui.animar(f"{DOS_AMARELO}🏆 FINAIS ALCANÇADOS: {qtd}/4{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_BRANCO}{c_med} Medíocre  {c_son} Bons Sonhos  {c_bom} Bom  {c_ver} Verdadeiro{RESET}\n", 0.01, DOS_BRANCO, jogo)
 
-    ui.exibir(f"{DOS_BRANCO}[1] INICIAR MODO: NORMAL (Para iniciantes){RESET}")
-    ui.exibir(f"{DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){RESET}")
-    ui.exibir(f"{DOS_AMARELO}[3] INICIAR MODO: RÁPIDO (Skip Delays de Digitação){RESET}")
+    ui.animar(f"{DOS_BRANCO}[1] INICIAR MODO: NORMAL (Para iniciantes){RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_AMARELO}[3] INICIAR MODO: RÁPIDO (Skip Delays de Digitação){RESET}", 0.01, DOS_BRANCO, jogo)
 
-    if AUTOSAVE_FILE.exists():
-        ui.exibir(f"{DOS_VERDE}[4] CONTINUAR JOGO (Autosave Encontrado){RESET}\n")
-        ui.exibir(f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-4): {RESET}")
+    if tem_autosave:
+        ui.animar(f"{DOS_VERDE}[4] CONTINUAR JOGO (Autosave Encontrado){RESET}\n", 0.01, DOS_BRANCO, jogo)
+        ui.animar(f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-4): {RESET}", 0.01, DOS_BRANCO, jogo)
     else:
-        ui.exibir(f"\n{DOS_VERDE}SELECIONE UMA OPÇÃO (1-3): {RESET}")
+        ui.animar(f"\n{DOS_VERDE}SELECIONE UMA OPÇÃO (1-3): {RESET}", 0.01, DOS_BRANCO, jogo)
 
-def imprimir_tutorial(ui):
-    ui.exibir(f"\n{DOS_AMARELO}--- DICAS DE SOBREVIVÊNCIA (TUTORIAL) ---{RESET}")
-    ui.exibir(f"{DOS_BRANCO}1. Mova-se digitando {DOS_VERDE}ir frente{DOS_BRANCO}, ou apenas o nome da sala.{RESET}")
-    ui.exibir(f"{DOS_BRANCO}2. Use aspas para nomes compostos: {DOS_VERDE}pegar \"tabua pequena de madeira\"{DOS_BRANCO}.{RESET}")
-    ui.exibir(f"{DOS_BRANCO}3. Você pode usar atalhos como {DOS_VERDE}p chave{DOS_BRANCO} em vez de {DOS_VERDE}pegar chave{DOS_BRANCO}.{RESET}")
-    ui.exibir(f"{DOS_BRANCO}4. Digite {DOS_VERDE}ajuda{DOS_BRANCO} a qualquer momento para ver o manual do sistema.{RESET}")
-    ui.exibir(f"{DOS_AMARELO}-----------------------------------------{RESET}\n")
+def imprimir_tutorial(ui, jogo=None):
+    ui.animar(f"\n{DOS_AMARELO}--- DICAS DE SOBREVIVÊNCIA (TUTORIAL) ---{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_BRANCO}1. Mova-se digitando {DOS_VERDE}ir frente{DOS_BRANCO}, ou apenas o nome da sala.{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_BRANCO}2. Use aspas para nomes compostos: {DOS_VERDE}pegar \"tabua pequena de madeira\"{DOS_BRANCO}.{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_BRANCO}3. Você pode usar atalhos como {DOS_VERDE}p chave{DOS_BRANCO} em vez de {DOS_VERDE}pegar chave{DOS_BRANCO}.{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_BRANCO}4. Digite {DOS_VERDE}ajuda{DOS_BRANCO} a qualquer momento para ver o manual do sistema.{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_AMARELO}-----------------------------------------{RESET}\n", 0.01, DOS_BRANCO, jogo)
 
 def dar_dica_jon(passo_certo, ui):
     dicas = {
@@ -108,7 +108,7 @@ def imprimir_contexto_sala(jogo):
         
         ui.animar(f"[ HP: {DOS_VERMELHO}{vida_visual}{DOS_BRANCO} | LUZ: {DOS_AMARELO}{luz_visual}{DOS_BRANCO} | INV: {inv_visual} ]", 0.04, DOS_BRANCO, jogo)
 
-        
+
 def dar_tela_de_morte(jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
