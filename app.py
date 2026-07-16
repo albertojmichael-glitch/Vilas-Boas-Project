@@ -293,16 +293,16 @@ def receber_comando():
                 print(f"{ui.DOS_BRANCO} Volume in drive A is VILLASBOAS{ui.RESET}")
                 print(f"{ui.DOS_BRANCO} Directory of A:\\{ui.RESET}\n")
                 
-                # --- ALINHAMENTO CORRIGIDO DO DIRETÓRIO ---
+                # --- O SEGREDO DO HTML (&lt;DIR&gt;) ---
                 print(f"{ui.DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{ui.RESET}")
                 print(f"{ui.DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{ui.RESET}")
                 print(f"{ui.DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{ui.RESET}")
-                print(f"{ui.DOS_VERDE}DESKTOP  <DIR>        197.78  24-07-2007  4:00a{ui.RESET}")
-                print(f"{ui.DOS_VERDE}SAVES    <DIR>        358.21  23-07-2008  4:00a{ui.RESET}")
-                print(f"{ui.DOS_VERDE}PICTURE  <DIR>        666.00  05-11-1994  4:00a{ui.RESET}")
-                print(f"{ui.DOS_VERDE}VALID    <DIR>        2.7801  24-07-2007  4:00a{ui.RESET}")
-                print(f"{ui.DOS_AMARELO}       3 file(s)      68.097 bytes{ui.RESET}")
-                print(f"{ui.DOS_AMARELO}       4 dir(s)      655.360 bytes free{ui.RESET}\n")
+                print(f"{ui.DOS_VERDE}DESKTOP  &lt;DIR&gt;        197.78  24-07-2007  4:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}SAVES    &lt;DIR&gt;        358.21  23-07-2008  4:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}PICTURE  &lt;DIR&gt;        666.00  05-11-1994  4:00a{ui.RESET}")
+                print(f"{ui.DOS_VERDE}VALID    &lt;DIR&gt;        2.7801  24-07-2007  4:00a{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}       3 file(s)        68.097 bytes{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}       4 dir(s)        655.360 bytes free{ui.RESET}\n")
                 
                 jogo.estado_atual = "MENU"
                 imprimir_menu_dificuldade()
@@ -413,7 +413,6 @@ def receber_comando():
                 elif jogo.sala_atual == "cama":
                     rodar_final_web("cama")
                     
-                # --- A VERIFICAÇÃO DOS FINAIS DEFINITIVOS NO HALL ---
                 elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
                     if getattr(jogo, 'incendio', False):
                         rodar_final_web("verdadeiro")
