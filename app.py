@@ -1,21 +1,21 @@
 import os
 import json
-from flask import Flask, request, jsonify, session, send_from_directory
-from flask_cors import CORS
 import sys
 import io
 import re
 import random
 import uuid
+from pathlib import Path
 
-from state import GameState, salvar_autosave, carregar_autosave, AUTOSAVE_FILE
+from flask import Flask, request, jsonify, session, send_from_directory
+from flask_cors import CORS
+
+from state import GameState, GameStateEnum, salvar_autosave, carregar_autosave, AUTOSAVE_FILE
 from commands import processar_comando, normalizar
 from minigames import MinigameMinotauro, MinigameSeguranca
-from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
+from data import ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, CAVEIRA_MORTE, MAX_INVENTARIO
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, UIHandler
 from utils import extrair_argumentos
-from pathlib import Path
-from state import GameStateEnum
 
 # Importa a lógica UI unificada
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
@@ -63,9 +63,7 @@ class WebUIHandler(UIHandler):
         return "" 
 
 def ansi_para_html(texto_ansi):
-    mapa_cores = {
-        DOS_VERDE: "verde", DOS_BRANCO: "branco", DOS_AMARELO: "amarelo", DOS_VERMELHO: "vermelho",
-    }
+    mapa_cores = { DOS_VERDE: "verde", DOS_BRANCO: "branco", DOS_AMARELO: "amarelo", DOS_VERMELHO: "vermelho" }
     padrao = re.compile("(" + "|".join(re.escape(c) for c in list(mapa_cores.keys()) + [RESET]) + ")")
     partes = padrao.split(texto_ansi)
 
@@ -89,8 +87,7 @@ app = Flask(__name__, static_folder=".", static_url_path="")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
 CORS(app, supports_credentials=True)
 
-partidas = {}
-
+# --- SESSÕES EM DISCO PARA EVITAR MEMORY LEAK ---
 SESSION_DIR = Path("sessions")
 SESSION_DIR.mkdir(exist_ok=True)
 
@@ -118,15 +115,12 @@ def salvar_sessao(sid, jogo):
     session_file = SESSION_DIR / f"{sid}.json"
     session_file.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
 
-@app.route("/")
-def raiz():
-    return send_from_directory(".", "index.html")
-
+# --- O CORAÇÃO DO FRONTEND (QUE EU TINHA ESQUECIDO!) ---
 def gerar_resposta_json(captura, jogo):
     linhas = [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]
     
     saidas = []
-    if jogo.estado_atual not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
+    if getattr(jogo, 'estado_atual', "") not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
         chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
         saidas = [k.title() for k in jogo.mapa[jogo.sala_atual].keys() if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
 
@@ -136,15 +130,24 @@ def gerar_resposta_json(captura, jogo):
             "hp": jogo.hp if not getattr(jogo, 'god_mode', False) else "∞",
             "luz": jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞",
             "inventario": jogo.inventario,
-            "sala": jogo.sala_atual.upper() if jogo.estado_atual != "MENU" else "MENU PRINCIPAL",
+            "sala": jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA",
             "saidas": saidas
         }
     })
 
+@app.route("/")
+def raiz():
+    return send_from_directory(".", "index.html")
+
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
     sid = session.get("sid")
-    if sid and sid in partidas: del partidas[sid]  
+    if sid:
+        session_file = SESSION_DIR / f"{sid}.json"
+        if session_file.exists():
+            try: session_file.unlink() # Limpa o cache antigo
+            except: pass
+            
     jogo = obter_estado()
     jogo.estado_atual = "AGUARDANDO_DIR"
     
@@ -153,6 +156,7 @@ def iniciar_jogo():
     imprimir_tela_boot(jogo.ui_handler)
     sys.stdout = sys.__stdout__
     
+    salvar_sessao(session.get("sid"), jogo)
     return gerar_resposta_json(captura, jogo)
 
 @app.route('/comando', methods=['POST'])
@@ -188,7 +192,7 @@ def receber_comando():
                 ui.exibir(f"{DOS_AMARELO}       3 file(s)        68.097 bytes{RESET}")
                 ui.exibir(f"{DOS_AMARELO}       4 dir(s)        655.360 bytes free{RESET}\n")
                 jogo.estado_atual = "MENU"
-                imprimir_menu_dificuldade(ui)
+                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
             else:
                 ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
                 ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
@@ -196,7 +200,7 @@ def receber_comando():
         elif jogo.estado_atual == "MENU":
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
-                imprimir_menu_dificuldade(ui)
+                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
             elif comando == "4" and AUTOSAVE_FILE.exists():
                 ui.limpar()
                 if carregar_autosave(jogo):
@@ -204,7 +208,7 @@ def receber_comando():
                     imprimir_contexto_sala(jogo)
                 else:
                     ui.exibir(f"{DOS_VERMELHO}Falha ao ler o Autosave.{RESET}")
-                    imprimir_menu_dificuldade(ui)
+                    imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
             elif comando in ["1", "2", "3"]:
                 ui.limpar()
                 if comando == "1":
@@ -226,16 +230,12 @@ def receber_comando():
                 ui.exibir(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}")
                 ui.exibir(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}")
                 imprimir_contexto_sala(jogo)
-
             elif comando == "2007":
                 ui.limpar()
                 jogo.dificuldade_escolhida = "GOD MODE"
                 jogo.god_mode = True
                 jogo.fast_mode = True
-                jogo.hp = 9999
-                jogo.furia_noite = 0
-                jogo.energia_min_noite = 9999
-                jogo.energia_max_noite = 9999
+                jogo.hp = 9999; jogo.furia_noite = 0; jogo.energia_min_noite = 9999; jogo.energia_max_noite = 9999
                 jogo.turnos_luz = 9999
                 jogo.estado_atual = "JOGO"
                 ui.exibir(f"{DOS_AMARELO}MODO DEUS ATIVADO. ACESSO AOS BASTIDORES CONCEDIDO.{RESET}\n")
@@ -322,7 +322,7 @@ def receber_comando():
                 sala.setdefault("itens", [])
                 
                 if "chave dos fundos" not in jogo.inventario and "chave dos fundos" not in sala["itens"]:
-                    if len(jogo.inventario) < 3 or getattr(jogo, 'god_mode', False):
+                    if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                         ui.exibir(f"{DOS_AMARELO}Você encontrou a 'chave dos fundos' suja de graxa lá dentro!{RESET}")
                         jogo.inventario.append("chave dos fundos")
                     else:
@@ -385,14 +385,14 @@ def receber_comando():
             sala.setdefault("itens", [])
             
             if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
-                if len(jogo.inventario) < 3 or getattr(jogo, 'god_mode', False):
+                if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                     jogo.inventario.append("chave da cozinha")
                     ui.exibir(f"{DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{RESET}")
                 else:
                     sala["itens"].append("chave da cozinha")
 
             if item_secreto:
-                if len(jogo.inventario) < 3 or getattr(jogo, 'god_mode', False):
+                if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                     jogo.inventario.append(item_secreto)
                     ui.exibir(f"{DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{RESET}")
                 else:
@@ -449,10 +449,11 @@ def receber_comando():
                     sala = jogo.mapa[jogo.sala_atual]
                     sala.setdefault("itens", [])
                     if "bateria nova" not in jogo.inventario and "bateria nova" not in sala["itens"]:
-                        if len(jogo.inventario) < 3 or getattr(jogo, 'god_mode', False):
+                        if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                             jogo.inventario.append("bateria nova")
-                            ui.exibir(f"{DOS_VERDE}🎒 Você guardou uma bateria nova na mochila.{RESET}")
+                            ui.exibir(f"{DOS_VERDE}🎒 Você a guardou na mochila.{RESET}")
                         else:
+                            ui.exibir(f"{DOS_AMARELO}🎒 Mochila cheia! A bateria nova caiu no chão.{RESET}")
                             sala["itens"].append("bateria nova")
                 else:
                     ui.animar("Quem é você? A tela desliga. Você perdeu a absolvição.", 0.05, DOS_VERMELHO, jogo)
@@ -463,7 +464,7 @@ def receber_comando():
 
         elif jogo.estado_atual in ["MINIGAME_MINOTAURO", "MINIGAME_SEGURANCA"]:
             if comando in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_SEGURANCA":
-                ui.exibir(f"{DOS_AMARELO}[GOD MODE] O tempo se contorce. O relógio salta para as 06:00 instantaneamente.{RESET}")
+                ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você altera os ponteiros do universo. O relógio salta para as 06:00 instantaneamente.{RESET}")
                 jogo.minigame_atual.turno = 24 
                 resultado = jogo.minigame_atual.processar_turno("esperar", jogo) 
                 if resultado == "vitoria_seguranca":
@@ -513,13 +514,14 @@ def receber_comando():
                 elif isinstance(jogo.minigame_atual, MinigameSeguranca): jogo.minigame_atual.energia = 9999
                     
         if jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
-            salvar_sessao(session.get("sid"), jogo)
-        
+            salvar_autosave(jogo)
+
     except Exception as e:
         ui.exibir(f"\n[ERRO DE SISTEMA]: {e}")
     finally:
         sys.stdout = stdout_original
 
+    salvar_sessao(session.get("sid"), jogo)
     return gerar_resposta_json(captura, jogo)
 
 if __name__ == '__main__':

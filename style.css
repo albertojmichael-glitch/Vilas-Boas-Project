@@ -71,6 +71,10 @@ input {
     font-size: 1.3rem;
     flex: 1;
     outline: none;
+    
+    /* O SEGREDO DO CURSOR MS-DOS */
+    caret-color: #33ff00;
+    caret-shape: block;
 }
 
 /* SIDEBAR */
