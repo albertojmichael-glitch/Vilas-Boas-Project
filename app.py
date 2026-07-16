@@ -36,12 +36,17 @@ ARTE_COFRE = r'''
     +*********************************************************************+     
     +*********************************************************************+'''
 
-def web_digitar(texto, tempo_base=0.03, cor="", jogo=None):
+def web_digitar(texto, tempo_base=0.03, cor="", jogo_ref=None):
     cor_nome = "verde"
     if cor == ui.DOS_BRANCO: cor_nome = "branco"
     elif cor == ui.DOS_AMARELO: cor_nome = "amarelo"
     elif cor == ui.DOS_VERMELHO: cor_nome = "vermelho"
     
+    # Se o Modo Rápido estiver ativo na sessão atual, tempo de digitação é zero!
+    estado = obter_estado()
+    if getattr(estado, 'fast_mode', False):
+        tempo_base = 0
+        
     ms = int(tempo_base * 1000)
     print(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
 
@@ -117,8 +122,9 @@ def imprimir_menu_dificuldade():
     ui.digitar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.02, ui.DOS_BRANCO)
     
     print(f"{ui.DOS_BRANCO}[1] INICIAR MODO: NORMAL (Para iniciantes){ui.RESET}")
-    print(f"{ui.DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){ui.RESET}\n")
-    print(f"{ui.DOS_VERDE}SELECIONE UMA OPÇÃO (1-2): {ui.RESET}")
+    print(f"{ui.DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){ui.RESET}")
+    print(f"{ui.DOS_AMARELO}[3] INICIAR MODO: RÁPIDO (Skip Delays de Digitação){ui.RESET}\n")
+    print(f"{ui.DOS_VERDE}SELECIONE UMA OPÇÃO (1-3): {ui.RESET}")
 
 def dar_dica_jon(passo_certo):
     dicas = {
@@ -293,7 +299,6 @@ def receber_comando():
                 print(f"{ui.DOS_BRANCO} Volume in drive A is VILLASBOAS{ui.RESET}")
                 print(f"{ui.DOS_BRANCO} Directory of A:\\{ui.RESET}\n")
                 
-                # --- O SEGREDO DO HTML (&lt;DIR&gt;) ---
                 print(f"{ui.DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{ui.RESET}")
                 print(f"{ui.DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{ui.RESET}")
                 print(f"{ui.DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{ui.RESET}")
@@ -332,10 +337,21 @@ def receber_comando():
                 print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
                 print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
                 imprimir_contexto_sala()
+            elif comando == "3":
+                print("@@CLEAR@@")
+                jogo.dificuldade_escolhida = "NORMAL"
+                jogo.fast_mode = True
+                jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
+                jogo.estado_atual = "JOGO"
+                print(f"{ui.DOS_AMARELO}MODO RÁPIDO SELECIONADO. DELAYS DE DIGITAÇÃO DESATIVADOS.{ui.RESET}\n")
+                print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{ui.RESET}")
+                print(f"{ui.DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{ui.RESET}")
+                imprimir_contexto_sala()
             elif comando == "2007":
                 print("@@CLEAR@@")
                 jogo.dificuldade_escolhida = "GOD MODE"
                 jogo.god_mode = True
+                jogo.fast_mode = True
                 jogo.hp = 9999
                 jogo.furia_noite = 0
                 jogo.energia_min_noite = 9999
@@ -346,7 +362,7 @@ def receber_comando():
                 print(f"{ui.DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{ui.RESET}")
                 imprimir_contexto_sala()
             else:
-                print(f"{ui.DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE 1 OU 2.{ui.RESET}")
+                print(f"{ui.DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{ui.RESET}")
 
         elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
             if comando in ["cls", "limpar", "clear", "clean"]:
@@ -643,7 +659,6 @@ def receber_comando():
                     jogo.sala_atual = "sala dos fundos" 
                     jogo.estado_atual = "JOGO"
                     
-                    # A MAGIA DO TRANCAMENTO AQUI:
                     jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída e bloqueada pelos destroços."
                     
                     print(f"{ui.DOS_VERDE}Você escapou da Sala de Energia com os fios! A porta cedeu atrás de você e travou para sempre.{ui.RESET}")

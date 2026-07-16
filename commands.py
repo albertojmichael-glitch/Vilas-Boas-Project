@@ -24,7 +24,6 @@ def cmd_ir(comando, jogo, mapa):
     
     sala = mapa[jogo.sala_atual]
 
-    # --- O CHUTE NA PORTA EMPERRADA (SALA 03) ---
     if jogo.sala_atual == "03" and direcao == "frente":
         print(f"{DOS_AMARELO}Você toma distância e dá um chute violento na porta emperrada!{RESET}")
         print(f"{DOS_VERDE}CRASH! A madeira velha cede e a porta escancara.{RESET}")
@@ -33,57 +32,76 @@ def cmd_ir(comando, jogo, mapa):
         pausar(2)
         return True
 
-    if direcao in sala:
-        destino = sala[direcao]
-        lugares_validos = list(mapa.keys()) + ["morte", "saida", "01", "cadeira"]
-
-        if destino in lugares_validos:
-            limpar_tela()
-            jogo.turnos_mesma_sala = 0
-
-            if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False) and random.randint(1, 100) <= 10:
-                print("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão")
-                jogo.hp -= 1
-                print(f" Você se machucou na queda. (HP: {jogo.hp})")
-                pausar(2)
-                if jogo.hp <= 0:
-                    print("\n Você cai no chão e quebra sua perna, você não consegue mais andar, e escuta barulhos vindo na sua direção")
-                    pausar(2)
-                    jogo.sala_atual = "morte"
-                return True
-
-            jogo.sala_atual = destino
-
-            if jogo.dificuldade_escolhida == "PESADELO" and jogo.sala_atual == jogo.posicao_perseguidor:
-                limpar_tela()
-                print("\n" + "="*50)
-                print(f"{DOS_VERMELHO}Quando voce entra na sala, passos pesados e cheiro de fuligem invadem o ar.{RESET}")
-                print(f"{DOS_VERMELHO}Uma mão robótica gigante segura o seu pescoço e te levanta do chão!{RESET}")
-                print(f"{DOS_AMARELO}Você tem UMA AÇÃO para reagir antes que ele quebre o seu pescoço!{RESET}")
-                jogo.estado_atual = "COMBATE_ANIMATRONICO" 
-                pausar(2)
-                return True
-            
-            if jogo.sala_atual == "saida":
-                if jogo.noite_vencida and getattr(jogo, 'fios_cortados_inventario', False) and not getattr(jogo, 'incendio', False):
-                    print(f"\n{DOS_VERDE}[DISPOSITIVO]: NÍVEL 2 - PRESENÇA PRÓXIMA.{RESET}")
-                    print(f"{DOS_AMARELO}'Eu preciso terminar isso antes...', você murmura para si mesmo.{RESET}")
-                    print(f"{DOS_AMARELO}Você vira as costas para a saída. A Sala de Energia espera.{RESET}")
-                    jogo.sala_atual = "entrada"
-                    pausar(3)
+    # --- FUZZY MATCH PARA DIREÇÕES E SALAS ---
+    saidas_validas = [k for k in sala.keys() if k not in ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"] and isinstance(sala[k], str)]
+    
+    if direcao not in saidas_validas:
+        sugestoes = difflib.get_close_matches(direcao, saidas_validas, n=1, cutoff=0.5)
+        if sugestoes:
+            direcao = sugestoes[0]
+            print(f"{DOS_AMARELO}(Entendido como: 'ir {direcao}'){RESET}")
         else:
-            # UX Corrigido: Imprime as descrições de barreira na tela
-            print(f"{DOS_BRANCO}{destino}{RESET}")
+            print(f"Você não pode ir para '{direcao_bruta}'.")
+            if saidas_validas:
+                print(f"{DOS_BRANCO}Saídas disponíveis: {', '.join(saidas_validas).title()}{RESET}")
             pausar(1.5)
+            return False
+
+    destino = sala[direcao]
+    lugares_validos = list(mapa.keys()) + ["morte", "saida", "01", "cadeira"]
+
+    if destino in lugares_validos:
+        limpar_tela()
+        jogo.turnos_mesma_sala = 0
+
+        if jogo.turnos_luz <= 0 and not getattr(jogo, 'god_mode', False) and random.randint(1, 100) <= 10:
+            print("\n No escuro, você perde a noção da direção, e acaba tropeçando no proprio pé, e cai no chão")
+            jogo.hp -= 1
+            print(f" Você se machucou na queda. (HP: {jogo.hp})")
+            pausar(2)
+            if jogo.hp <= 0:
+                print("\n Você cai no chão e quebra sua perna, você não consegue mais andar, e escuta barulhos vindo na sua direção")
+                pausar(2)
+                jogo.sala_atual = "morte"
+            return True
+
+        jogo.sala_atual = destino
+
+        if jogo.dificuldade_escolhida == "PESADELO" and jogo.sala_atual == jogo.posicao_perseguidor:
+            limpar_tela()
+            print("\n" + "="*50)
+            print(f"{DOS_VERMELHO}Quando voce entra na sala, passos pesados e cheiro de fuligem invadem o ar.{RESET}")
+            print(f"{DOS_VERMELHO}Uma mão robótica gigante segura o seu pescoço e te levanta do chão!{RESET}")
+            print(f"{DOS_AMARELO}Você tem UMA AÇÃO para reagir antes que ele quebre o seu pescoço!{RESET}")
+            jogo.estado_atual = "COMBATE_ANIMATRONICO" 
+            pausar(2)
+            return True
+        
+        if jogo.sala_atual == "saida":
+            if jogo.noite_vencida and getattr(jogo, 'fios_cortados_inventario', False) and not getattr(jogo, 'incendio', False):
+                print(f"\n{DOS_VERDE}[DISPOSITIVO]: NÍVEL 2 - PRESENÇA PRÓXIMA.{RESET}")
+                print(f"{DOS_AMARELO}'Eu preciso terminar isso antes...', você murmura para si mesmo.{RESET}")
+                print(f"{DOS_AMARELO}Você vira as costas para a saída. A Sala de Energia espera.{RESET}")
+                jogo.sala_atual = "entrada"
+                pausar(3)
     else:
-        print(f"Você não pode ir para '{direcao}'.")
+        print(f"{DOS_BRANCO}{destino}{RESET}")
         pausar(1.5)
+    return True
 
 def cmd_pegar(comando, jogo, mapa):
     item_desejado = comando.replace("pegar ", "").strip()
     sala = mapa[jogo.sala_atual]
+    itens_sala = sala.get("itens", [])
     
-    item_real_na_sala = next((item for item in sala.get("itens", []) if item_desejado in item), None)
+    item_real_na_sala = next((item for item in itens_sala if item_desejado in item), None)
+    
+    # --- FUZZY MATCH PARA PEGAR ITENS ---
+    if not item_real_na_sala and itens_sala:
+        sugestoes = difflib.get_close_matches(item_desejado, itens_sala, n=1, cutoff=0.5)
+        if sugestoes:
+            item_real_na_sala = sugestoes[0]
+            print(f"{DOS_AMARELO}(Entendido como: 'pegar {item_real_na_sala}'){RESET}")
     
     if item_real_na_sala:
         if len(jogo.inventario) >= MAX_INVENTARIO and not getattr(jogo, 'god_mode', False):
@@ -112,14 +130,25 @@ def cmd_pegar(comando, jogo, mapa):
         pausar(1)
     else:
         print(f"{DOS_BRANCO}Não há nenhum '{item_desejado}' aqui para pegar.{RESET}")
-        pausar(1)
+        if itens_sala and jogo.turnos_luz > 0:
+            print(f"{DOS_BRANCO}Itens visíveis: {', '.join(itens_sala)}{RESET}")
+        pausar(1.5)
 
 def cmd_largar(comando, jogo, mapa):
-    item_desejado = comando.replace("largar ", "")
+    item_desejado = comando.replace("largar ", "").strip()
+    
+    # --- FUZZY MATCH PARA LARGAR ITENS ---
+    if item_desejado not in jogo.inventario and jogo.inventario:
+        sugestoes = difflib.get_close_matches(item_desejado, jogo.inventario, n=1, cutoff=0.5)
+        if sugestoes:
+            item_desejado = sugestoes[0]
+            print(f"{DOS_AMARELO}(Entendido como: 'largar {item_desejado}'){RESET}")
+
     if item_desejado == "lanterna":
         print(f"{DOS_VERMELHO}Você enlouqueceu? Se largar a lanterna, não vai sobrar nada para iluminar.{RESET}")
         pausar(2)
         return
+        
     if item_desejado in jogo.inventario:
         jogo.inventario.remove(item_desejado)
         sala = mapa[jogo.sala_atual]
@@ -150,6 +179,17 @@ def cmd_examinar(comando, jogo, mapa):
     item_cenario = next((k for k in coisas_para_olhar.keys() if alvo in k or k in alvo), None)
     item_inventario = next((i for i in jogo.inventario if alvo in i or i in alvo), None)
     
+    # --- FUZZY MATCH PARA EXAMINAR ---
+    if not item_cenario and not item_inventario:
+        todas_chaves = list(coisas_para_olhar.keys()) + jogo.inventario
+        if todas_chaves:
+            sugestoes = difflib.get_close_matches(alvo, todas_chaves, n=1, cutoff=0.5)
+            if sugestoes:
+                sugestao = sugestoes[0]
+                print(f"{DOS_AMARELO}(Entendido como: 'examinar {sugestao}'){RESET}")
+                item_cenario = next((k for k in coisas_para_olhar.keys() if sugestao == k), None)
+                item_inventario = next((i for i in jogo.inventario if sugestao == i), None)
+
     if item_cenario:
         print(f"\n{DOS_VERDE}C:\\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
         pausar(1)
@@ -209,36 +249,53 @@ def cmd_combinar(comando, jogo):
     partes = comando_limpo.split(" com ")
     if len(partes) == 2:
         item1, item2 = partes[0].strip(), partes[1].strip()
+        
+        # --- FUZZY MATCH PARA COMBINAR ---
+        if item1 not in jogo.inventario:
+            sug = difflib.get_close_matches(item1, jogo.inventario, n=1, cutoff=0.5)
+            if sug: item1 = sug[0]
+        if item2 not in jogo.inventario:
+            sug = difflib.get_close_matches(item2, jogo.inventario, n=1, cutoff=0.5)
+            if sug: item2 = sug[0]
+            
         if item1 in jogo.inventario and item2 in jogo.inventario:
-            if ("tabua pequena de madeira" in partes) and ("papel" in partes):
+            if ("tabua pequena de madeira" in [item1, item2]) and ("papel" in [item1, item2]):
                 jogo.inventario.remove("tabua pequena de madeira"); jogo.inventario.remove("papel")
                 jogo.inventario.append("tocha")
                 print("Você enrolou o papel na tábua. Criou uma 'tocha' (apagada).")
-            elif ("tocha" in partes) and ("isqueiro" in partes):
+            elif ("tocha" in [item1, item2]) and ("isqueiro" in [item1, item2]):
                 if getattr(jogo, 'isqueiro_usos', 0) > 0 or getattr(jogo, 'god_mode', False):
                     if not getattr(jogo, 'god_mode', False): jogo.isqueiro_usos -= 1
                     jogo.inventario.remove("tocha"); jogo.inventario.append("tocha acesa")
                     jogo.turnos_luz = 2 if not getattr(jogo, 'god_mode', False) else 9999
                     print(f"🔥 Você acendeu a tocha! A luz vai durar 2 turnos. (Usos: {getattr(jogo, 'isqueiro_usos', 0)})")
                 else: print("O isqueiro não faz faísca... acabou o gás!")
-            elif ("papel" in partes) and ("isqueiro" in partes):
+            elif ("papel" in [item1, item2]) and ("isqueiro" in [item1, item2]):
                 if getattr(jogo, 'isqueiro_usos', 0) > 0 or getattr(jogo, 'god_mode', False):
                     if not getattr(jogo, 'god_mode', False): jogo.isqueiro_usos -= 1
                     jogo.inventario.remove("papel"); jogo.inventario.append("papel aceso")
                     jogo.turnos_luz = 1 if not getattr(jogo, 'god_mode', False) else 9999
                     print(f" Você acendeu o papel. A chama vai queimar seus dedos rapidamente (Usos: {getattr(jogo, 'isqueiro_usos', 0)})")
                 else: print("O isqueiro não tem gás")
-            elif ("tesoura quebrada" in partes) and ("fita isolante" in partes):
+            elif ("tesoura quebrada" in [item1, item2]) and ("fita isolante" in [item1, item2]):
                 jogo.inventario.remove("tesoura quebrada"); jogo.inventario.remove("fita isolante")
                 jogo.inventario.append("tesoura")
                 print("Você passou fita na tesoura e estabilizou as lâminas!")
-            else: print("Esses itens não parecem combinar.")
+            else: print(f"Não há como combinar '{item1}' com '{item2}'.")
         else: print("Você não tem esses itens no inventário para tentar combinar.")
     else: print("Formato inválido. Use: 'combinar [item1] com [item2]'")
     pausar(2)
 
 def cmd_usar(comando, jogo, mapa):
-    item = comando.replace("usar ", "")
+    item = comando.replace("usar ", "").strip()
+    
+    # --- FUZZY MATCH PARA USAR ---
+    if item not in jogo.inventario and jogo.inventario:
+        sugestoes = difflib.get_close_matches(item, jogo.inventario, n=1, cutoff=0.5)
+        if sugestoes:
+            item = sugestoes[0]
+            print(f"{DOS_AMARELO}(Entendido como: 'usar {item}'){RESET}")
+            
     if item not in jogo.inventario:
         print(f"Você não tem '{item}' no inventário.")
         pausar(1.5)
@@ -270,8 +327,6 @@ def cmd_usar(comando, jogo, mapa):
         jogo.inventario.remove("bateria nova")
         print(f"{DOS_VERDE} Você conectou a bateria na sua lanterna, ela brilha com força total.{RESET}")
         pausar(2)
-        
-    # --- MECÂNICA DE ARROMBAR COM A TESOURA ---
     elif item == "tesoura" and jogo.sala_atual in ["corredor", "02", "03"]:
         if "02" in mapa["corredor"] and mapa["corredor"]["02"] != "cozinha privada":
             mapa["corredor"]["02"] = "cozinha privada"
@@ -288,7 +343,6 @@ def cmd_usar(comando, jogo, mapa):
         else:
             print("Você já abriu as portas que precisavam ser forçadas aqui.")
             pausar(2)
-            
     elif item == "fios cortados" and jogo.sala_atual == "sala do gerador":
         print("\n Você joga os fios na fiação principal desencapada")
         print(" O painel explode e as chamas começam a lamber as paredes")
@@ -296,7 +350,6 @@ def cmd_usar(comando, jogo, mapa):
         jogo.inventario.remove("fios cortados")
         mapa["entrada"]["descrição"] = "A porta! Está logo ali!"
         pausar(3)
-        
     elif item in ["isqueiro", "fosforo"] and jogo.sala_atual == "sala dos fundos":
         if getattr(jogo, 'noite_vencida', False):
             print(f"\nVocê saca o {item}. A carcaça do coelho rosa avança na sua direção nas sombras.")
@@ -305,13 +358,11 @@ def cmd_usar(comando, jogo, mapa):
                 print("Com o restaurante caindo aos pedaços, você acende o fósforo e joga na fantasia!")
                 mapa["sala dos fundos"]["frente"] = "parede" 
             elif not getattr(jogo, 'incendio', False) and item == "isqueiro":
-                # O Isqueiro não encerra mais o jogo. Ele só espanta a IA!
                 print(f"{DOS_VERDE}Você acende o isqueiro. O fogo assusta a criatura, que recua para as sombras. O caminho de volta está livre!{RESET}")
             else:
                 print("Você tenta usar isso, mas no pânico não funciona direito! Ela te agarra!")
                 jogo.sala_atual = "morte"
         else: print("Você balança a luz, mas não há nada aqui... ainda.")
-        
     elif item == "chave da cozinha" and jogo.sala_atual in ["corredor", "02"]:
         print("Você coloca a chave na fechadura. Ela gira com um 'clique' pesado.")
         mapa["corredor"]["02"] = "cozinha privada"
@@ -319,7 +370,6 @@ def cmd_usar(comando, jogo, mapa):
         jogo.inventario.remove("chave da cozinha")
         print(f"{DOS_VERDE}A porta da Cozinha Privada está destrancada e você entra no local.{RESET}")
         pausar(2)
-        
     elif item == "chave dos fundos" and jogo.sala_atual in ["sala de jantar", "porta dos fundos"]:
         print("Você insere a chave suja na porta de metal. A tranca estala!")
         mapa["sala de jantar"]["esquerda"] = "sala dos fundos"
@@ -356,11 +406,12 @@ def processar_comando(comando, jogo, mapa):
             jogo.estado_atual = "FIM"
             return True
 
+    # --- ALIASES GLOBAIS DE JOGO ---
     mapa_direcoes = {
-        "f": "ir frente", "frente": "ir frente",
-        "t": "ir atrás", "tras": "ir atrás", "atras": "ir atrás", "atrás": "ir atrás",
-        "e": "ir esquerda", "esquerda": "ir esquerda",
-        "d": "ir direita", "direita": "ir direita"
+        "f": "ir frente", "frente": "ir frente", "n": "ir frente", "norte": "ir frente",
+        "t": "ir atrás", "tras": "ir atrás", "atras": "ir atrás", "atrás": "ir atrás", "s": "ir atrás", "sul": "ir atrás",
+        "e": "ir esquerda", "esquerda": "ir esquerda", "w": "ir esquerda", "oeste": "ir esquerda",
+        "d": "ir direita", "direita": "ir direita", "leste": "ir direita"
     }
     if comando in mapa_direcoes:
         comando = mapa_direcoes[comando]
@@ -374,14 +425,24 @@ def processar_comando(comando, jogo, mapa):
     verbo_bruto = partes[0]
     resto = partes[1] if len(partes) > 1 else ""
 
-    # Adicionado o DESLIGAR E DESATIVAR aos comandos!
-    verbos_validos = ["ir", "pegar", "largar", "usar", "combinar", "juntar", "examinar", "ex", "jogar", "abrir", "salvar", "carregar", "ajuda", "comandos", "inventario", "i", "olhar", "o", "cls", "limpar", "clear", "clean", "whoami", "sair", "tp", "gerar", "atacar", "bater", "chutar", "lutar", "pular", "desligar", "desativar"]
+    # --- DICIONÁRIO DE ATALHOS / SHORTHAND ---
+    aliases_verbos = {
+        "p": "pegar", "l": "largar", "u": "usar", "c": "combinar", 
+        "j": "jogar", "x": "examinar", "ex": "examinar", "o": "olhar", 
+        "i": "inventario", "inv": "inventario"
+    }
+    if verbo_bruto in aliases_verbos:
+        verbo_bruto = aliases_verbos[verbo_bruto]
+        comando = f"{verbo_bruto} {resto}".strip()
+
+    verbos_validos = ["ir", "pegar", "largar", "usar", "combinar", "juntar", "examinar", "jogar", "abrir", "salvar", "carregar", "ajuda", "comandos", "inventario", "olhar", "cls", "limpar", "clear", "clean", "whoami", "sair", "tp", "gerar", "atacar", "bater", "chutar", "lutar", "pular", "desligar", "desativar"]
     
     if verbo_bruto not in verbos_validos:
         sugestoes = difflib.get_close_matches(verbo_bruto, verbos_validos, n=1, cutoff=0.6)
         if sugestoes:
             verbo_corrigido = sugestoes[0]
             comando = f"{verbo_corrigido} {resto}".strip()
+            print(f"{DOS_AMARELO}(Entendido como: '{comando}'){RESET}")
         else:
             if verbo_bruto in ["correr", "fugir", "escapar"]:
                 print(f"{DOS_BRANCO}Você está com muito medo, mas correr às cegas no escuro seria suicídio.{RESET}")
@@ -402,14 +463,12 @@ def processar_comando(comando, jogo, mapa):
         cmd_usar(comando, jogo, mapa); return True
     elif comando.startswith("combinar ") or comando.startswith("juntar "):
         cmd_combinar(comando, jogo); return True
-    elif comando.startswith("examinar ") or comando.startswith("ex "):
+    elif comando.startswith("examinar "):
         cmd_examinar(comando, jogo, mapa); return False 
     elif comando.startswith("jogar "):
         cmd_jogar(comando, jogo); return True
     elif comando == "abrir cofre":
         cmd_abrir_cofre(jogo); return True
-    
-    # --- A MECÂNICA DE DESATIVAR O ALBERTO ---
     elif verbo_bruto in ["desligar", "desativar"]:
         if "alberto" in comando or "troll" in comando or "animatronico" in comando or "robô" in comando or "robo" in comando:
             if jogo.sala_atual == "cozinha privada":
@@ -425,7 +484,6 @@ def processar_comando(comando, jogo, mapa):
             print("Desativar o quê?")
         pausar(2)
         return True
-
     elif comando.startswith("tp ") and getattr(jogo, 'god_mode', False):
         destino = comando.replace("tp ", "").strip()
         jogo.sala_atual = destino
@@ -436,7 +494,6 @@ def processar_comando(comando, jogo, mapa):
         jogo.inventario.append(item)
         print(f"{DOS_AMARELO}[GOD MODE] O item '{item}' materializou-se na sua mochila.{RESET}")
         return True
-
     elif verbo_bruto in ["atacar", "bater", "chutar", "lutar"]:
         if getattr(jogo, 'god_mode', False):
             print(f"{DOS_AMARELO}[GOD MODE] Você dá um soco no ar! A pressão rompe as partículas de poeira ao seu redor. Você se sente incrivelmente forte.{RESET}")
@@ -444,7 +501,6 @@ def processar_comando(comando, jogo, mapa):
             print(f"{DOS_BRANCO}Você não tem armas. Suas mãos estão tremendo demais para lutar.{RESET}")
         pausar(1.5)
         return False
-        
     elif comando == "salvar":
         salvar_jogo(jogo); return False
     elif comando == "carregar":
@@ -453,6 +509,7 @@ def processar_comando(comando, jogo, mapa):
         print(f"\n{DOS_AMARELO}--- COMANDOS DO SISTEMA ---{RESET}")
         print("Mover: 'ir [direcao]' ou apenas o nome da sala! | Itens: 'pegar', 'largar', 'usar', 'combinar'")
         print("Ações: 'examinar', 'jogar', 'desativar [objeto]' | Outros: 'i', 'cls'")
+        print(f"{DOS_AMARELO}Atalhos:{RESET} 'p' (pegar), 'l' (largar), 'u' (usar), 'x' (examinar), 'c' (combinar), 'i' (inventario)")
         if getattr(jogo, 'god_mode', False):
             print(f"{DOS_VERMELHO}--- CÓDIGOS DE DEUS ---{RESET}")
             print(f"{DOS_VERMELHO}'tp [sala]' -> Teleporta | 'gerar [item]' -> Cria item | 'atacar' -> Insta-Kill{RESET}")

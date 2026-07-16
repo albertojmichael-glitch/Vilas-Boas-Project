@@ -46,6 +46,7 @@ class GameState:
     minigame_atual: Any = None
     god_mode: bool = False
     alberto_desativado: bool = False
+    fast_mode: bool = False
     mapa: Dict[str, Any] = field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
 
     def to_dict(self) -> dict:

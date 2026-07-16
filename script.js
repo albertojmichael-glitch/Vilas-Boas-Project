@@ -122,10 +122,19 @@ function digitarFilaDeLinhas(linhas, index) {
     }
 }
 
+// A Máquina de Escrever capaz de ler HTML sem quebrar as cores!
 function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) {
     const p = document.createElement('p');
     p.className = classeCor;
     outputDiv.appendChild(p);
+    
+    // --- O PULO DA MÁQUINA (MODO RÁPIDO) ---
+    if (velocidade === 0) {
+        p.innerHTML = htmlString;
+        terminal.scrollTop = terminal.scrollHeight;
+        aoTerminar();
+        return;
+    }
     
     let i = 0;
     let isTag = false;
@@ -143,10 +152,11 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
             if (char === '<') isTag = true;
             if (char === '>') isTag = false;
             
+            // Pula a lentidão instantaneamente se for um código HTML de cor (<span class="verde">)
             if (isTag || htmlString.charAt(i) === '<') {
                 digitar(); 
             } else {
-                setTimeout(digitar, velocidade);
+                setTimeout(digitar, velocidade); // Pausa apenas nas letras lidas pelo jogador
             }
         } else {
             aoTerminar(); 
