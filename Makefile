@@ -17,3 +17,7 @@ format:
 
 run:
 	./venv/bin/python app.py
+
+git add .
+git commit -m "style: formatando codigo com o Black"
+git pushdf
