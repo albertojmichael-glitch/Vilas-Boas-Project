@@ -71,12 +71,10 @@ class GameState(BaseModel):
 
 
     def to_dict(self):
-        # Pydantic V2 usa model_dump()
         return self.model_dump()
 
     @classmethod
     def from_dict(cls, data):
-        # Pydantic V2 usa model_validate()
         return cls.model_validate(data)
 
     @property
@@ -89,12 +87,7 @@ class GameState(BaseModel):
     @minigame_atual.setter
     def minigame_atual(self, v): self._minigame_atual = v
 
-    def to_dict(self):
-        return self.model_dump()
-        
-    @classmethod
-    def from_dict(cls, dados):
-        return cls(**dados)
+    
 
 ARQUIVO_CONQUISTAS = Path("conquistas.json")
 AUTOSAVE_FILE = Path("autosave.json")

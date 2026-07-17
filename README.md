@@ -59,28 +59,57 @@ python app.py
 (Opcional) Jogue pelo Terminal:
 python main.py
 
-2. **API Reference**
+## 📡 API Reference
 
-A aplicação utiliza uma API RESTful para processar as ações do jogador de forma stateless (estado mantido via Flask-Session).
-Endpoint: POST /comando
-Payload de Exemplo:
+A aplicação utiliza uma API RESTful *stateless*. O estado é recuperado em cada requisição via Session ID (`sid`) alocado em cookies de HTTPOnly.
 
-{
-  "comando": "ir sala de jantar"
-}
+### 1. Iniciar Sessão
+Cria uma nova sessão isolada, reseta o GameState e devolve a tela de Boot.
 
-Resposta de Exemplo (Estruturada para Animação UI):
-'''
-{
+- **URL:** `/iniciar`
+- **Method:** `GET`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "estado": {
+      "hp": "...",
+      "inventario": [],
+      "luz": "...",
+      "saidas": [],
+      "sala": "BOOT"
+    },
+    "linhas": [
+      "<span class=\"verde\">@@TYPE@@verde@@15@@CARREGANDO 'COMMAND.COM'...... OK</span>"
+    ]
+  }
+
+2. Processar Ação
+Envia um comando textual para o Engine de processamento e devolve o estado resultante e as falas renderizadas.
+
+URL: /comando
+
+Method: POST
+
+Headers: Content-Type: application/json
+
+Body: { "comando": "ir corredor" }
+
+Success Response (200 OK): {
   "estado": {
     "hp": 3,
     "inventario": ["lanterna", "chave dos fundos"],
     "luz": 8,
-    "saidas": ["Corredor", "Porta dos fundos"],
-    "sala": "SALA DE JANTAR"
+    "saidas": ["Entrada", "Sala 01", "Cozinha Privada"],
+    "sala": "CORREDOR"
   },
   "linhas": [
-    "<span class=\"verde\">@@TYPE@@verde@@15@@📍 VOCÊ ESTÁ EM: SALA DE JANTAR</span>",
-    "<span class=\"branco\">@@TYPE@@branco@@15@@👁️  Visão: tem varias mesas de jantar com confetes, é um lugar bem grande, está bem sujo</span>"
+    "<span class=\"verde\">@@TYPE@@verde@@15@@📍 VOCÊ ESTÁ EM: CORREDOR</span>",
+    "<span class=\"branco\">@@TYPE@@branco@@15@@👁️  Visão: Um corredor longo com portas numeradas.</span>"
   ]
 }
+
+Error Responses:
+
+400 Bad Request: JSON malformado ou payload vazio.
+
+500 Internal Server Error: Exceção não tratada no engine.py. A UI injeta a string [ERRO INTERNO] no array de linhas. Traces são omitidos em produção.

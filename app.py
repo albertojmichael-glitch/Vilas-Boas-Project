@@ -21,6 +21,11 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # --- SEGURANÇA E CONFIGURAÇÃO ---
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982")
+
+# Validação estrita para Produção (Render configura a variável RENDER automaticamente)
+if os.environ.get("RENDER"):
+    assert SECRET_KEY != "DEV_SECRET_DO_NOT_USE_IN_PROD_1982", "CRÍTICO: FLASK_SECRET_KEY não configurada em produção! Abortando boot."
+
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 

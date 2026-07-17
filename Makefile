@@ -1,4 +1,4 @@
-.PHONY: setup test lint format run
+.PHONY: setup test lint format run push
 
 setup:
 	python3 -m venv venv
@@ -18,6 +18,8 @@ format:
 run:
 	./venv/bin/python app.py
 
-git add .
-git commit -m "style: formatando codigo com o Black"
-git pushdf
+
+push: format lint test
+	git add .
+	git commit -m "chore: auto-format, lint and pass tests"
+	git push

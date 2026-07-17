@@ -3,42 +3,40 @@ import random
 from state import GameState
 from commands import processar_comando
 from minigames import MinigameMinotauro
+from engine import processar_fluxo_jogo
 
-def test_serializacao_estado():
-    # Testa se o Pydantic salva e recupera os dados corretamente
-    jogo = GameState(hp=2, sala_atual="01", inventario=["lanterna"])
-    dados = jogo.to_dict()
+def test_inventario_pegar_item():
+    """Unit Test: Lógica de inventário e manipulação do mapa."""
+    jogo = GameState(sala_atual="01", inventario=[])
+    mapa_mock = {"01": {"itens": ["lanterna"]}}
     
-    assert dados["hp"] == 2
-    assert dados["sala_atual"] == "01"
-    assert "lanterna" in dados["inventario"]
+    processar_comando("pegar lanterna", jogo, mapa_mock)
     
-    jogo_restaurado = GameState.from_dict(dados)
-    assert jogo_restaurado.sala_atual == "01"
-    assert len(jogo_restaurado.inventario) == 1
+    assert "lanterna" in jogo.inventario
+    assert "lanterna" not in mapa_mock["01"].get("itens", [])
 
-def test_comando_ir_frente():
-    # Testa a mecânica de movimentação sem depender da UI
-    jogo = GameState(sala_atual="entrada")
-    mapa_mock = {
-        "entrada": {"frente": "sala de jantar", "itens": []},
-        "sala de jantar": {"descrição": "Uma sala vazia"}
-    }
+def test_engine_transicao_menu_para_jogo():
+    """Integration Test: Transição de estado da máquina (MENU -> JOGO)."""
+    jogo = GameState(estado_atual="MENU")
     
-    processar_comando("ir frente", jogo, mapa_mock)
+    # Simula o jogador escolhendo a opção 1 (Modo Normal)
+    processar_fluxo_jogo("1", jogo)
     
-    assert jogo.sala_atual == "sala de jantar"
+    assert jogo.estado_atual == "JOGO"
+    assert jogo.dificuldade_escolhida == "NORMAL"
+    assert jogo.hp == 3
+    assert not jogo.fast_mode
 
-def test_minigame_minotauro_deterministico():
-    # Fixamos a "semente" do gerador aleatório para que o RNG seja previsível.
-    # Com seed(42), o Minotauro SEMPRE vai atacar do mesmo lado.
+def test_minigame_minotauro_deterministico_seed_42():
+    """Minigame Test: Controlando a aleatoriedade (Seed 42)."""
     random.seed(42) 
     jogo = GameState()
     minigame = MinigameMinotauro(jogo)
     
-    # Comportamento forçado da Seed 42: O boss pode atacar pela 'esquerda' na primeira rodada
-    # Ajuste as asserções de acordo com a lógica fixa do seu minigame:
-    minigame.processar_turno("esperar", jogo)
+    # Com a Seed 42, sabemos exatamente como o gerador vai se comportar
+    # Turno 1: O jogador espera. O monstro deve agir e a bateria deve cair.
+    resultado = minigame.processar_turno("esperar", jogo)
     
-    # Exemplo: bateria gasta ao esperar
-    assert minigame.bateria < 100
+    assert minigame.bateria == 95  # Bateria gasta por esperar
+    assert minigame.turno == 1
+    assert resultado != "morte" # Na seed 42, ele não ataca no turno 1
