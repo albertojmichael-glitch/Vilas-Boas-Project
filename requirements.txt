@@ -3,4 +3,4 @@ flask-cors>=4.0.0
 gunicorn>=21.2.0
 colorama>=0.4
 pydantic>=2.5.3
-Flask-Session>=0.5.0
+
