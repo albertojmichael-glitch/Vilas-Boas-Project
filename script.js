@@ -63,11 +63,9 @@ function novaLinha(linha) {
             let texto = parts.slice(4).join("@@"); 
             digitarTextoAnimadoHTML(texto, cor, ms, resolve);
         } else {
-            let p = document.createElement('p');
-            p.innerHTML = linha;
-            outputDiv.appendChild(p);
-            terminal.scrollTop = terminal.scrollHeight;
-            resolve();
+            // O SEGREDO AQUI: Qualquer 'print' normal que o Python enviar 
+            // será automaticamente digitado a 15ms por letra!
+            digitarTextoAnimadoHTML(linha, "", 15, resolve);
         }
     });
 }

@@ -189,9 +189,9 @@ def iniciar_jogo():
 # --- A ROTA AGORA ACEITA GET (F5) E POST ---
 @app.route('/comando', methods=['GET', 'POST'])
 def receber_comando():
-    # Se o jogador der F5 na rota /comando, devolvemos a tela do jogo para ele
+    # SE DER F5 AQUI, DEVOLVE O JOGO NORMALMENTE!
     if request.method == 'GET':
-        return app.send_static_file("index.html")
+        return send_from_directory(BASE_DIR, "index.html")
 
     jogo = None
     captura = io.StringIO()
@@ -218,10 +218,10 @@ def receber_comando():
                 ui.animar(f"{DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
                 ui.animar(f"{DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
                 ui.animar(f"{DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
-                ui.animar(f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;        197.78  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
-                ui.animar(f"{DOS_VERDE}SAVES    &lt;DIR&gt;        358.21  23-07-2008  4:00a{RESET}", 0.01, jogo=jogo)
-                ui.animar(f"{DOS_VERDE}PICTURE  &lt;DIR&gt;        666.00  05-11-1994  4:00a{RESET}", 0.01, jogo=jogo)
-                ui.animar(f"{DOS_VERDE}VALID    &lt;DIR&gt;        2.7801  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}DESKTOP  <DIR>        197.78  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}SAVES    <DIR>        358.21  23-07-2008  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}PICTURE  <DIR>        666.00  05-11-1994  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}VALID    <DIR>        2.7801  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
                 ui.exibir(f"{DOS_AMARELO}       3 file(s)        68.097 bytes{RESET}")
                 ui.exibir(f"{DOS_AMARELO}       4 dir(s)        655.360 bytes free{RESET}\n")
                 jogo.estado_atual = "MENU"
@@ -289,17 +289,20 @@ def receber_comando():
                 jogo.minigame_atual = MinigameSeguranca(jogo)
                 jogo.estado_atual = "MINIGAME_SEGURANCA"
                 jogo.minigame_atual.imprimir_status()
-            elif comando == "abrir cofre" and jogo.sala_atual == "sala de segurança":
+                
+            # === CORREÇÃO DA SALA DO COFRE AQUI: Voltou a ser "01" ===
+            elif comando == "abrir cofre" and jogo.sala_atual == "01":
                 jogo.estado_atual = "MINIGAME_COFRE"
-                ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.002, jogo=jogo)
+                ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.015, jogo=jogo)
                 ui.exibir(f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo.{RESET}")
                 ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
+                
             elif (comando == "jogar jon" or comando == "jogar fome de jon") and jogo.sala_atual == "sala de fliperamas":
                 jogo.estado_atual = "MINIGAME_JON"
                 jogo.jon_passos_dados = 0
                 jogo.jon_caminho_certo = [random.choice(["f", "e", "d"]) for _ in range(4)]
                 ui.limpar()
-                ui.animar(f"{DOS_BRANCO}{ARTE_PORCO}{RESET}", 0.002, jogo=jogo)
+                ui.animar(f"{DOS_BRANCO}{ARTE_PORCO}{RESET}", 0.015, jogo=jogo)
                 ui.animar("--- A FOME DE JON ---", 0.03, DOS_VERDE, jogo)
                 ui.exibir(f"{DOS_BRANCO}Guie o Porco Jon pelos dutos baseando-se nos seus sentidos.{RESET}")
                 ui.exibir("Comandos: [F] Frente | [E] Esquerda | [D] Direita")
@@ -313,7 +316,7 @@ def receber_comando():
                     jogo.estado_atual = "MINIGAME_CONSERTOS_CABECA"
                     jogo.web_consertos = {}
                     ui.limpar()
-                    ui.animar(f"{DOS_BRANCO}{ARTE_ROBO}{RESET}", 0.002, jogo=jogo)
+                    ui.animar(f"{DOS_BRANCO}{ARTE_ROBO}{RESET}", 0.015, jogo=jogo)
                     ui.animar("--- CONSERTOS & SORRISOS ---", 0.03, DOS_VERDE, jogo)
                     ui.exibir("Bem-vindo, Mecânico! Vamos montar nosso novo Festeiro!")
                     ui.exibir(f"\n{DOS_AMARELO}[ FASE 1: SELEÇÃO DE PEÇAS ]{RESET}")
@@ -322,7 +325,7 @@ def receber_comando():
                 jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1"
                 jogo.web_julgamento = {"pontos": 0, "vitimas": ["angela", "joao", "renato"]}
                 ui.limpar()
-                ui.animar(f"{DOS_BRANCO}{ARTE_PIANO}{RESET}", 0.002, jogo=jogo)
+                ui.animar(f"{DOS_BRANCO}{ARTE_PIANO}{RESET}", 0.015, jogo=jogo)
                 ui.animar("--- O JULGAMENTO DO PIANISTA ---", 0.03, DOS_VERDE, jogo)
                 ui.exibir(f"{DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{RESET}")
                 ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{RESET}")
@@ -347,7 +350,7 @@ def receber_comando():
         elif jogo.estado_atual == "MINIGAME_COFRE":
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
-                ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.002, jogo=jogo)
+                ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.015, jogo=jogo)
                 ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
             elif comando == "1994": 
                 ui.exibir(f"{DOS_VERDE}CLICK! A pesada porta de metal se abre.{RESET}")
@@ -502,7 +505,8 @@ def receber_comando():
                 resultado = jogo.minigame_atual.processar_turno("esperar", jogo) 
                 if resultado == "vitoria_seguranca":
                     jogo.minigame_atual = None
-                    jogo.sala_atual = "01"
+                    # === CORREÇÃO DO RETORNO DE VITÓRIA: Voltou a ser "01" ===
+                    jogo.sala_atual = "01" 
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
 
@@ -533,6 +537,7 @@ def receber_comando():
                     imprimir_contexto_sala(jogo)
                 elif resultado == "vitoria_seguranca":
                     jogo.minigame_atual = None
+                    # === CORREÇÃO DO RETORNO DE VITÓRIA: Voltou a ser "01" ===
                     jogo.sala_atual = "01" 
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
@@ -542,7 +547,7 @@ def receber_comando():
         if getattr(jogo, 'god_mode', False):
             jogo.hp = 9999
             jogo.turnos_luz = 9999
-            if jogo.minigame_atual:
+            if getattr(jogo, 'minigame_atual', None):
                 if isinstance(jogo.minigame_atual, MinigameMinotauro): jogo.minigame_atual.bateria = 9999
                 elif isinstance(jogo.minigame_atual, MinigameSeguranca): jogo.minigame_atual.energia = 9999
                     
@@ -558,6 +563,6 @@ def receber_comando():
 
     if jogo: salvar_sessao(session.get("sid"), jogo)
     return gerar_resposta_json(captura, jogo)
-
+    
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

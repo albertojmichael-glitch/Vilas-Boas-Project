@@ -1,4 +1,5 @@
 import random
+import difflib
 from utils import normalizar, extrair_argumentos, encontrar_melhor_match
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, default_ui
 from data import MAX_INVENTARIO, COFRE_SENHA, descricoes_itens
