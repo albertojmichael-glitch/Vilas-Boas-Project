@@ -31,15 +31,16 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
     ui.animar(f"{DOS_AMARELO}🏆 FINAIS ALCANÇADOS: {qtd}/4{RESET}", 0.01, DOS_BRANCO, jogo)
     ui.animar(f"{DOS_BRANCO}{c_med} Medíocre  {c_son} Bons Sonhos  {c_bom} Bom  {c_ver} Verdadeiro{RESET}\n", 0.01, DOS_BRANCO, jogo)
 
-    ui.animar(f"{DOS_BRANCO}[1] INICIAR MODO: NORMAL (Para iniciantes){RESET}", 0.01, DOS_BRANCO, jogo)
-    ui.animar(f"{DOS_VERMELHO}[2] INICIAR MODO: PESADELO (RNG Agressivo / HP Baixo){RESET}", 0.01, DOS_BRANCO, jogo)
-    ui.animar(f"{DOS_AMARELO}[3] INICIAR MODO: RÁPIDO (Skip Delays de Digitação){RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_BRANCO}[1] INICIAR: MODO NORMAL (Velocidade MS-DOS Padrão){RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_AMARELO}[2] INICIAR: MODO NORMAL (Texto Rápido — Sem Delays){RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_VERMELHO}[3] INICIAR: MODO PESADELO (Velocidade MS-DOS Padrão){RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_AMARELO}[4] INICIAR: MODO PESADELO (Texto Rápido — Sem Delays){RESET}", 0.01, DOS_BRANCO, jogo)
 
     if tem_autosave:
-        ui.animar(f"{DOS_VERDE}[4] CONTINUAR JOGO (Autosave Encontrado){RESET}\n", 0.01, DOS_BRANCO, jogo)
-        ui.animar(f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-4): {RESET}", 0.01, DOS_BRANCO, jogo)
+        ui.animar(f"{DOS_VERDE}[5] CONTINUAR JOGO (Autosave Encontrado){RESET}\n", 0.01, DOS_BRANCO, jogo)
+        ui.animar(f"{DOS_VERDE}SELECIONE UMA OPÇÃO (1-5): {RESET}", 0.01, DOS_BRANCO, jogo)
     else:
-        ui.animar(f"\n{DOS_VERDE}SELECIONE UMA OPÇÃO (1-3): {RESET}", 0.01, DOS_BRANCO, jogo)
+        ui.animar(f"\n{DOS_VERDE}SELECIONE UMA OPÇÃO (1-4): {RESET}", 0.01, DOS_BRANCO, jogo)
 
 def imprimir_tutorial(ui, jogo=None):
     ui.animar(f"\n{DOS_AMARELO}--- DICAS DE SOBREVIVÊNCIA (TUTORIAL) ---{RESET}", 0.01, DOS_BRANCO, jogo)

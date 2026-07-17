@@ -95,6 +95,35 @@ CORS(app, supports_credentials=True)
 SESSION_DIR = Path(BASE_DIR) / "sessions"
 SESSION_DIR.mkdir(exist_ok=True)
 
+
+# --- NOVO DIRETÓRIO ISOLADO PARA SAVES ---
+SAVES_DIR = Path(BASE_DIR) / "saves"
+SAVES_DIR.mkdir(exist_ok=True)
+
+def obter_caminho_autosave(sid):
+    return SAVES_DIR / f"autosave_{sid}.json"
+
+def salvar_autosave_com_sid(jogo, sid):
+    if not sid: return
+    caminho = obter_caminho_autosave(sid)
+    caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
+
+def carregar_autosave_com_sid(jogo, sid):
+    if not sid: return False
+    caminho = obter_caminho_autosave(sid)
+    if caminho.exists():
+        try:
+            dados = json.loads(caminho.read_text(encoding="utf-8"))
+            novo_jogo = GameState.from_dict(dados)
+            # Copia os dados recuperados para o estado ao vivo da sessão
+            for k, v in novo_jogo.__dict__.items():
+                if k != 'ui_handler':
+                    setattr(jogo, k, v)
+            return True
+        except:
+            return False
+    return False
+
 # AQUI VAI O CACHE DE MEMÓRIA PARA SALVAR O MINIGAME!
 MEMORIA_SESSOES = {}
 
@@ -231,37 +260,47 @@ def receber_comando():
                 ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
         elif jogo.estado_atual == "MENU":
+            sid = session.get("sid")
+            tem_save = sid and obter_caminho_autosave(sid).exists() if sid else False
+
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
-                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
-            elif comando == "4" and AUTOSAVE_FILE.exists():
+                imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
+            elif comando == "5" and tem_save:
                 ui.limpar()
-                if carregar_autosave(jogo):
-                    ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO ÚLTIMO AUTOSAVE.{RESET}\n", 0.04, jogo=jogo)
+                if carregar_autosave_com_sid(jogo, sid):
+                    ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO SEU AUTOSAVE DE SESSÃO.{RESET}\n", 0.04, jogo=jogo)
                     imprimir_contexto_sala(jogo)
                 else:
-                    ui.animar(f"{DOS_VERMELHO}Falha ao ler o Autosave.{RESET}", 0.04, jogo=jogo)
-                    imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
-            elif comando in ["1", "2", "3"]:
+                    ui.animar(f"{DOS_VERMELHO}Falha ao ler o seu Autosave.{RESET}", 0.04, jogo=jogo)
+                    imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
+            elif comando in ["1", "2", "3", "4"]:
                 ui.limpar()
                 if comando == "1":
                     jogo.dificuldade_escolhida = "NORMAL"
+                    jogo.fast_mode = False
                     jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
-                    ui.animar(f"{DOS_VERDE}MODO NORMAL SELECIONADO. INICIANDO JOGO.EXE...{RESET}\n", 0.04, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}MODO NORMAL SELECIONADO. VELOCIDADE RETRÔ ATIVADA.{RESET}\n", 0.04, jogo=jogo)
                 elif comando == "2":
-                    jogo.dificuldade_escolhida = "PESADELO"
-                    jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
-                    ui.animar(f"{DOS_VERMELHO}MODO PESADELO SELECIONADO. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
-                elif comando == "3":
                     jogo.dificuldade_escolhida = "NORMAL"
                     jogo.fast_mode = True
                     jogo.hp = 3; jogo.furia_noite = 1; jogo.energia_min_noite = 100; jogo.energia_max_noite = 100
-                    ui.animar(f"{DOS_AMARELO}MODO RÁPIDO SELECIONADO. DELAYS DE DIGITAÇÃO DESATIVADOS.{RESET}\n", 0.04, jogo=jogo)
+                    ui.animar(f"{DOS_AMARELO}MODO NORMAL COM TEXTO RÁPIDO SELECIONADO.{RESET}\n", 0.04, jogo=jogo)
+                elif comando == "3":
+                    jogo.dificuldade_escolhida = "PESADELO"
+                    jogo.fast_mode = False
+                    jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
+                    ui.animar(f"{DOS_VERMELHO}MODO PESADELO SELECIONADO. VELOCIDADE RETRÔ ATIVADA. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
+                elif comando == "4":
+                    jogo.dificuldade_escolhida = "PESADELO"
+                    jogo.fast_mode = True
+                    jogo.hp = 2; jogo.furia_noite = 2; jogo.energia_min_noite = 70; jogo.energia_max_noite = 82
+                    ui.animar(f"{DOS_VERMELHO}MODO PESADELO COM TEXTO RÁPIDO SELECIONADO. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
 
                 jogo.estado_atual = "JOGO"
                 imprimir_tutorial(ui)
-                ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
-                ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.04, jogo=jogo)
+                ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.08, jogo=jogo)
+                ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.01, jogo=jogo)
                 imprimir_contexto_sala(jogo)
                 
             elif comando == "2007":
@@ -552,7 +591,7 @@ def receber_comando():
                 elif isinstance(jogo.minigame_atual, MinigameSeguranca): jogo.minigame_atual.energia = 9999
                     
         if getattr(jogo, 'estado_atual', "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
-            salvar_autosave(jogo)
+            salvar_autosave_com_sid(jogo, session.get("sid"))
 
     except Exception as e:
         print(f"\n{DOS_VERMELHO}[ERRO INTERNO DO SISTEMA]: O sistema falhou ao processar a ação.{RESET}")

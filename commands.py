@@ -287,7 +287,7 @@ def cmd_usar(comando, jogo, mapa):
         ui.pausar(2)
     elif item == "sanduiche estragado":
         jogo.hp -= 1; jogo.turnos_enjoado = 4; jogo.inventario.remove("sanduiche estragado")
-        ui.exibir(f"🤢 Você deu uma mordida na gosma cinza. Seu estômago revira violentamente! (HP: {jogo.hp})")
+        ui.exibir(f" Você deu uma mordida na gosma cinza. Seu estômago revira violentamente! (HP: {jogo.hp})")
         ui.pausar(2)
     elif item == "remedio":
         if jogo.hp < 3:
@@ -301,22 +301,39 @@ def cmd_usar(comando, jogo, mapa):
         jogo.inventario.remove("bateria nova")
         ui.exibir(f"{DOS_VERDE} Você conectou a bateria na sua lanterna, ela brilha com força total.{RESET}")
         ui.pausar(2)
-    elif item == "tesoura" and jogo.sala_atual in ["corredor", "02", "03"]:
-        if "02" in mapa["corredor"] and mapa["corredor"]["02"] != "cozinha privada":
-            mapa["corredor"]["02"] = "cozinha privada"
-            jogo.inventario.remove("tesoura"); jogo.inventario.append("tesoura quebrada")
-            ui.exibir(f"{DOS_VERDE}Você usa a tesoura na fechadura da Sala 02. O metal estala e a porta abre!{RESET}")
-            ui.exibir(f"{DOS_AMARELO}A tesoura quebrou com o esforço e as lâminas se soltaram.{RESET}")
-            ui.pausar(2)
-        elif "03" in mapa["corredor"] and mapa["corredor"]["03"] != "sala do gerador":
-            mapa["corredor"]["03"] = "sala do gerador"
-            jogo.inventario.remove("tesoura"); jogo.inventario.append("tesoura quebrada")
-            ui.exibir(f"{DOS_VERDE}Você usa a tesoura na porta emperrada 03. Você força a alavanca e a porta escancara!{RESET}")
-            ui.exibir(f"{DOS_AMARELO}A tesoura quebrou com o esforço e as lâminas se soltaram.{RESET}")
+
+    elif item == "tesoura":
+        if jogo.sala_atual == "02":
+            if mapa["corredor"]["02"] != "cozinha privada":
+                mapa["corredor"]["02"] = "cozinha privada"
+                jogo.sala_atual = "cozinha privada"
+                jogo.inventario.remove("tesoura")
+                jogo.inventario.append("tesoura quebrada")
+                ui.exibir(f"{DOS_VERDE}Você usa a tesoura na fechadura da Sala 02. O metal estala e a porta abre.{RESET}")
+                ui.exibir(f"{DOS_AMARELO}A tesoura quebrou com o esforço e as lâminas se soltaram.{RESET}")
+                ui.pausar(2)
+            else:
+                ui.exibir("A cozinha privada (Sala 02) já está aberta.")
+                ui.pausar(1.5)
+        elif jogo.sala_atual == "03":
+            if mapa["corredor"]["03"] != "sala do gerador":
+                mapa["corredor"]["03"] = "sala do gerador"
+                jogo.sala_atual = "sala do gerador"
+                jogo.inventario.remove("tesoura")
+                jogo.inventario.append("tesoura quebrada")
+                ui.exibir(f"{DOS_VERDE}Você usa a tesoura na porta emperrada 03. Você força a alavanca e a porta escancara.{RESET}")
+                ui.exibir(f"{DOS_AMARELO}A tesoura quebrou com o esforço e as lâminas se soltaram.{RESET}")
+                ui.pausar(2)
+            else:
+                ui.exibir("A sala do gerador (Sala 03) já está aberta.")
+                ui.pausar(1.5)
+        elif jogo.sala_atual == "corredor":
+            ui.exibir("Vá até a porta trancada (02) ou emperrada (03) para tentar usar a tesoura diretamente nela.")
             ui.pausar(2)
         else:
-            ui.exibir("Você já abriu as portas que precisavam ser forçadas aqui.")
-            ui.pausar(2)
+            ui.exibir("Não há nenhuma porta ou tranca aqui que precise ser arrombada com a tesoura.")
+            ui.pausar(1.5)
+
     elif item == "fios cortados" and jogo.sala_atual == "sala do gerador":
         ui.exibir("\n Você joga os fios na fiação principal desencapada")
         ui.exibir(" O painel explode e as chamas começam a lamber as paredes")
