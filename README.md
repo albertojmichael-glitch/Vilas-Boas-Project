@@ -6,6 +6,9 @@ O projeto possui uma **Engine Própria** construída do zero em Python, suportan
 
 ---
 
+![Villas-Boas Interface]
+
+
 ## ✨ Features Técnicas (Arquitetura & Engenharia)
 
 Este projeto foi construído focando em boas práticas de mercado, arquitetura escalável e Clean Code:
@@ -29,12 +32,9 @@ Este projeto foi construído focando em boas práticas de mercado, arquitetura e
 
 ---
 
-## 🚀 Como Instalar e Jogar
+## 🚀 Instalação e Execução Local
 
-### Pré-requisitos
-Certifique-se de ter o Python instalado em sua máquina. Clone este repositório e instale as dependências:
-
+1. **Clone o repositório:**
 ```bash
-git clone [https://github.com/SEU_USUARIO/villas-boas-1982.git](https://github.com/SEU_USUARIO/villas-boas-1982.git)
+git clone [https://github.com/SEU-USUARIO/villas-boas-1982.git](https://github.com/SEU-USUARIO/villas-boas-1982.git)
 cd villas-boas-1982
-pip install flask flask-cors pydantic colorama pytest
