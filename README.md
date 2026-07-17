@@ -58,3 +58,29 @@ python app.py
 
 (Opcional) Jogue pelo Terminal:
 python main.py
+
+2. **API Reference**
+
+A aplicação utiliza uma API RESTful para processar as ações do jogador de forma stateless (estado mantido via Flask-Session).
+Endpoint: POST /comando
+Payload de Exemplo:
+
+{
+  "comando": "ir sala de jantar"
+}
+
+Resposta de Exemplo (Estruturada para Animação UI):
+'''
+{
+  "estado": {
+    "hp": 3,
+    "inventario": ["lanterna", "chave dos fundos"],
+    "luz": 8,
+    "saidas": ["Corredor", "Porta dos fundos"],
+    "sala": "SALA DE JANTAR"
+  },
+  "linhas": [
+    "<span class=\"verde\">@@TYPE@@verde@@15@@📍 VOCÊ ESTÁ EM: SALA DE JANTAR</span>",
+    "<span class=\"branco\">@@TYPE@@branco@@15@@👁️  Visão: tem varias mesas de jantar com confetes, é um lugar bem grande, está bem sujo</span>"
+  ]
+}
