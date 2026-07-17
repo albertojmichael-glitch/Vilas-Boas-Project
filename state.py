@@ -69,6 +69,16 @@ class GameState(BaseModel):
         super().__init__(**data)
         self._ui_handler = ui_handler
 
+
+    def to_dict(self):
+        # Pydantic V2 usa model_dump()
+        return self.model_dump()
+
+    @classmethod
+    def from_dict(cls, data):
+        # Pydantic V2 usa model_validate()
+        return cls.model_validate(data)
+
     @property
     def ui_handler(self): return self._ui_handler
     @ui_handler.setter
