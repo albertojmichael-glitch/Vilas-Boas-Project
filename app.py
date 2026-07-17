@@ -6,6 +6,7 @@ import uuid
 from datetime import timedelta
 from pathlib import Path
 
+from pymongo import MongoClient
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 
@@ -22,12 +23,22 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # --- SEGURANÇA E CONFIGURAÇÃO ---
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982")
 
-# Validação estrita para Produção (Render configura a variável RENDER automaticamente)
 if os.environ.get("RENDER"):
     assert SECRET_KEY != "DEV_SECRET_DO_NOT_USE_IN_PROD_1982", "CRÍTICO: FLASK_SECRET_KEY não configurada em produção! Abortando boot."
 
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
+
+# --- CONEXÃO COM O BANCO DE DADOS (MONGODB) ---
+MONGO_URI = os.environ.get("MONGO_URI")
+if MONGO_URI:
+    mongo_client = MongoClient(MONGO_URI)
+    db = mongo_client["villasboas_db"]
+    saves_collection = db["saves"]
+    logging.info("🚀 Conectado ao MongoDB com sucesso!")
+else:
+    mongo_client = None
+    logging.warning("⚠️ Rodando sem Banco de Dados. Usando arquivos locais.")
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 app.secret_key = SECRET_KEY
@@ -86,27 +97,56 @@ def obter_caminho_autosave(sid):
 def carregar_save_web(jogo):
     sid = session.get("sid")
     if not sid: return False
-    caminho = obter_caminho_autosave(sid)
-    if caminho.exists():
+
+    if mongo_client:
+        # Busca o save no Banco de Dados MongoDB
         try:
-            dados = json.loads(caminho.read_text(encoding="utf-8"))
-            novo_jogo = GameState.from_dict(dados)
-            for k, v in novo_jogo.__dict__.items():
-                if k != 'ui_handler':
-                    setattr(jogo, k, v)
-            return True
+            doc = saves_collection.find_one({"sid": sid})
+            if doc and "dados" in doc:
+                novo_jogo = GameState.from_dict(doc["dados"])
+                for k, v in novo_jogo.__dict__.items():
+                    if k != 'ui_handler':
+                        setattr(jogo, k, v)
+                return True
         except Exception as e:
-            logging.exception(f"Erro ao carregar save da web: {e}")
+            logging.exception(f"Erro ao buscar save no MongoDB: {e}")
+    else:
+        # Busca o save no Disco Local (Fallback)
+        caminho = obter_caminho_autosave(sid)
+        if caminho.exists():
+            try:
+                dados = json.loads(caminho.read_text(encoding="utf-8"))
+                novo_jogo = GameState.from_dict(dados)
+                for k, v in novo_jogo.__dict__.items():
+                    if k != 'ui_handler':
+                        setattr(jogo, k, v)
+                return True
+            except Exception as e:
+                logging.exception(f"Erro ao carregar save local: {e}")
+                
     return False
 
 def salvar_save_web(jogo):
     sid = session.get("sid")
     if not sid: return
-    try:
-        caminho = obter_caminho_autosave(sid)
-        caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
-    except Exception as e:
-        logging.exception(f"Erro ao gerar autosave: {e}")
+    
+    if mongo_client:
+        # Salva / Atualiza o progresso no Banco de Dados MongoDB
+        try:
+            saves_collection.update_one(
+                {"sid": sid},
+                {"$set": {"sid": sid, "dados": jogo.to_dict()}},
+                upsert=True
+            )
+        except Exception as e:
+            logging.exception(f"Erro ao salvar progresso no MongoDB: {e}")
+    else:
+        # Salva o progresso no Disco Local (Fallback)
+        try:
+            caminho = obter_caminho_autosave(sid)
+            caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
+        except Exception as e:
+            logging.exception(f"Erro ao gerar autosave local: {e}")
 
 def gerar_resposta_json(jogo):
     linhas = []
