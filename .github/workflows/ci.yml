@@ -27,4 +27,4 @@ jobs:
 
     - name: Rodar Testes Unitários (Pytest)
       run: |
-        pytest tests/ -v
+        PYTHONPATH=. pytest tests/ -v
