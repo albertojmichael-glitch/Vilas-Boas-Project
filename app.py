@@ -48,18 +48,30 @@ Session(app)
 CORS(app, supports_credentials=True)
 
 class WebUIHandler(UIHandler):
-    def limpar(self): print("@@CLEAR@@")
-    def pausar(self, segs): pass
-    def exibir(self, texto): self.animar(texto, 0.015)
+    def __init__(self):
+        self.buffer = [] # Buffer de memória estruturado (Fim do sys.stdout!)
+        
+    def limpar(self): 
+        self.buffer.append("@@CLEAR@@")
+        
+    def pausar(self, segs): 
+        pass
+        
+    def exibir(self, texto): 
+        self.animar(texto, 0.015)
+        
     def animar(self, texto, tempo=0.03, cor="", jogo=None):
         cor_nome = "verde"
         if cor == DOS_BRANCO: cor_nome = "branco"
         elif cor == DOS_AMARELO: cor_nome = "amarelo"
         elif cor == DOS_VERMELHO: cor_nome = "vermelho"
+        
         if jogo and getattr(jogo, 'fast_mode', False): tempo = 0
         ms = int(tempo * 1000)
-        print(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
-    def obter_input(self, prompt_text): return ""
+        self.buffer.append(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
+        
+    def obter_input(self, prompt_text): 
+        return ""
 
 def ansi_para_html(texto_ansi):
     import re
@@ -106,18 +118,28 @@ def salvar_save_web(jogo):
     except Exception as e:
         logger.error(f"Erro ao Gerar Save: {e}")
 
-def gerar_resposta_json(captura, jogo):
-    linhas = [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]
+def gerar_resposta_json(jogo):
+    linhas = []
     saidas, hp, luz, inv, sala = [], "...", "...", [], "BOOT"
+    
     if jogo:
+        # Pega as linhas direto do buffer do UIHandler e depois limpa o buffer
+        if hasattr(jogo.ui_handler, 'buffer'):
+            linhas = [ansi_para_html(linha) for linha in jogo.ui_handler.buffer if linha.strip() != ""]
+            jogo.ui_handler.buffer.clear()
+            
         if getattr(jogo, 'estado_atual', "") not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
             chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
             saidas = [k.title() for k in jogo.mapa[jogo.sala_atual].keys() if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
+            
         hp = jogo.hp if not getattr(jogo, 'god_mode', False) else "∞"
         luz = jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞"
         inv = jogo.inventario
         sala = jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA"
+        
     return jsonify({"linhas": linhas, "estado": {"hp": hp, "luz": luz, "inventario": inv, "sala": sala, "saidas": saidas}})
+
+
 
 @app.route("/")
 def raiz(): return send_from_directory(BASE_DIR, "index.html")
@@ -155,41 +177,41 @@ def receber_comando():
     if request.method == 'GET':
         return send_from_directory(BASE_DIR, "index.html")
 
-    captura = io.StringIO()
-    stdout_original = sys.stdout
-    sys.stdout = captura
+    jogo = None
 
     try:
-        # Recupera o estado serializado pela sessão do Flask! (Nenhuma global leakada)
         if "jogo" not in session:
             session["sid"] = str(uuid.uuid4())
             session["jogo"] = GameState()
             session.permanent = True
             
         jogo = session["jogo"]
+        
+        # Injeta um handler novo e limpo para cada requisição HTTP
         jogo.ui_handler = WebUIHandler()
 
         dados = request.json
         comando = dados.get('comando', '')
-        
         sid = session.get("sid")
         tem_save = sid and obter_caminho_autosave(sid).exists() if sid else False
 
-        # Joga todo o trabalho bruto para o nosso novo Motor (Engine)
         processar_fluxo_jogo(comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web)
 
         if getattr(jogo, 'estado_atual', "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
             salvar_save_web(jogo)
 
-        # Informa o Flask-Session que o objeto de jogo foi alterado
         session.modified = True
 
     except Exception as e:
-        logger.error(f"Falha interna: {e}")
-    finally:
-        sys.stdout = stdout_original
+        logging.exception(f"Erro critico de rota: {e}")
+        if jogo and hasattr(jogo, 'ui_handler'):
+            jogo.ui_handler.buffer.append(f"@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação.")
+            # Esconde o trace do usuário em produção!
+            if app.debug:
+                jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {str(e)}")
 
-    return gerar_resposta_json(captura, jogo)
+    # Chama o gerador sem precisar passar o StringIO!
+    return gerar_resposta_json(jogo)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
