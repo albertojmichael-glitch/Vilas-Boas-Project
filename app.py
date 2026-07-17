@@ -170,6 +170,10 @@ def gerar_resposta_json(jogo):
 
 @app.route("/")
 def raiz(): return send_from_directory(BASE_DIR, "index.html")
+@app.route("/ping")
+def ping():
+    # Rota super leve apenas para o Uptime Robot bater e manter o servidor acordado
+    return "Estou vivo!", 200
 @app.route("/style.css")
 def serve_css(): return send_from_directory(BASE_DIR, "style.css")
 @app.route("/script.js")
