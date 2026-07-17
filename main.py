@@ -1,12 +1,17 @@
 import sys
 import random
+import logging
+from pathlib import Path
 from state import GameState, QuitGameException, salvar_autosave, carregar_autosave, AUTOSAVE_FILE
 from commands import processar_comando, normalizar
 from ui import default_ui, DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial, 
                    imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
 from minigames import MinigameMinotauro, MinigameSeguranca
-from utils import extrair_argumentos, atualizar_eventos_de_tempo 
+from utils import extrair_argumentos, atualizar_eventos_de_tempo
+
+# Configuração profissional de logging para o Terminal
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 if __name__ == "__main__":
     jogo = GameState(ui_handler=default_ui)
@@ -35,33 +40,32 @@ if __name__ == "__main__":
                     ui.animar(f"{DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
                     ui.animar(f"{DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
                     ui.animar(f"{DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
-                    ui.animar(f"{DOS_VERDE}DESKTOP  <DIR>        197.78  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
-                    ui.animar(f"{DOS_VERDE}SAVES    <DIR>        358.21  23-07-2008  4:00a{RESET}", 0.01, jogo=jogo)
-                    ui.animar(f"{DOS_VERDE}PICTURE  <DIR>        666.00  05-11-1994  4:00a{RESET}", 0.01, jogo=jogo)
-                    ui.animar(f"{DOS_VERDE}VALID    <DIR>        2.7801  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;        197.78  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}SAVES    &lt;DIR&gt;        358.21  23-07-2008  4:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}PICTURE  &lt;DIR&gt;        666.00  05-11-1994  4:00a{RESET}", 0.01, jogo=jogo)
+                    ui.animar(f"{DOS_VERDE}VALID    &lt;DIR&gt;        2.7801  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
                     ui.exibir(f"{DOS_AMARELO}       3 file(s)        68.097 bytes{RESET}")
                     ui.exibir(f"{DOS_AMARELO}       4 dir(s)        655.360 bytes free{RESET}\n")
                     jogo.estado_atual = "MENU"
-                    imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
+                    imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists(), jogo=jogo)
                 else:
                     ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
                     ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
             elif jogo.estado_atual == "MENU":
-                sid = session.get("sid")
-                tem_save = sid and obter_caminho_autosave(sid).exists() if sid else False
-
+                tem_save_local = AUTOSAVE_FILE.exists()
+                
                 if comando in ["cls", "limpar", "clear", "clean"]:
                     ui.limpar()
-                    imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
-                elif comando == "5" and tem_save:
+                    imprimir_menu_dificuldade(ui, tem_autosave=tem_save_local, jogo=jogo)
+                elif comando == "5" and tem_save_local:
                     ui.limpar()
-                    if carregar_autosave_com_sid(jogo, sid):
-                        ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO SEU AUTOSAVE DE SESSÃO.{RESET}\n", 0.04, jogo=jogo)
+                    if carregar_autosave(jogo):
+                        ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO AUTOSAVE LOCAL.{RESET}\n", 0.04, jogo=jogo)
                         imprimir_contexto_sala(jogo)
                     else:
-                        ui.animar(f"{DOS_VERMELHO}Falha ao ler o seu Autosave.{RESET}", 0.04, jogo=jogo)
-                        imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
+                        ui.animar(f"{DOS_VERMELHO}Falha ao ler o Autosave local.{RESET}", 0.04, jogo=jogo)
+                        imprimir_menu_dificuldade(ui, tem_autosave=tem_save_local, jogo=jogo)
                 elif comando in ["1", "2", "3", "4"]:
                     ui.limpar()
                     if comando == "1":
@@ -86,16 +90,14 @@ if __name__ == "__main__":
                         ui.animar(f"{DOS_VERMELHO}MODO PESADELO COM TEXTO RÁPIDO SELECIONADO. BOA SORTE.{RESET}\n", 0.04, jogo=jogo)
 
                     jogo.estado_atual = "JOGO"
-                    imprimir_tutorial(ui)
-                    ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.08, jogo=jogo)
-                    ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.01, jogo=jogo)
+                    imprimir_tutorial(ui, jogo=jogo)
+                    ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
+                    ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.04, jogo=jogo)
                     imprimir_contexto_sala(jogo)
-                    
                 elif comando == "2007":
                     ui.limpar()
                     jogo.dificuldade_escolhida = "GOD MODE"
                     jogo.god_mode = True
-                    # A LINHA QUE QUEBRAVA A SUA IMERSÃO FOI REMOVIDA DAQUI! 
                     jogo.hp = 9999; jogo.furia_noite = 0; jogo.energia_min_noite = 9999; jogo.energia_max_noite = 9999
                     jogo.turnos_luz = 9999
                     jogo.estado_atual = "JOGO"
@@ -103,7 +105,7 @@ if __name__ == "__main__":
                     ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna brilha com a força de uma estrela...{RESET}", 0.04, jogo=jogo)
                     imprimir_contexto_sala(jogo)
                 else:
-                    ui.animar(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}", 0.04, jogo=jogo)
+                    ui.exibir(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}")
 
             elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
                 if comando in ["cls", "limpar", "clear", "clean"]:
@@ -139,21 +141,6 @@ if __name__ == "__main__":
                 if comando in ["cls", "limpar", "clear", "clean"]:
                     ui.limpar()
                     jogo.minigame_atual.imprimir_status()
-                elif comando in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_SEGURANCA":
-                    ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você altera os ponteiros do universo. O relógio salta para as 06:00 instantaneamente.{RESET}")
-                    jogo.minigame_atual.turno = 24 
-                    resultado = jogo.minigame_atual.processar_turno("esperar", jogo) 
-                    if resultado == "vitoria_seguranca":
-                        jogo.minigame_atual = None
-                        jogo.sala_atual = "01"
-                        jogo.estado_atual = "JOGO"
-                        imprimir_contexto_sala(jogo)
-                elif comando in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_MINOTAURO":
-                    ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre e dá uma voadora no peito do Minotauro! Ele foge.{RESET}")
-                    jogo.minigame_atual = None
-                    jogo.sala_atual = "sala dos fundos"
-                    jogo.estado_atual = "JOGO"
-                    imprimir_contexto_sala(jogo)
                 else:
                     partes = extrair_argumentos(comando)
                     verbo = partes[0] if partes else ""
@@ -170,8 +157,6 @@ if __name__ == "__main__":
                         jogo.minigame_atual = None
                         jogo.sala_atual = "sala dos fundos" 
                         jogo.estado_atual = "JOGO"
-                        jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
-                        ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você e travou para sempre.{RESET}")
                         imprimir_contexto_sala(jogo)
                     elif resultado == "vitoria_seguranca":
                         jogo.minigame_atual = None
@@ -184,9 +169,6 @@ if __name__ == "__main__":
             if getattr(jogo, 'god_mode', False):
                 jogo.hp = 9999
                 jogo.turnos_luz = 9999
-                if jogo.minigame_atual:
-                    if isinstance(jogo.minigame_atual, MinigameMinotauro): jogo.minigame_atual.bateria = 9999
-                    elif isinstance(jogo.minigame_atual, MinigameSeguranca): jogo.minigame_atual.energia = 9999
                         
             if jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
                 salvar_autosave(jogo)
@@ -196,7 +178,8 @@ if __name__ == "__main__":
             break
             
         except Exception as e:
+            logging.exception("Erro inesperado no loop principal da CLI")
             ui.exibir(f"\n{DOS_VERMELHO}[ FALHA GERAL DE SISTEMA - TELA AZUL ]{RESET}")
-            ui.exibir(f"{DOS_BRANCO}O sistema encontrou um erro: {e}{RESET}")
+            ui.exibir(f"{DOS_BRANCO}Ocorreu um problema inesperado. O sistema tentará prosseguir.{RESET}")
             ui.pausar(3)
             continue

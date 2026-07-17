@@ -5,11 +5,12 @@ import io
 import re
 import random
 import uuid
+import logging
 import traceback
 from pathlib import Path
 from datetime import timedelta
 
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 
 from state import GameState, GameStateEnum, salvar_autosave, carregar_autosave, AUTOSAVE_FILE
@@ -21,6 +22,9 @@ from utils import extrair_argumentos, atualizar_eventos_de_tempo
 
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
                    dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
+
+# Configuração de Logs para auditoria no Render
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -44,15 +48,10 @@ ARTE_COFRE = r'''
 class WebUIHandler(UIHandler):
     def limpar(self):
         print("@@CLEAR@@")
-    
     def pausar(self, segs):
         pass
-        
     def exibir(self, texto):
-        # AQUI É O SEGREDO DO MINIGAME!
-        # Agora o texto "instantâneo" vai ser desenhado a 2 milissegundos por letra!
-        self.animar(texto, 0.002)
-        
+        self.animar(texto, 0.015)
     def animar(self, texto, tempo=0.03, cor="", jogo=None):
         cor_nome = "verde"
         if cor == DOS_BRANCO: cor_nome = "branco"
@@ -62,7 +61,6 @@ class WebUIHandler(UIHandler):
         if jogo and getattr(jogo, 'fast_mode', False): tempo = 0
         ms = int(tempo * 1000)
         print(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
-        
     def obter_input(self, prompt_text):
         return "" 
 
@@ -70,7 +68,6 @@ def ansi_para_html(texto_ansi):
     mapa_cores = { DOS_VERDE: "verde", DOS_BRANCO: "branco", DOS_AMARELO: "amarelo", DOS_VERMELHO: "vermelho" }
     padrao = re.compile("(" + "|".join(re.escape(c) for c in list(mapa_cores.keys()) + [RESET]) + ")")
     partes = padrao.split(texto_ansi)
-
     html = []
     aberto = False
     for parte in partes:
@@ -79,53 +76,26 @@ def ansi_para_html(texto_ansi):
             html.append(f'<span class="{mapa_cores[parte]}">')
             aberto = True
         elif parte == RESET:
-            if aberto:
-                html.append("</span>")
-                aberto = False
-        else:
-            html.append(parte)
+            if aberto: html.append("</span>"); aberto = False
+        else: html.append(parte)
     if aberto: html.append("</span>")
     return "".join(html)
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30) # <--- ADICIONE ESTA LINHA AQUI
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 CORS(app, supports_credentials=True)
 
 SESSION_DIR = Path(BASE_DIR) / "sessions"
 SESSION_DIR.mkdir(exist_ok=True)
 
-
-# --- NOVO DIRETÓRIO ISOLADO PARA SAVES ---
 SAVES_DIR = Path(BASE_DIR) / "saves"
 SAVES_DIR.mkdir(exist_ok=True)
 
+MEMORIA_SESSOES = {}
+
 def obter_caminho_autosave(sid):
     return SAVES_DIR / f"autosave_{sid}.json"
-
-def salvar_autosave_com_sid(jogo, sid):
-    if not sid: return
-    caminho = obter_caminho_autosave(sid)
-    caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
-
-def carregar_autosave_com_sid(jogo, sid):
-    if not sid: return False
-    caminho = obter_caminho_autosave(sid)
-    if caminho.exists():
-        try:
-            dados = json.loads(caminho.read_text(encoding="utf-8"))
-            novo_jogo = GameState.from_dict(dados)
-            # Copia os dados recuperados para o estado ao vivo da sessão
-            for k, v in novo_jogo.__dict__.items():
-                if k != 'ui_handler':
-                    setattr(jogo, k, v)
-            return True
-        except:
-            return False
-    return False
-
-# AQUI VAI O CACHE DE MEMÓRIA PARA SALVAR O MINIGAME!
-MEMORIA_SESSOES = {}
 
 def obter_estado():
     session.permanent = True
@@ -134,13 +104,11 @@ def obter_estado():
         sid = str(uuid.uuid4())
         session["sid"] = sid
         
-    # Tenta puxar direto da memória RAM rápida
     if sid in MEMORIA_SESSOES:
         jogo = MEMORIA_SESSOES[sid]
         jogo.ui_handler = WebUIHandler()
         return jogo
         
-    # Se falhar (ex: servidor reiniciou), puxa do disco
     session_file = SESSION_DIR / f"{sid}.json"
     if session_file.exists():
         try:
@@ -149,7 +117,10 @@ def obter_estado():
             jogo.ui_handler = WebUIHandler()
             MEMORIA_SESSOES[sid] = jogo
             return jogo
-        except: pass
+        except json.JSONDecodeError:
+            logging.exception(f"Erro ao decodificar JSON de sessao corrompido: {sid}")
+        except Exception as e:
+            logging.exception(f"Falha de leitura critica na sessao {sid}: {e}")
         
     jogo = GameState(ui_handler=WebUIHandler())
     salvar_sessao(sid, jogo)
@@ -157,40 +128,67 @@ def obter_estado():
 
 def salvar_sessao(sid, jogo):
     if not sid: return
-    # Salva na memória e no disco
     MEMORIA_SESSOES[sid] = jogo
-    session_file = SESSION_DIR / f"{sid}.json"
-    session_file.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
+    try:
+        session_file = SESSION_DIR / f"{sid}.json"
+        session_file.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        logging.exception(f"Impossivel salvar arquivo de sessao {sid} em disco: {e}")
+
+def salvar_autosave_com_sid(jogo, sid):
+    if not sid: return
+    try:
+        caminho = obter_caminho_autosave(sid)
+        caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        logging.exception(f"Falha ao gerar autosave do ID {sid}: {e}")
+
+def carregar_autosave_com_sid(jogo, sid):
+    if not sid: return False
+    caminho = obter_caminho_autosave(sid)
+    if caminho.exists():
+        try:
+            dados = json.loads(caminho.read_text(encoding="utf-8"))
+            novo_jogo = GameState.from_dict(dados)
+            for k, v in novo_jogo.__dict__.items():
+                if k != 'ui_handler':
+                    setattr(jogo, k, v)
+            return True
+        except json.JSONDecodeError:
+            logging.exception(f"Autosave JSON corrompido para a sessao {sid}")
+        except Exception as e:
+            logging.exception(f"Erro inesperado ao ler progresso do ID {sid}: {e}")
+    return False
 
 def gerar_resposta_json(captura, jogo):
     linhas = [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]
     saidas, hp, luz, inv, sala = [], "...", "...", [], "BOOT"
-
     if jogo:
         if getattr(jogo, 'estado_atual', "") not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
             chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
             saidas = [k.title() for k in jogo.mapa[jogo.sala_atual].keys() if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
-
         hp = jogo.hp if not getattr(jogo, 'god_mode', False) else "∞"
         luz = jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞"
         inv = jogo.inventario
         sala = jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA"
+    return jsonify({"linhas": linhas, "estado": {"hp": hp, "luz": luz, "inventario": inv, "sala": sala, "saidas": saidas}})
 
-    return jsonify({
-        "linhas": linhas,
-        "estado": { "hp": hp, "luz": luz, "inventario": inv, "sala": sala, "saidas": saidas }
-    })
-
-# --- REDIRECIONADORES DE ERRO (Mata a Tela Preta do "Not Found") ---
 @app.route("/")
 def raiz():
-    return app.send_static_file("index.html")
+    return send_from_directory(BASE_DIR, "index.html")
+
+@app.route("/style.css")
+def serve_css():
+    return send_from_directory(BASE_DIR, "style.css")
+
+@app.route("/script.js")
+def serve_js():
+    return send_from_directory(BASE_DIR, "script.js")
 
 @app.errorhandler(404)
 @app.errorhandler(405)
 def page_not_found(e):
-    # Se o jogador der F5 numa rota proibida, o Flask manda ele de volta pro jogo à força!
-    return app.send_static_file("index.html")
+    return send_from_directory(BASE_DIR, "index.html")
 
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
@@ -199,9 +197,9 @@ def iniciar_jogo():
         session_file = SESSION_DIR / f"{sid}.json"
         if session_file.exists():
             try: session_file.unlink() 
-            except: pass
-            
-    # Limpa a sessão atual do Flask para garantir que o F5 sempre recomece do zero!
+            except FileNotFoundError: pass
+            except Exception as e:
+                logging.exception(f"Nao foi possivel expurgar a sessao expirada {sid}: {e}")
     session.clear()
     
     jogo = obter_estado()
@@ -215,10 +213,8 @@ def iniciar_jogo():
     salvar_sessao(session.get("sid"), jogo)
     return gerar_resposta_json(captura, jogo)
 
-# --- A ROTA AGORA ACEITA GET (F5) E POST ---
 @app.route('/comando', methods=['GET', 'POST'])
 def receber_comando():
-    # SE DER F5 AQUI, DEVOLVE O JOGO NORMALMENTE!
     if request.method == 'GET':
         return send_from_directory(BASE_DIR, "index.html")
 
@@ -247,29 +243,31 @@ def receber_comando():
                 ui.animar(f"{DOS_VERDE}COMMAND  COM          47.845  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
                 ui.animar(f"{DOS_VERDE}SEGURA   SYS           2.048  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
                 ui.animar(f"{DOS_VERDE}NOTURNO  EXE          18.204  02-11-1982  6:00a{RESET}", 0.01, jogo=jogo)
-                ui.animar(f"{DOS_VERDE}DESKTOP  <DIR>        197.78  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
-                ui.animar(f"{DOS_VERDE}SAVES    <DIR>        358.21  23-07-2008  4:00a{RESET}", 0.01, jogo=jogo)
-                ui.animar(f"{DOS_VERDE}PICTURE  <DIR>        666.00  05-11-1994  4:00a{RESET}", 0.01, jogo=jogo)
-                ui.animar(f"{DOS_VERDE}VALID    <DIR>        2.7801  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;        197.78  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}SAVES    &lt;DIR&gt;        358.21  23-07-2008  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}PICTURE  &lt;DIR&gt;        666.00  05-11-1994  4:00a{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_VERDE}VALID    &lt;DIR&gt;        2.7801  24-07-2007  4:00a{RESET}", 0.01, jogo=jogo)
                 ui.exibir(f"{DOS_AMARELO}       3 file(s)        68.097 bytes{RESET}")
                 ui.exibir(f"{DOS_AMARELO}       4 dir(s)        655.360 bytes free{RESET}\n")
                 jogo.estado_atual = "MENU"
-                imprimir_menu_dificuldade(ui, tem_autosave=AUTOSAVE_FILE.exists())
+                sid_atual = session.get("sid")
+                tem_save = sid_atual and obter_caminho_autosave(sid_atual).exists() if sid_atual else False
+                imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
             else:
                 ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
                 ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
         elif jogo.estado_atual == "MENU":
-            sid = session.get("sid")
-            tem_save = sid and obter_caminho_autosave(sid).exists() if sid else False
+            sid_atual = session.get("sid")
+            tem_save = sid_atual and obter_caminho_autosave(sid_atual).exists() if sid_atual else False
 
             if comando in ["cls", "limpar", "clear", "clean"]:
                 ui.limpar()
                 imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
             elif comando == "5" and tem_save:
                 ui.limpar()
-                if carregar_autosave_com_sid(jogo, sid):
-                    ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO SEU AUTOSAVE DE SESSÃO.{RESET}\n", 0.04, jogo=jogo)
+                if carregar_autosave_com_sid(jogo, sid_atual):
+                    ui.animar(f"{DOS_VERDE}JOGO RESTAURADO COM SUCESSO DO SEU AUTOSAVE PRIVADO DE SESSÃO.{RESET}\n", 0.04, jogo=jogo)
                     imprimir_contexto_sala(jogo)
                 else:
                     ui.animar(f"{DOS_VERMELHO}Falha ao ler o seu Autosave.{RESET}", 0.04, jogo=jogo)
@@ -299,8 +297,8 @@ def receber_comando():
 
                 jogo.estado_atual = "JOGO"
                 imprimir_tutorial(ui)
-                ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.08, jogo=jogo)
-                ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.01, jogo=jogo)
+                ui.animar(f"{DOS_BRANCO}Você entra no restaurante. Sua lanterna velha dá três piscadas fracas...{RESET}", 0.04, jogo=jogo)
+                ui.animar(f"{DOS_AMARELO}[AVISO DO SISTEMA]: BATERIA DA LANTERNA EM 5%. PROCURAR OUTRA FONTE DE LUZ EM ATÉ 3 TURNOS.{RESET}", 0.04, jogo=jogo)
                 imprimir_contexto_sala(jogo)
                 
             elif comando == "2007":
@@ -328,14 +326,11 @@ def receber_comando():
                 jogo.minigame_atual = MinigameSeguranca(jogo)
                 jogo.estado_atual = "MINIGAME_SEGURANCA"
                 jogo.minigame_atual.imprimir_status()
-                
-            # === CORREÇÃO DA SALA DO COFRE AQUI: Voltou a ser "01" ===
             elif comando == "abrir cofre" and jogo.sala_atual == "01":
                 jogo.estado_atual = "MINIGAME_COFRE"
                 ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.015, jogo=jogo)
                 ui.exibir(f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo.{RESET}")
                 ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
-                
             elif (comando == "jogar jon" or comando == "jogar fome de jon") and jogo.sala_atual == "sala de fliperamas":
                 jogo.estado_atual = "MINIGAME_JON"
                 jogo.jon_passos_dados = 0
@@ -421,7 +416,7 @@ def receber_comando():
                     jogo.jon_passos_dados += 1
                     if jogo.jon_passos_dados == 4:
                         ui.exibir(f"\n{DOS_VERDE}Jon encontrou a 'comida'. A tela pinga um pixel vermelho.{RESET}")
-                        ui.exibir(f"{DOS_VERMELHO}MENSAGEM: 'Eles não saíram pela porta da frente em 94.'{RESET}")
+                        ui.exibir(f"{DOS_VERMEDLHO}MENSAGEM: 'Eles não saíram pela porta da frente em 94.'{RESET}")
                         jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                         jogo.estado_atual = "JOGO"
                         imprimir_contexto_sala(jogo)
@@ -459,7 +454,7 @@ def receber_comando():
             sala = jogo.mapa[jogo.sala_atual]
             sala.setdefault("itens", [])
             
-            if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
+            if "chave da cozinha" not in font and "chave da cozinha" not in sala["itens"]:
                 if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                     jogo.inventario.append("chave da cozinha")
                     ui.exibir(f"{DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{RESET}")
@@ -544,8 +539,7 @@ def receber_comando():
                 resultado = jogo.minigame_atual.processar_turno("esperar", jogo) 
                 if resultado == "vitoria_seguranca":
                     jogo.minigame_atual = None
-                    # === CORREÇÃO DO RETORNO DE VITÓRIA: Voltou a ser "01" ===
-                    jogo.sala_atual = "01" 
+                    jogo.sala_atual = "01"
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
 
@@ -576,7 +570,6 @@ def receber_comando():
                     imprimir_contexto_sala(jogo)
                 elif resultado == "vitoria_seguranca":
                     jogo.minigame_atual = None
-                    # === CORREÇÃO DO RETORNO DE VITÓRIA: Voltou a ser "01" ===
                     jogo.sala_atual = "01" 
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
@@ -591,12 +584,11 @@ def receber_comando():
                 elif isinstance(jogo.minigame_atual, MinigameSeguranca): jogo.minigame_atual.energia = 9999
                     
         if getattr(jogo, 'estado_atual', "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
-            salvar_autosave_com_sid(jogo, session.get("sid"))
+            sid_atual = session.get("sid")
+            salvar_autosave_com_sid(jogo, sid_atual)
 
     except Exception as e:
-        print(f"\n{DOS_VERMELHO}[ERRO INTERNO DO SISTEMA]: O sistema falhou ao processar a ação.{RESET}")
-        print(f"{DOS_AMARELO}Detalhes técnicos: {e}{RESET}")
-        traceback.print_exc()
+        logging.exception(f"Erro critico na rota de processamento de comandos: {e}")
     finally:
         sys.stdout = stdout_original
 
