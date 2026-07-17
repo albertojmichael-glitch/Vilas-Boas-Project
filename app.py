@@ -7,6 +7,7 @@ import random
 import uuid
 import traceback
 from pathlib import Path
+from datetime import timedelta
 
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
@@ -88,6 +89,7 @@ def ansi_para_html(texto_ansi):
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "villas-boas-1982-seguranca")
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30) # <--- ADICIONE ESTA LINHA AQUI
 CORS(app, supports_credentials=True)
 
 SESSION_DIR = Path(BASE_DIR) / "sessions"
@@ -97,6 +99,7 @@ SESSION_DIR.mkdir(exist_ok=True)
 MEMORIA_SESSOES = {}
 
 def obter_estado():
+    session.permanent = True
     sid = session.get("sid")
     if not sid:
         sid = str(uuid.uuid4())

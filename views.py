@@ -115,6 +115,8 @@ def dar_tela_de_morte(jogo):
     ui.animar("💀 GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, DOS_VERMELHO, jogo)
     ui.animar("=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)
 
+
+    
 def rodar_final(tipo_final, jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
@@ -122,17 +124,50 @@ def rodar_final(tipo_final, jogo):
     liberou_deus = False
     
     if tipo_final == "saida":
+        ui.animar("Você sai pela porta da pizzaria...", 0.08, DOS_AMARELO, jogo)
+        ui.animar("Você acredita que vai conseguir superar tudo isso, e continuar uma nova vida...", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("Você quer esquecer dela... Mesmo ela suplicando por ajuda...", 0.10, DOS_VERMELHO, jogo)
         ui.animar("[ FINAL MEDÍOCRE ]", 0.05, DOS_VERDE, jogo)
         liberou_deus = registrar_final("mediocre")
+        
     elif tipo_final == "cama":
+        ui.animar("Você deita na cama...", 0.05, DOS_AMARELO, jogo)
+        ui.animar("Você sente algo abrir a porta...", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("Você finalmente sente ela, o seu cheiro, sua vibração... Seu dispositivo apita...", 0.05, DOS_VERDE, jogo)
+        ui.animar("PRESENÇA ULTERIOR PROXIMA...", 0.10, DOS_VERMELHO, jogo)
+        ui.animar("Você dorme... Pensando em não acordar mais.", 0.10, DOS_VERDE, jogo)
         ui.animar("[ FINAL BONS SONHOS ]", 0.05, DOS_BRANCO, jogo)
         liberou_deus = registrar_final("bons_sonhos")
+        
     elif tipo_final == "final_bom":
         ui.animar("Você acende o isqueiro e ilumina o local. A luz do fogo traz calma...", 0.04, DOS_VERDE, jogo)
+        ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- 'Ainda estou aqui...'", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("- Amor? É voce? Mesmo???", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- 'Eu espero que ainda seja eu...'", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("- Caroline... desista desse corpo que não lhe pertence. Siga o rumo das estrelas.", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- ... *Caroline abraça Rogério*", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("- 'Vamos nos encontrar no céu, meu bem.'", 0.09, DOS_VERMELHO, jogo)
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL BOM ]{RESET}")
         liberou_deus = registrar_final("bom")
+        
     elif tipo_final == "verdadeiro":
         ui.animar("Voce se aproxima do animatronico... dela. E encaixa os fios na sua fiação...", 0.05, DOS_BRANCO, jogo)
+        ui.animar("Voce acende o isqueiro. Os olhos de plastico parecem te encarar.", 0.05, DOS_BRANCO, jogo)
+        ui.animar("Os olhos piscam em vermelho, ela tenta fazer algo... mas não consegue.\n", 0.05, DOS_BRANCO, jogo)
+        ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- '... voce fez dar certo'", 0.08, DOS_VERMELHO, jogo)
+        ui.animar("- Caro... Caroline? É você?", 0.05, DOS_AMARELO, jogo)
+        ui.animar("*(Você abraça a carcaça de pelugem rosa)*", 0.04, DOS_BRANCO, jogo)
+        ui.animar("- Meu corpo ficou em silencio, não sinto mais raiva.", 0.07, DOS_VERDE, jogo)
+        ui.animar("*(O fogo se alastra pelo restaurante, a fumaça chega no hall)*", 0.04, DOS_BRANCO, jogo)
+        ui.animar("- Me sinta pela ultima vez.", 0.07, DOS_VERDE, jogo)
+        ui.animar("*(Voce sente mãos invisíveis em seus ombros, um alivio inunda sua mente)*", 0.04, DOS_BRANCO, jogo)
+        ui.animar("- Obrigada por me deixar assim pela ultima vez.", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Eu te amo.", 0.06, DOS_AMARELO, jogo)
+        ui.animar("*(O animatronico cai no chão, o fogo cobre o metal e o plástico)*", 0.05, DOS_BRANCO, jogo)
+        ui.animar("\n[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.", 0.05, DOS_VERDE, jogo)
+        ui.animar("Você se levanta e caminha para a saída antes que o teto desabe.", 0.05, DOS_BRANCO, jogo)
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL VERDADEIRO ]{RESET}")
         liberou_deus = registrar_final("verdadeiro")
 
@@ -142,4 +177,4 @@ def rodar_final(tipo_final, jogo):
         ui.exibir(f"{DOS_AMARELO}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {DOS_BRANCO}2007{RESET}")
         ui.exibir(f"{DOS_AMARELO}=================================================={RESET}")
         
-    ui.animar("\n=== APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)
+    ui.animar("\n=== APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)    
