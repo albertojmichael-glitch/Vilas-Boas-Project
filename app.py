@@ -94,7 +94,7 @@ def carregar_save_web(jogo):
                     setattr(jogo, k, v)
             return True
         except Exception as e:
-            logging.exception(f"Erro ao carregar save da web: {e}")
+            logger.error(f"Erro ao carregar save da web: {e}")
     return False
 
 def salvar_save_web(jogo):
@@ -104,7 +104,7 @@ def salvar_save_web(jogo):
         caminho = obter_caminho_autosave(sid)
         caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
     except Exception as e:
-        logging.exception(f"Erro ao gerar autosave: {e}")
+        logger.error(f"Erro ao Gerar Save: {e}")
 
 def gerar_resposta_json(captura, jogo):
     linhas = [linha for linha in ansi_para_html(captura.getvalue()).split('\n') if linha.strip() != ""]
@@ -185,7 +185,7 @@ def receber_comando():
         session.modified = True
 
     except Exception as e:
-        logging.exception(f"Erro critico de rota: {e}")
+        logger.error(f"Falha interna: {e}")
     finally:
         sys.stdout = stdout_original
 
