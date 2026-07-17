@@ -1,14 +1,12 @@
 import os
 import sys
 import logging
-import io
 import json
 import uuid
 from datetime import timedelta
 from pathlib import Path
 
 from flask import Flask, request, jsonify, session, send_from_directory
-from flask_session import Session
 from flask_cors import CORS
 
 from state import GameState
@@ -21,35 +19,22 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# --- SEGURANÇA E CONFIGURAÇÃO VIA ENVIRONMENT VARIABLES ---
-SECRET_KEY = os.environ.get("FLASK_SECRET_KEY")
-if not SECRET_KEY:
-    logging.critical("CRITICO: FLASK_SECRET_KEY nao configurada no ambiente. Aplicacao vulneravel!")
-    # Apenas para impedir o app de quebrar nos testes locais. No Render, preencha as ENV Vars!
-    SECRET_KEY = "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
-
-SESSION_DIR_ENV = os.environ.get("SESSION_DIR", os.path.join(BASE_DIR, "sessions"))
+# --- SEGURANÇA E CONFIGURAÇÃO ---
+SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982")
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
-
-os.makedirs(SESSION_DIR_ENV, exist_ok=True)
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 
-# Inicialização Blindada do App
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 app.secret_key = SECRET_KEY
-
-# Configuração Oficial do Flask-Session (Pronto para escalar para Redis se necessário)
-app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = SESSION_DIR_ENV
-app.config["SESSION_PERMANENT"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
-
-Session(app)
 CORS(app, supports_credentials=True)
+
+# COFRE DE MEMÓRIA RAM (Blindado contra falhas de Pickling)
+MEMORIA_SESSOES = {}
 
 class WebUIHandler(UIHandler):
     def __init__(self):
-        self.buffer = [] # Buffer de memória estruturado (Fim do sys.stdout!)
+        self.buffer = [] 
         
     def limpar(self): 
         self.buffer.append("@@CLEAR@@")
@@ -106,7 +91,7 @@ def carregar_save_web(jogo):
                     setattr(jogo, k, v)
             return True
         except Exception as e:
-            logger.error(f"Erro ao carregar save da web: {e}")
+            logging.exception(f"Erro ao carregar save da web: {e}")
     return False
 
 def salvar_save_web(jogo):
@@ -116,14 +101,13 @@ def salvar_save_web(jogo):
         caminho = obter_caminho_autosave(sid)
         caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
     except Exception as e:
-        logger.error(f"Erro ao Gerar Save: {e}")
+        logging.exception(f"Erro ao gerar autosave: {e}")
 
 def gerar_resposta_json(jogo):
     linhas = []
     saidas, hp, luz, inv, sala = [], "...", "...", [], "BOOT"
     
     if jogo:
-        # Pega as linhas direto do buffer do UIHandler e depois limpa o buffer
         if hasattr(jogo.ui_handler, 'buffer'):
             linhas = [ansi_para_html(linha) for linha in jogo.ui_handler.buffer if linha.strip() != ""]
             jogo.ui_handler.buffer.clear()
@@ -139,8 +123,6 @@ def gerar_resposta_json(jogo):
         
     return jsonify({"linhas": linhas, "estado": {"hp": hp, "luz": luz, "inventario": inv, "sala": sala, "saidas": saidas}})
 
-
-
 @app.route("/")
 def raiz(): return send_from_directory(BASE_DIR, "index.html")
 @app.route("/style.css")
@@ -155,62 +137,57 @@ def page_not_found(e):
 
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
+    # Cria uma sessão 100% nova e limpa da memória
     session.clear()
+    sid = str(uuid.uuid4())
+    session["sid"] = sid
     session.permanent = True
-    session["sid"] = str(uuid.uuid4())
-    session["jogo"] = GameState()
     
-    jogo = session["jogo"]
+    jogo = GameState()
     jogo.ui_handler = WebUIHandler()
     jogo.estado_atual = "AGUARDANDO_DIR"
     
-    captura = io.StringIO()
-    sys.stdout = captura
-    imprimir_tela_boot(jogo.ui_handler)
-    sys.stdout = sys.__stdout__
+    # Guarda o jogo na memória RAM segura
+    MEMORIA_SESSOES[sid] = jogo
     
-    session.modified = True
-    return gerar_resposta_json(captura, jogo)
+    imprimir_tela_boot(jogo.ui_handler)
+    return gerar_resposta_json(jogo)
 
 @app.route('/comando', methods=['GET', 'POST'])
 def receber_comando():
     if request.method == 'GET':
         return send_from_directory(BASE_DIR, "index.html")
 
-    jogo = None
+    sid = session.get("sid")
+    
+    # Se a sessão foi perdida ou o servidor reiniciou, cria uma nova
+    if not sid or sid not in MEMORIA_SESSOES:
+        sid = str(uuid.uuid4())
+        session["sid"] = sid
+        session.permanent = True
+        MEMORIA_SESSOES[sid] = GameState()
+        
+    jogo = MEMORIA_SESSOES[sid]
+    
+    # Injeta um handler novo e limpo para capturar o texto desta requisição
+    jogo.ui_handler = WebUIHandler()
+
+    dados = request.json
+    comando = dados.get('comando', '')
+    tem_save = obter_caminho_autosave(sid).exists()
 
     try:
-        if "jogo" not in session:
-            session["sid"] = str(uuid.uuid4())
-            session["jogo"] = GameState()
-            session.permanent = True
-            
-        jogo = session["jogo"]
-        
-        # Injeta um handler novo e limpo para cada requisição HTTP
-        jogo.ui_handler = WebUIHandler()
-
-        dados = request.json
-        comando = dados.get('comando', '')
-        sid = session.get("sid")
-        tem_save = sid and obter_caminho_autosave(sid).exists() if sid else False
-
         processar_fluxo_jogo(comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web)
 
         if getattr(jogo, 'estado_atual', "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
             salvar_save_web(jogo)
 
-        session.modified = True
-
     except Exception as e:
-        logging.exception(f"Erro critico de rota: {e}")
-        if jogo and hasattr(jogo, 'ui_handler'):
-            jogo.ui_handler.buffer.append(f"@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação.")
-            # Esconde o trace do usuário em produção!
-            if app.debug:
-                jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {str(e)}")
+        logging.exception(f"Erro critico na Engine: {e}")
+        jogo.ui_handler.buffer.append(f"@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação.")
+        if app.debug:
+            jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {str(e)}")
 
-    # Chama o gerador sem precisar passar o StringIO!
     return gerar_resposta_json(jogo)
 
 if __name__ == '__main__':

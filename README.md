@@ -38,3 +38,23 @@ Este projeto foi construído focando em boas práticas de mercado, arquitetura e
 ```bash
 git clone [https://github.com/SEU-USUARIO/villas-boas-1982.git](https://github.com/SEU-USUARIO/villas-boas-1982.git)
 cd villas-boas-1982
+
+Crie e ative o ambiente virtual:
+
+python3 -m venv venv
+# No Linux/Mac:
+source venv/bin/activate
+# No Windows:
+venv\Scripts\activate
+
+Instale as dependências:
+pip install -r requirements.txt
+
+Variáveis de Ambiente (Segurança):
+export FLASK_SECRET_KEY="sua_chave_super_secreta_aqui"
+
+Execute a API/Servidor Web:
+python app.py
+
+(Opcional) Jogue pelo Terminal:
+python main.py
