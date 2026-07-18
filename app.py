@@ -3,6 +3,7 @@ import sys
 import logging
 import json
 import uuid
+import certifi
 from datetime import timedelta
 from pathlib import Path
 
