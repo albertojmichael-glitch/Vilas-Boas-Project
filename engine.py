@@ -188,7 +188,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.015, jogo=jogo)
             ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
         elif comando == "1994": 
-            ui.exibir(f"{DOS_VERDE}CLICK! A pesada porta de metal se abre.{RESET}")
+            ui.exibir(f"{DOS_VERDE} Um som de 'click'. A pesada porta de metal se abre.{RESET}")
             sala = jogo.mapa[jogo.sala_atual]
             sala.setdefault("itens", [])
             
@@ -217,7 +217,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 jogo.jon_passos_dados += 1
                 if jogo.jon_passos_dados == 4:
                     ui.exibir(f"\n{DOS_VERDE}Jon encontrou a 'comida'. A tela pinga um pixel vermelho.{RESET}")
-                    ui.exibir(f"{DOS_VERMELHO}MENSAGEM: 'Eles não saíram pela porta da frente em 94.'{RESET}")
+                    ui.exibir(f"{DOS_VERMELHO}MENSAGEM: 'Eles ainda estão aqui.'{RESET}")
                     jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
@@ -225,7 +225,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     dar_dica_jon(jogo.jon_caminho_certo[jogo.jon_passos_dados], ui)
                     ui.exibir(f"Passo {jogo.jon_passos_dados + 1}/4 - Direção (F/E/D): ")
             else:
-                ui.exibir(f"\n{DOS_VERMELHO}CRUNCH! Jon caiu num triturador ativo! leva um choque brutal!{RESET}")
+                ui.exibir(f"\n{DOS_VERMELHO}Jon caiu num triturador ativo! leva um choque brutal!{RESET}")
                 jogo.hp -= 1
                 jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
                 if jogo.hp <= 0: dar_tela_de_morte(jogo)
@@ -251,7 +251,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         pernas = comando
         item_secreto = "remedio" if (cabeca == "2" and pernas == "2") else None
         
-        ui.exibir(f"\n{DOS_VERDE}CONSERTO CONCLUÍDO! O ANIMATRÔNICO SORRI PARA VOCÊ!{RESET}")
+        ui.exibir(f"\n{DOS_VERDE}CONSERTO CONCLUÍDO. O ANIMATRÔNICO SORRI PARA VOCÊ!{RESET}")
         sala = jogo.mapa[jogo.sala_atual]
         sala.setdefault("itens", [])
         
@@ -327,7 +327,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                         ui.exibir(f"{DOS_AMARELO}⛋ Mochila cheia! A bateria nova caiu no chão.{RESET}")
                         sala["itens"].append("bateria nova")
             else:
-                ui.animar("Quem é você? A tela desliga. Você perdeu a absolvição.", 0.05, DOS_VERMELHO, jogo)
+                ui.animar("Quem é você? *A tela desliga* Você perdeu a absolvição.", 0.05, DOS_VERMELHO, jogo)
                 
             jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
             jogo.estado_atual = "JOGO"

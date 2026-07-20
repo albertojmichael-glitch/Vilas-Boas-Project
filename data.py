@@ -1,12 +1,8 @@
-# ==========================================
-# CONSTANTES DE JOGO
-# ==========================================
+
 COFRE_SENHA = "1994"
 MAX_INVENTARIO = 3
 
-# ==========================================
-# ARTES ASCII
-# ==========================================
+
 CAVEIRA_MORTE = r'''
                      .ed"""" """$$$$be.
                    -"           ^""**$$$e.
@@ -139,9 +135,9 @@ ARTE_PIANO = r'''
     \|_|            "  "               \|_|
 '''
 
-# ==========================================
-# MAPA E DESCRIÇÕES
-# ==========================================
+
+# mapa
+
 MAPA_ORIGINAL = {
     "entrada": {
         "descrição": "você está na entrada do restaurante, está muito escuro, e as luzes piscam de forma ordenada, cheira mal",
@@ -371,7 +367,7 @@ MAPA_ORIGINAL = {
         "itens": [], "inspecionaveis": {}
     },
     "cama": {
-        "descrição": "O cheiro de panquecas...",
+        "descrição": "O cheiro dela...",
         "itens": [], "inspecionaveis": {}
     },
     "final_bom": {
@@ -400,13 +396,13 @@ descricoes_itens = {
     "moeda velha": "Uma ficha de fliperama enferrujada de 1982.",
     "chave da cozinha": "Uma chave prateada com um chaveiro sujo de graxa.",
     "remedio": "Um frasco de relaxante muscular, venceu em 1996. Talvez ajude com a dor.",
-    "pizza mofada": "Um pedaço de pizza de 1994. Tem uma cor verde fluorescente.",
+    "pizza mofada": "Um pedaço de pizza de 1992. Tem uma cor verde fluorescente.",
     "bateria nova": "Uma bateria industrial pesada. Cabe na sua lanterna",
     "recorte 1": "Pedaço de jornal de 1994: '...o cliente João Barros, desapareceu...' ",
     "recorte 2": "Parte central da notícia: '...a garçonete Ângela Silva vista pela última vez...' ",
     "recorte 3": "A base do jornal: '...o proprietário Renato Fidelis.'",
-    "jornal completo": "Os três recortes unidos. Conta a história das três vítimas de 1994.",
-    "lanterna": "Sua lanterna velha de plástico vermelha, você esqueceu de trocar a bateria antes de sair de casa.",
+    "jornal completo": "Os três recortes unidos. Conta a história das três vítimas de 1994, João.. Ângela... e Renato.",
+    "lanterna": "Sua lanterna velha de plástico vermelha, você esqueceu de trocar a bateria antes de vir aqui.",
     "disquete": "Um disquete de 5¼ polegadas. Serve para salvar os dados do sistema no terminal.",
     "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir."
 }

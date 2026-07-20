@@ -61,5 +61,5 @@ class UIHandler:
     def obter_input(self, prompt_text):
         return input(prompt_text)
 
-# O handler padrão será o próprio terminal local
+
 default_ui = UIHandler()

@@ -5,7 +5,7 @@ from ui import default_ui, DOS_VERDE, DOS_AMARELO, DOS_VERMELHO, DOS_BRANCO, RES
 from views import imprimir_tela_boot
 from engine import processar_fluxo_jogo
 
-# Configuração de Logs para o Terminal
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_local_save(jogo):
@@ -27,7 +27,7 @@ if __name__ == "__main__":
             comando_bruto = ui.obter_input(f"\n{DOS_VERDE}C:\\> {RESET}")
             tem_save = AUTOSAVE_FILE.exists()
             
-            # Delega 100% da lógica para o Motor Unificado
+            
             processar_fluxo_jogo(comando_bruto, jogo, tem_save=tem_save, callback_load_save=load_local_save)
             
             if jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:

@@ -6,12 +6,12 @@ from pydantic import BaseModel, Field, PrivateAttr
 from typing import List, Dict, Any
 from data import MAPA_ORIGINAL
 
-# --- POINT 10: EXCEPTION HIERARCHY ---
+
 class GameException(Exception): pass
 class QuitGameException(GameException): pass
 class InvalidCommandError(GameException): pass
 
-# --- POINT 10: ENUMS PARA EVITAR MAGIC STRINGS ---
+
 class GameStateEnum(str, Enum):
     MENU = "MENU"
     JOGO = "JOGO"
@@ -33,7 +33,7 @@ class GameStateEnum(str, Enum):
     MINIGAME_JULGAMENTO_V2 = "MINIGAME_JULGAMENTO_V2"
     MINIGAME_JULGAMENTO_V3 = "MINIGAME_JULGAMENTO_V3"
 
-# --- POINT 3: PYDANTIC MODELS FOR VALIDATION ---
+
 class GameState(BaseModel):
     hp: int = 3
     inventario: List[str] = Field(default_factory=lambda: ["lanterna"])
@@ -61,7 +61,7 @@ class GameState(BaseModel):
     fast_mode: bool = False
     mapa: Dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
     
-    # Atributos não-serializáveis ocultos do Pydantic
+    
     _ui_handler: Any = PrivateAttr(default=None)
     _minigame_atual: Any = PrivateAttr(default=None)
 

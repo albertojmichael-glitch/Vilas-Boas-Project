@@ -15,9 +15,7 @@ body {
     overflow: hidden;
 }
 
-/* =========================================
-   CORES E GLOW DO MONITOR CRT
-   ========================================= */
+
 .amarelo { 
     color: #ffdd00; 
     text-shadow: 0 0 3px rgba(255, 221, 0, 0.4);
@@ -37,18 +35,15 @@ body {
     color: #ffffff;
 }
 
-/* =========================================
-   LAYOUT BASE (DESKTOP)
-   ========================================= */
-/* IMPORTANTE: Mantive a classe .container que você usa no seu HTML */
+
 .container {
     display: flex;
-    flex-direction: row; /* Força lado a lado */
+    flex-direction: row; 
     height: 100vh;
     width: 100vw;
 }
 
-/* TERMINAL (Lado Esquerdo) */
+
 .terminal-section {
     flex: 3;
     padding: 20px;
@@ -58,7 +53,7 @@ body {
     flex-direction: column;
 }
 
-/* EFEITO RETRÔ NA TELA */
+
 .crt-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -98,7 +93,7 @@ input {
     caret-shape: block;
 }
 
-/* SIDEBAR (Lado Direito) */
+
 .sidebar {
     flex: 1;
     min-width: 250px;
@@ -129,9 +124,7 @@ input {
 ul { list-style-type: none; }
 ul li { margin-bottom: 5px; }
 
-/* =========================================
-   UI SECUNDÁRIA (Spinner, Modal, Float)
-   ========================================= */
+
 .spinner-container {
     display: none;
     color: #ffcc00;
@@ -189,20 +182,18 @@ ul li { margin-bottom: 5px; }
     margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
 }
 
-/* =========================================
-   RESPONSIVIDADE MOBILE (Celulares e Tablets)
-   ========================================= */
+
 @media (max-width: 1024px) {
     body {
-        overflow: auto; /* Permite scroll no celular */
+        overflow: auto; 
     }
     .container { 
-        flex-direction: column; /* Empilha: Terminal em cima, Sidebar embaixo */
+        flex-direction: column; 
         height: auto;
     }
     .terminal-section { 
         flex: none; 
-        height: 65vh; /* Terminal ocupa 65% da tela visível */
+        height: 65vh; 
     }
     .sidebar { 
         flex: none; 

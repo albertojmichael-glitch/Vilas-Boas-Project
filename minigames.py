@@ -36,9 +36,12 @@ CAVEIRA_ASCII = r'''
             """""                             "$$$"    
 '''
 
-# ==========================================
-# MINIGAME: SALA DE ENERGIA (O MINOTAURO)
-# ==========================================
+
+
+#minigame minotauro
+
+
+
 class MinigameMinotauro:
     def __init__(self, jogo):
         self.px, self.py = 0, 0 
@@ -179,12 +182,12 @@ class MinigameMinotauro:
             else:
                 ui.exibir("A porta de saída não fica aqui! Tente voltar para trás.")
         
-        # --- AQUI ESTÁ A CORREÇÃO DO BUG (UM ÚNICO ELSE) ---
+        
         else: 
             ui.exibir(f"{DOS_AMARELO}Comando não reconhecido no escuro. Você gasta segundos preciosos tropeçando...{RESET}")
-            turno_gasto = True # Gasta o turno para punir o jogador por errar!
+            turno_gasto = True 
 
-        # --- LÓGICA DE MORTE E MOVIMENTO ---
+        
         if self.px == self.mx and self.py == self.my:
             if getattr(jogo, 'god_mode', False):
                 ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Você esbarra no Minotauro. Ele tenta te arranhar, mas suas garras quebram na sua pele divina! Ele foge chorando.{RESET}")
@@ -238,9 +241,9 @@ class MinigameMinotauro:
         return "continuar"
 
 
-# ==========================================
-# MINIGAME: SALA DE SEGURANÇA (SOBREVIVÊNCIA)
-# ==========================================
+
+# minigame sala de segurança
+
 class MinigameSeguranca:
     def __init__(self, jogo):
         self.turno = 0
@@ -404,7 +407,7 @@ class MinigameSeguranca:
             if self.apagao > 0: 
                 print("No apagão, você ouve sua própria respiração...")
             elif self.erro_deteccao: 
-                print(f"{DOS_VERMELHO}BEEP! BEEP! O alarme estridente de falha nos sensores ecoa na sala. Você não consegue ouvir nada além disso!{RESET}")
+                print(f"{DOS_VERMELHO}⚠ ⚠ ⚠ O alarme estridente de falha nos sensores ecoa na sala. Você não consegue ouvir nada além disso ⚠ ⚠ ⚠{RESET}")
             elif self.energia <= CUSTO_INFO_LEVE: 
                 print("Sistema de áudio offline (Bateria fraca).")
             elif self.usos_sistema_turno >= 2:
@@ -540,7 +543,7 @@ class MinigameSeguranca:
             
             if (rick_ataque and not self.porta_fechada) or (carol_porta_ataque and not self.porta_fechada) or jon_ataque or carol_duto_ataque:
                 if getattr(jogo, 'god_mode', False):
-                    print(f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara com um olhar mortal. Ele pede desculpas e sai de fininho.{RESET}")
+                    print(f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara. Ele pede desculpas e sai de fininho.{RESET}")
                     self.rick_pos = 0; self.caroline_pos = 0; self.jon_pos = 0
                 else:
                     print("\n Um animatronico conseguiu entrar.")

@@ -75,7 +75,7 @@ def imprimir_contexto_sala(jogo):
         sala = jogo.mapa[jogo.sala_atual]
         ui.exibir("\n" + "="*50)
         
-        # ANIMAÇÃO RÁPIDA: 0.01 segundos
+        #0.01 segundos
         ui.animar(f"⚇ VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}", 0.01, DOS_VERDE, jogo)
         
         descricao_colorida = sala.get('descrição', '')

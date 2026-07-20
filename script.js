@@ -10,10 +10,9 @@ let comandoDigitadoAtual = "";
 const terminal = document.getElementById('terminal');
 const loadingSpinner = document.getElementById('loading');
 
-// NOVA VARIÁVEL QUE CONTROLA A LINHA DO C:\>
+
 const inputLineDiv = document.querySelector('.input-line'); 
 
-// Elementos da HUD
 const hpEl = document.getElementById('hud-hp');
 const luzEl = document.getElementById('hud-luz');
 const invEl = document.getElementById('hud-inv');
@@ -26,13 +25,13 @@ inputField.addEventListener("keydown", async function(event) {
         const comando = comandoBruto.trim();
         
         if (comando !== "") {
-            // Salva o comando no histórico (sem repetir o último)
+            
             if (historicoComandos[historicoComandos.length - 1] !== comando) {
                 historicoComandos.push(comando);
             }
-            posicaoHistorico = historicoComandos.length; // Reseta a posição
+            posicaoHistorico = historicoComandos.length; 
             
-            // Joga o comando na tela (eco)
+            
             const p = document.createElement("p");
             p.className = "branco";
             p.innerHTML = `<span class="prompt">C:\\></span> ${comandoBruto}`;
@@ -44,18 +43,18 @@ inputField.addEventListener("keydown", async function(event) {
             await enviarComando(comando);
         }
     } 
-    // --- LÓGICA DA SETA PRA CIMA ---
+    
     else if (event.key === "ArrowUp") {
-        event.preventDefault(); // Impede o cursor de ir pro começo
+        event.preventDefault(); 
         if (posicaoHistorico === historicoComandos.length) {
-            comandoDigitadoAtual = inputField.value; // Salva o que estava digitando
+            comandoDigitadoAtual = inputField.value; 
         }
         if (posicaoHistorico > 0) {
             posicaoHistorico--;
             inputField.value = historicoComandos[posicaoHistorico];
         }
     } 
-    // --- LÓGICA DA SETA PRA BAIXO ---
+    
     else if (event.key === "ArrowDown") {
         event.preventDefault();
         if (posicaoHistorico < historicoComandos.length - 1) {
@@ -63,7 +62,7 @@ inputField.addEventListener("keydown", async function(event) {
             inputField.value = historicoComandos[posicaoHistorico];
         } else if (posicaoHistorico === historicoComandos.length - 1) {
             posicaoHistorico++;
-            inputField.value = comandoDigitadoAtual; // Devolve o texto em rascunho
+            inputField.value = comandoDigitadoAtual; 
         }
     }
 });
@@ -75,7 +74,7 @@ document.addEventListener('click', () => {
 function atualizarSidebar(estado) {
     if (!estado) return;
 
-    // 1. Atualizar HP com blocos ASCII estilo DOS
+    
     const hpVal = document.getElementById("hp-val");
     if (hpVal) {
         if (estado.hp === "∞") {
@@ -92,14 +91,14 @@ function atualizarSidebar(estado) {
         }
     }
 
-    // 2. Atualizar Luz
+    
     const luzVal = document.getElementById("luz-val");
     if (luzVal) {
         luzVal.textContent = estado.turnos_luz;
         luzVal.className = (estado.turnos_luz <= 3) ? "vermelho" : "verde";
     }
 
-    // 3. Atualizar Inventário
+    
     const invList = document.getElementById("inv-list");
     if (invList) {
         invList.innerHTML = "";
@@ -138,8 +137,7 @@ function novaLinha(linha) {
             let texto = parts.slice(4).join("@@"); 
             digitarTextoAnimadoHTML(texto, cor, ms, resolve);
         } else {
-            // O SEGREDO AQUI: Qualquer 'print' normal que o Python enviar 
-            // será automaticamente digitado a 15ms por letra!
+            
             digitarTextoAnimadoHTML(linha, "", 15, resolve);
         }
     });
@@ -192,10 +190,10 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
 
 async function fetchSeguro(url, options) {
     inputField.disabled = true;
-    inputLineDiv.style.display = 'none'; // ESCONDE O C:\> DURANTE A DIGITAÇÃO
+    inputLineDiv.style.display = 'none'; 
     loadingSpinner.style.display = 'flex';
     
-    // 1. Inicia o cronômetro AQUI
+    
     const startTime = Date.now(); 
     
     try {
@@ -205,10 +203,10 @@ async function fetchSeguro(url, options) {
 
         console.log("PYTHON:", data);
         
-        // 2. Calcula quanto tempo passou
+        
         const tempoDecorrido = Date.now() - startTime;
         
-        // 3. Se foi rápido demais (menos de 300ms), força uma esperazinha
+        
         if (tempoDecorrido < 300) {
             await new Promise(resolve => setTimeout(resolve, 300 - tempoDecorrido));
         }
@@ -226,7 +224,7 @@ async function fetchSeguro(url, options) {
         outputDiv.appendChild(p);
         terminal.scrollTop = terminal.scrollHeight;
     } finally {
-        inputLineDiv.style.display = 'flex'; // MOSTRA O C:\> DE NOVO QUANDO ACABA
+        inputLineDiv.style.display = 'flex'; 
         inputField.disabled = false;
         inputField.focus();
     }
@@ -236,9 +234,9 @@ function iniciarJogo() {
     fetchSeguro('/iniciar', { method: 'GET' });
 }
 
-// --- SINTETIZADOR DE SOM MS-DOS ---
+
 function reproduzirBeep(tipo = 'sucesso') {
-    // Usa o sintetizador nativo do navegador (não precisa de arquivos MP3!)
+    
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
@@ -247,13 +245,13 @@ function reproduzirBeep(tipo = 'sucesso') {
     gainNode.connect(audioCtx.destination);
 
     if (tipo === 'erro') {
-        oscillator.type = 'sawtooth'; // Som mais "rasgado" e grave
+        oscillator.type = 'sawtooth'; 
         oscillator.frequency.setValueAtTime(150, audioCtx.currentTime); 
         gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.3);
     } else {
-        oscillator.type = 'square'; // Beep clássico e agudo
+        oscillator.type = 'square'; 
         oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); 
         gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
         oscillator.start();
@@ -272,34 +270,34 @@ async function enviarComando(comando) {
 
 window.onload = iniciarJogo;
 
-// Funções do Modal de Ajuda
+
 function openHelp() {
     document.getElementById('help-modal').classList.remove('hidden');
 }
 
 function closeHelp() {
     document.getElementById('help-modal').classList.add('hidden');
-    // Foca de volta no input para o jogador não ter que clicar na tela
+    
     document.getElementById('comando').focus(); 
 }
 
-// Fechar o modal com a tecla ESC
+
 document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
         closeHelp();
     }
 });
 
-// --- ATALHOS GLOBAIS DE TECLADO ---
+
 document.addEventListener('keydown', function (e) {
-    // Ctrl + L (Limpar Terminal)
+    
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
         e.preventDefault();
         outputDiv.innerHTML = '';
         reproduzirBeep('sucesso');
     }
     
-    // Ctrl + S (Feedback visual de Save)
+    
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         let p = document.createElement('p');
@@ -310,9 +308,9 @@ document.addEventListener('keydown', function (e) {
         reproduzirBeep('sucesso');
     }
 
-    // Tecla ? (Ajuda) - Só abre se ele não estiver digitando texto
+    
     if (e.key === '?' && document.activeElement !== inputField) {
         e.preventDefault();
-        openHelp(); // Função que criamos na etapa anterior
+        openHelp(); 
     }
 });
