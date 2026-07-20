@@ -205,6 +205,9 @@ async function fetchSeguro(url, options) {
         loadingSpinner.style.display = 'none';
         await processarLinhas(data.linhas, data.estado);
     } catch (erro) {
+
+        console.error("O ERRO REAL É ESTE AQUI:", erro);
+        
         loadingSpinner.style.display = 'none';
         let p = document.createElement('p');
         p.className = 'vermelho';
