@@ -204,11 +204,7 @@ def iniciar_jogo():
     
     resposta = gerar_resposta_json(jogo)
     
-    # --- BLINDAGEM ANTI-CACHE ---
-    # Proíbe o navegador de fingir que recarregou a página
-    resposta.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    resposta.headers["Pragma"] = "no-cache"
-    resposta.headers["Expires"] = "0"
+    resposta.headers["Cache-Control"] = "no-store"
     
     return resposta
 
@@ -253,13 +249,7 @@ def receber_comando():
 
     return gerar_resposta_json(jogo)
 
-# --- OTIMIZAÇÃO DE PERFORMANCE (CACHE NATIVO) ---
-@app.after_request
-def adicionar_headers_de_cache(response):
-    # Se o arquivo for CSS ou JavaScript, manda o navegador guardar por 1 Hora (3600 segundos)
-    if response.content_type in ['text/css', 'application/javascript']:
-        response.cache_control.max_age = 3600
-    return response
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
