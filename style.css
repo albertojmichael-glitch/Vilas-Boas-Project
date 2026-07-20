@@ -9,12 +9,15 @@
 body {
     background-color: #050505;
     color: #33ff00;
-    font-family: 'VT323', monospace;
+    font-family: 'VT323', 'Courier New', monospace;
     font-size: 1.3rem;
+    font-weight: 500;
     overflow: hidden;
 }
 
-/* style.css - Cores mais vibrantes com "Glow" de monitor CRT */
+/* =========================================
+   CORES E GLOW DO MONITOR CRT
+   ========================================= */
 .amarelo { 
     color: #ffdd00; 
     text-shadow: 0 0 3px rgba(255, 221, 0, 0.4);
@@ -30,23 +33,22 @@ body {
     text-shadow: 0 0 3px rgba(68, 255, 68, 0.4);
 }
 
-/* Fallback de fonte e espaçamento de linha */
-body {
-    font-family: 'VT323', 'Courier New', monospace;
-    font-weight: 500;
+.branco {
+    color: #ffffff;
 }
 
-#output p {
-    line-height: 1.6;
-}
-
-.game-container {
+/* =========================================
+   LAYOUT BASE (DESKTOP)
+   ========================================= */
+/* IMPORTANTE: Mantive a classe .container que você usa no seu HTML */
+.container {
     display: flex;
+    flex-direction: row; /* Força lado a lado */
     height: 100vh;
-    flex-direction: row;
+    width: 100vw;
 }
 
-/* TERMINAL */
+/* TERMINAL (Lado Esquerdo) */
 .terminal-section {
     flex: 3;
     padding: 20px;
@@ -56,7 +58,7 @@ body {
     flex-direction: column;
 }
 
-/* EFEITO RETRÔ */
+/* EFEITO RETRÔ NA TELA */
 .crt-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -70,6 +72,7 @@ body {
     margin-bottom: 8px;
     white-space: pre-wrap;
     word-wrap: break-word;
+    line-height: 1.6;
 }
 
 .input-line {
@@ -87,17 +90,15 @@ input {
     background: transparent;
     border: none;
     color: #33ff00;
-    font-family: 'VT323', monospace;
+    font-family: inherit;
     font-size: 1.3rem;
     flex: 1;
     outline: none;
-    
-    /* O SEGREDO DO CURSOR MS-DOS */
     caret-color: #33ff00;
     caret-shape: block;
 }
 
-/* SIDEBAR */
+/* SIDEBAR (Lado Direito) */
 .sidebar {
     flex: 1;
     min-width: 250px;
@@ -125,40 +126,12 @@ input {
     margin-bottom: 5px;
 }
 
-ul {
-    list-style-type: none;
-}
+ul { list-style-type: none; }
+ul li { margin-bottom: 5px; }
 
-ul li {
-    margin-bottom: 5px;
-}
-
-.shortcuts p {
-    color: #888;
-    font-size: 1.1rem;
-}
-
-.shortcuts strong {
-    color: #fff;
-}
-
-/* RESPONSIVIDADE PARA CELULAR */
-@media (max-width: 768px) {
-    .game-container {
-        flex-direction: column;
-    }
-    .terminal-section {
-        flex: 2;
-    }
-    .sidebar {
-        flex: 1;
-        max-width: 100%;
-        border-left: none;
-        border-top: 2px solid #33ff00;
-    }
-}
-
-/* --- SPINNER DE CARREGAMENTO --- */
+/* =========================================
+   UI SECUNDÁRIA (Spinner, Modal, Float)
+   ========================================= */
 .spinner-container {
     display: none;
     color: #ffcc00;
@@ -166,6 +139,7 @@ ul li {
     align-items: center;
     gap: 10px;
 }
+
 .spinner {
     width: 15px; height: 15px;
     border: 3px solid #ffcc00;
@@ -175,18 +149,6 @@ ul li {
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* =========================================
-   ACESSIBILIDADE E UTILIDADES
-   ========================================= */
-.sr-only {
-    position: absolute; width: 1px; height: 1px; padding: 0;
-    margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0);
-    white-space: nowrap; border-width: 0;
-}
-
-/* =========================================
-   BOTÃO FLUTUANTE E MODAL DE AJUDA
-   ========================================= */
 .help-float {
     position: fixed;
     bottom: 20px;
@@ -196,7 +158,7 @@ ul li {
     background: #000;
     color: #33ff00;
     border: 2px solid #33ff00;
-    font-family: 'Courier New', monospace;
+    font-family: inherit;
     font-size: 1.5rem;
     font-weight: bold;
     cursor: pointer;
@@ -204,27 +166,15 @@ ul li {
     z-index: 200;
     transition: 0.2s;
 }
-
-.help-float:hover {
-    background: #33ff00;
-    color: #000;
-}
+.help-float:hover { background: #33ff00; color: #000; }
 
 .modal {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #000;
-    border: 2px solid #33ff00;
-    padding: 20px;
-    color: #33ff00;
-    z-index: 300;
-    font-family: 'Courier New', monospace;
-    box-shadow: 0 0 15px #33ff0055;
-    min-width: 300px;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #000; border: 2px solid #33ff00;
+    padding: 20px; color: #33ff00; z-index: 300;
+    box-shadow: 0 0 15px #33ff0055; min-width: 300px;
 }
-
 .modal h2 { margin-top: 0; border-bottom: 1px solid #33ff00; padding-bottom: 10px; }
 .modal p { margin: 10px 0; }
 .modal .close-btn {
@@ -234,19 +184,37 @@ ul li {
 }
 .modal .close-btn:hover { background: #33ff00; color: #000; }
 .hidden { display: none !important; }
+.sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0;
+    margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
+}
 
 /* =========================================
-   RESPONSIVIDADE MOBILE
+   RESPONSIVIDADE MOBILE (Celulares e Tablets)
    ========================================= */
 @media (max-width: 1024px) {
-    .container { flex-direction: column; }
-    .terminal-section { flex: 2; height: 70vh; }
-    .sidebar { flex: 1; border-left: none; border-top: 2px solid #33ff00; }
+    body {
+        overflow: auto; /* Permite scroll no celular */
+    }
+    .container { 
+        flex-direction: column; /* Empilha: Terminal em cima, Sidebar embaixo */
+        height: auto;
+    }
+    .terminal-section { 
+        flex: none; 
+        height: 65vh; /* Terminal ocupa 65% da tela visível */
+    }
+    .sidebar { 
+        flex: none; 
+        max-width: 100%;
+        border-left: none; 
+        border-top: 2px solid #33ff00; 
+    }
 }
 
 @media (max-width: 600px) {
     body { font-size: 1rem; }
-    .input-line input { font-size: 1.1rem; }
-    .sidebar { padding: 10px; gap: 10px; }
+    input { font-size: 1.1rem; }
+    .sidebar { padding: 15px; gap: 10px; }
     .help-float { bottom: 10px; right: 10px; width: 40px; height: 40px; font-size: 1.2rem; }
 }
