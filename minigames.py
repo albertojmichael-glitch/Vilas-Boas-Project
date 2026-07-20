@@ -1,7 +1,6 @@
 import random
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, limpar_tela, pausar, digitar
 from data import ARTE_INDIO
-from engine import DOS_VERMELHO, DOS_AMARELO, DOS_VERDE, RESET, CAVEIRA_ASCII
 
 CAVEIRA_MORTE = r'''
                      .ed"""" """$$$$be.
