@@ -74,40 +74,49 @@ document.addEventListener('click', () => {
 
 function atualizarSidebar(estado) {
     if (!estado) return;
-    salaEl.textContent = estado.sala;
-    
+
+    // 1. Atualizar HP com blocos ASCII estilo DOS
     const hpVal = document.getElementById("hp-val");
-    if (estado.hp === "∞") {
-        hpVal.innerText = "[ GOD MODE ]";
-        hpVal.className = "amarelo";
-    } else {
-        // Supondo que o HP máximo normal seja 3
-        const hpAtual = parseInt(estado.hp) || 0;
-        const maxHp = 3;
-        
-        // Cria os blocos cheios (█) e vazios (░)
-        const blocosCheios = "█".repeat(hpAtual);
-        const blocosVazios = "░".repeat(Math.max(0, maxHp - hpAtual));
-        
-        hpVal.innerText = `[${blocosCheios}${blocosVazios}]`;
-        
-        // Muda a cor para vermelho se o HP estiver em 1 (Perigo)
-        if (hpAtual <= 1) {
-            hpVal.className = "vermelho";
+    if (hpVal) {
+        if (estado.hp === "∞") {
+            hpVal.textContent = "[ GOD MODE ]";
+            hpVal.className = "amarelo";
         } else {
-            hpVal.className = "verde";
+            const hpAtual = parseInt(estado.hp) || 0;
+            const maxHp = 3;
+            const blocosCheios = "█".repeat(hpAtual);
+            const blocosVazios = "░".repeat(Math.max(0, maxHp - hpAtual));
+            
+            hpVal.textContent = `[${blocosCheios}${blocosVazios}]`;
+            hpVal.className = (hpAtual <= 1) ? "vermelho" : "verde";
         }
     }
-    
-    luzEl.textContent = estado.luz === "∞" ? "∞" : estado.luz + " turnos";
-    
-    invEl.innerHTML = "";
-    if (estado.inventario.length === 0) invEl.innerHTML = "<li>Vazio</li>";
-    else estado.inventario.forEach(item => { invEl.innerHTML += `<li>- ${item}</li>`; });
 
-    saidasEl.innerHTML = "";
-    if (estado.saidas.length === 0) saidasEl.innerHTML = "<li>Nenhuma visível</li>";
-    else estado.saidas.forEach(saida => { saidasEl.innerHTML += `<li>> ${saida}</li>`; });
+    // 2. Atualizar Luz
+    const luzVal = document.getElementById("luz-val");
+    if (luzVal) {
+        luzVal.textContent = estado.turnos_luz;
+        luzVal.className = (estado.turnos_luz <= 3) ? "vermelho" : "verde";
+    }
+
+    // 3. Atualizar Inventário
+    const invList = document.getElementById("inv-list");
+    if (invList) {
+        invList.innerHTML = "";
+        if (estado.inventario && estado.inventario.length > 0) {
+            estado.inventario.forEach(item => {
+                let li = document.createElement("li");
+                li.textContent = `- ${item}`;
+                li.className = "branco";
+                invList.appendChild(li);
+            });
+        } else {
+            let li = document.createElement("li");
+            li.textContent = "Vazio";
+            li.className = "amarelo";
+            invList.appendChild(li);
+        }
+    }
 }
 
 async function processarLinhas(linhas, estado) {
@@ -207,7 +216,7 @@ async function fetchSeguro(url, options) {
     } catch (erro) {
 
         console.error("O ERRO REAL É ESTE AQUI:", erro);
-        
+
         loadingSpinner.style.display = 'none';
         let p = document.createElement('p');
         p.className = 'vermelho';
