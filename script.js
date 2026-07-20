@@ -202,6 +202,8 @@ async function fetchSeguro(url, options) {
         const res = await fetch(url, options);
         if (!res.ok) throw new Error("Servidor offline");
         const data = await res.json();
+
+        console.log("RESPOSTA DO PYTHON:", data);
         
         // 2. Calcula quanto tempo passou
         const tempoDecorrido = Date.now() - startTime;
