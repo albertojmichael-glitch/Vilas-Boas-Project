@@ -14,11 +14,31 @@ body {
     overflow: hidden;
 }
 
-/* --- CLASSES DE CORES DO PYTHON --- */
-.verde { color: #33ff00; }
-.branco { color: #ffffff; }
-.amarelo { color: #ffcc00; }
-.vermelho { color: #ff3333; }
+/* style.css - Cores mais vibrantes com "Glow" de monitor CRT */
+.amarelo { 
+    color: #ffdd00; 
+    text-shadow: 0 0 3px rgba(255, 221, 0, 0.4);
+}
+
+.vermelho { 
+    color: #ff4444; 
+    text-shadow: 0 0 3px rgba(255, 68, 68, 0.4);
+}
+
+.verde { 
+    color: #44ff44; 
+    text-shadow: 0 0 3px rgba(68, 255, 68, 0.4);
+}
+
+/* Fallback de fonte e espaçamento de linha */
+body {
+    font-family: 'VT323', 'Courier New', monospace;
+    font-weight: 500;
+}
+
+#output p {
+    line-height: 1.6;
+}
 
 .game-container {
     display: flex;
@@ -154,3 +174,79 @@ ul li {
     animation: spin 1s linear infinite;
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* =========================================
+   ACESSIBILIDADE E UTILIDADES
+   ========================================= */
+.sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0;
+    margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border-width: 0;
+}
+
+/* =========================================
+   BOTÃO FLUTUANTE E MODAL DE AJUDA
+   ========================================= */
+.help-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    background: #000;
+    color: #33ff00;
+    border: 2px solid #33ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 200;
+    transition: 0.2s;
+}
+
+.help-float:hover {
+    background: #33ff00;
+    color: #000;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #000;
+    border: 2px solid #33ff00;
+    padding: 20px;
+    color: #33ff00;
+    z-index: 300;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 0 15px #33ff0055;
+    min-width: 300px;
+}
+
+.modal h2 { margin-top: 0; border-bottom: 1px solid #33ff00; padding-bottom: 10px; }
+.modal p { margin: 10px 0; }
+.modal .close-btn {
+    margin-top: 15px; width: 100%; padding: 10px;
+    background: transparent; color: #33ff00; border: 1px solid #33ff00;
+    cursor: pointer; font-family: inherit; font-weight: bold;
+}
+.modal .close-btn:hover { background: #33ff00; color: #000; }
+.hidden { display: none !important; }
+
+/* =========================================
+   RESPONSIVIDADE MOBILE
+   ========================================= */
+@media (max-width: 1024px) {
+    .container { flex-direction: column; }
+    .terminal-section { flex: 2; height: 70vh; }
+    .sidebar { flex: 1; border-left: none; border-top: 2px solid #33ff00; }
+}
+
+@media (max-width: 600px) {
+    body { font-size: 1rem; }
+    .input-line input { font-size: 1.1rem; }
+    .sidebar { padding: 10px; gap: 10px; }
+    .help-float { bottom: 10px; right: 10px; width: 40px; height: 40px; font-size: 1.2rem; }
+}

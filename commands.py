@@ -93,7 +93,7 @@ def cmd_pegar(comando, jogo, mapa):
         if item_real_na_sala != item_desejado: ui.exibir(f"{DOS_AMARELO}(Entendido como: 'pegar {item_real_na_sala}'){RESET}")
         
         if len(jogo.inventario) >= MAX_INVENTARIO and not getattr(jogo, 'god_mode', False):
-            ui.exibir(f"{DOS_AMARELO}🎒 Sua mochila está cheia! (Máx: {MAX_INVENTARIO}). Use 'largar [item]' primeiro.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}[INV] Sua mochila está cheia! (Máx: {MAX_INVENTARIO}). Use 'largar [item]' primeiro.{RESET}")
             ui.pausar(1.5)
             return
         
@@ -114,7 +114,7 @@ def cmd_pegar(comando, jogo, mapa):
                     
         sala["itens"].remove(item_real_na_sala) 
         jogo.inventario.append(item_real_na_sala)    
-        ui.exibir(f"{DOS_VERDE}🎒 Você pegou: {item_real_na_sala.upper()}{RESET}")
+        ui.exibir(f"{DOS_VERDE}[INV] Você pegou: {item_real_na_sala.upper()}{RESET}")
         ui.pausar(1)
     else:
         ui.exibir(f"{DOS_BRANCO}Não há nenhum '{item_desejado}' aqui para pegar.{RESET}")
@@ -206,7 +206,7 @@ def cmd_abrir_cofre(jogo):
             else:
                 ui.exibir("O cofre está vazio. Apenas poeira.")
         else:
-            ui.exibir(f"{DOS_VERMELHO}BEEP! Senha incorreta. O painel pisca em vermelho.{RESET}")
+            ui.exibir(f"{DOS_VERMELHO}☓ Senha incorreta. O painel pisca em vermelho. ☓{RESET}")
         ui.pausar(2)
     else:
         ui.exibir("Não há nenhum cofre aqui para abrir.")
@@ -244,7 +244,7 @@ def cmd_combinar(comando, jogo):
                     if not getattr(jogo, 'god_mode', False): jogo.isqueiro_usos -= 1
                     jogo.inventario.remove("tocha"); jogo.inventario.append("tocha acesa")
                     jogo.turnos_luz = 2 if not getattr(jogo, 'god_mode', False) else 9999
-                    ui.exibir(f"🔥 Você acendeu a tocha! A luz vai durar 2 turnos. (Usos: {getattr(jogo, 'isqueiro_usos', 0)})")
+                    ui.exibir(f"🜂 Você acendeu a tocha! A luz vai durar 2 turnos. (Usos: {getattr(jogo, 'isqueiro_usos', 0)})")
                 else: ui.exibir("O isqueiro não faz faísca... acabou o gás!")
             elif ("papel" in [item1, item2]) and ("isqueiro" in [item1, item2]):
                 if getattr(jogo, 'isqueiro_usos', 0) > 0 or getattr(jogo, 'god_mode', False):
@@ -282,7 +282,7 @@ def cmd_usar(comando, jogo, mapa):
         ui.pausar(2)
     elif item == "doce":
         jogo.hp += 1; jogo.inventario.remove("doce")
-        ui.exibir(f"🍬 Você engoliu o doce velho. Ganhou 1 HP! (HP: {jogo.hp})")
+        ui.exibir(f"Você engoliu o doce velho. Ganhou 1 HP! (HP: {jogo.hp})")
         ui.exibir("Mas o gosto de açúcar mofado embrulha seu estômago...")
         ui.pausar(2)
     elif item == "sanduiche estragado":
@@ -494,12 +494,12 @@ def processar_comando(comando, jogo, mapa):
         return False
     elif comando == "salvar":
         salvar_autosave(jogo)
-        ui.exibir(f"{DOS_VERDE}💾 Progresso salvo no sistema unificado de Autosave.{RESET}")
+        ui.exibir(f"{DOS_VERDE}Progresso salvo no sistema unificado de Autosave.{RESET}")
         ui.pausar(1.5)
         return False
     elif comando == "carregar":
         if carregar_autosave(jogo):
-            ui.exibir(f"{DOS_VERDE}💾 Jogo carregado com sucesso do Autosave.{RESET}")
+            ui.exibir(f"{DOS_VERDE} Jogo carregado com sucesso do Autosave.{RESET}")
             ui.pausar(1.5)
             imprimir_contexto_sala(jogo)
         else:
@@ -520,9 +520,9 @@ def processar_comando(comando, jogo, mapa):
         if len(jogo.inventario) > 0: 
             itens_inv = [f"{DOS_VERDE}{i}{RESET}" for i in jogo.inventario]
             texto_inv = "∞" if getattr(jogo, 'god_mode', False) else f"{len(jogo.inventario)}/{MAX_INVENTARIO}"
-            ui.exibir(f"🎒 Seu inventário ({texto_inv}): {', '.join(itens_inv)}")
+            ui.exibir(f"[INV] Seu inventário ({texto_inv}): {', '.join(itens_inv)}")
         else: 
-            ui.exibir("🎒 Seu inventário está vazio.")
+            ui.exibir("[INV] Seu inventário está vazio.")
         ui.pausar(2); return False
     elif comando == "olhar" or comando == "o":
         return False 
@@ -533,7 +533,7 @@ def processar_comando(comando, jogo, mapa):
         ui.pausar(2); return False
     elif comando == "format c:":
         ui.animar("FORMATAÇÃO INICIADA...", 0.05, DOS_VERMELHO, jogo)
-        ui.exibir(f"{DOS_VERMELHO}ERRO CRÍTICO 0x0000: PRESENÇA ULTERIOR PRESA NO DISCO.{RESET}")
+        ui.exibir(f"{DOS_VERMELHO} ☣ ERRO CRÍTICO 0x0000: PRESENÇA ULTERIOR PRESA NO DISCO. ☣{RESET}")
         ui.pausar(2); return False
     elif comando == "sair":
         raise QuitGameException()

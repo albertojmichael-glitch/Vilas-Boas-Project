@@ -29,6 +29,12 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     ui = jogo.ui_handler
 
     if jogo.estado_atual == "FIM":
+        if comando in ["f5", "reiniciar", "restart", "reset"]:
+            jogo.estado_atual = "AGUARDANDO_DIR"
+            ui.limpar()
+            imprimir_tela_boot(ui)
+            return
+            
         ui.exibir(f"{DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{RESET}")
         return
 
@@ -198,7 +204,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala(jogo)
         else:
-            ui.exibir(f"{DOS_VERMELHO}BEEP! Senha incorreta. Painel pisca em vermelho.{RESET}")
+            ui.exibir(f"{DOS_VERMELHO} ⛝ Senha incorreta. Painel pisca em vermelho.⛝{RESET}")
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala(jogo)
 
@@ -252,14 +258,14 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         if "chave da cozinha" not in jogo.inventario and "chave da cozinha" not in sala["itens"]:
             if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                 jogo.inventario.append("chave da cozinha")
-                ui.exibir(f"{DOS_VERDE}🎒 Você obteve: CHAVE DA COZINHA!{RESET}")
+                ui.exibir(f"{DOS_VERDE}⛋ Você obteve: CHAVE DA COZINHA!{RESET}")
             else:
                 sala["itens"].append("chave da cozinha")
 
         if item_secreto:
             if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                 jogo.inventario.append(item_secreto)
-                ui.exibir(f"{DOS_VERDE}🎒 Você obteve um item extra: {item_secreto.upper()}!{RESET}")
+                ui.exibir(f"{DOS_VERDE}⛋ Você obteve um item extra: {item_secreto.upper()}!{RESET}")
             else:
                 sala["itens"].append(item_secreto)
             
@@ -316,9 +322,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 if "bateria nova" not in jogo.inventario and "bateria nova" not in sala["itens"]:
                     if len(jogo.inventario) < MAX_INVENTARIO or getattr(jogo, 'god_mode', False):
                         jogo.inventario.append("bateria nova")
-                        ui.exibir(f"{DOS_VERDE}🎒 Você a guardou na mochila.{RESET}")
+                        ui.exibir(f"{DOS_VERDE}⛋ Você a guardou na mochila.{RESET}")
                     else:
-                        ui.exibir(f"{DOS_AMARELO}🎒 Mochila cheia! A bateria nova caiu no chão.{RESET}")
+                        ui.exibir(f"{DOS_AMARELO}⛋ Mochila cheia! A bateria nova caiu no chão.{RESET}")
                         sala["itens"].append("bateria nova")
             else:
                 ui.animar("Quem é você? A tela desliga. Você perdeu a absolvição.", 0.05, DOS_VERMELHO, jogo)

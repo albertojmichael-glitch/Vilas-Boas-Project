@@ -76,7 +76,7 @@ def imprimir_contexto_sala(jogo):
         ui.exibir("\n" + "="*50)
         
         # ANIMAÇÃO RÁPIDA: 0.01 segundos
-        ui.animar(f"📍 VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}", 0.01, DOS_VERDE, jogo)
+        ui.animar(f"⚇ VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}", 0.01, DOS_VERDE, jogo)
         
         descricao_colorida = sala.get('descrição', '')
         for inspecionavel in sala.get("inspecionaveis", {}):
@@ -84,21 +84,21 @@ def imprimir_contexto_sala(jogo):
         for item in sala.get("itens", []):
             descricao_colorida = descricao_colorida.replace(item, f"{DOS_VERDE}{item}{RESET}")
             
-        ui.animar(f"👁️  Visão: {descricao_colorida}", 0.01, DOS_BRANCO, jogo)
+        ui.animar(f"⏿ Visão: {descricao_colorida}", 0.01, DOS_BRANCO, jogo)
 
         if len(sala.get("itens", [])) > 0:
             if jogo.turnos_luz > 0:
                 itens_formatados = [f"{DOS_VERDE}{item}{RESET}" for item in sala['itens']]
-                ui.animar(f"📦 Itens no chão: {', '.join(itens_formatados)}", 0.01, DOS_BRANCO, jogo)
+                ui.animar(f"[i] Itens no chão: {', '.join(itens_formatados)}", 0.01, DOS_BRANCO, jogo)
             else:
-                ui.animar(f"📦 {DOS_BRANCO}Deve ter algo no chão, mas escuro demais para ver o quê.{RESET}", 0.01, DOS_BRANCO, jogo)
+                ui.animar(f"� {DOS_BRANCO}Deve ter algo no chão, mas escuro demais para ver o quê.{RESET}", 0.01, DOS_BRANCO, jogo)
 
         chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
         saidas = [k for k in sala.keys() if k not in chaves_ignoradas and isinstance(sala[k], str)]
         if saidas:
-            ui.animar(f"🧭 Saídas: {DOS_AMARELO}{', '.join(saidas).title()}{RESET}", 0.01, DOS_BRANCO, jogo)
+            ui.animar(f"⏱ Saídas: {DOS_AMARELO}{', '.join(saidas).title()}{RESET}", 0.01, DOS_BRANCO, jogo)
         else:
-            ui.animar(f"🧭 Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}", 0.01, DOS_BRANCO, jogo)
+            ui.animar(f"⏱ Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}", 0.01, DOS_BRANCO, jogo)
 
         ui.animar(f"\n[ SISTEMA OPERACIONAL VILLAS BOAS v20.08 ]", 0.01, DOS_BRANCO, jogo)
         
@@ -113,7 +113,7 @@ def dar_tela_de_morte(jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
     ui.animar(f"{DOS_VERMELHO}{CAVEIRA_MORTE}{RESET}", 0.002, jogo=jogo)
-    ui.animar("💀 GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, DOS_VERMELHO, jogo)
+    ui.animar("☠ GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, DOS_VERMELHO, jogo)
     ui.animar("=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)
 
 

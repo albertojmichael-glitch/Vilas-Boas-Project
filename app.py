@@ -36,10 +36,10 @@ if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
     db = mongo_client["villasboas_db"]
     saves_collection = db["saves"]
-    logging.info("🚀 Conectado ao MongoDB com sucesso!")
+    logging.info("conectado ao MongoDB com sucesso...")
 else:
     mongo_client = None
-    logging.warning("⚠️ Rodando sem Banco de Dados. Usando arquivos locais.")
+    logging.warning("⚠ Rodando sem Banco de Dados. Usando arquivos locais.")
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 app.secret_key = SECRET_KEY
@@ -187,21 +187,30 @@ def page_not_found(e):
 
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
-    # Cria uma sessão 100% nova e limpa da memória
+    # Cria uma sessão 100% nova e limpa
     session.clear()
     sid = str(uuid.uuid4())
     session["sid"] = sid
     session.permanent = True
+    session.modified = True # Força o navegador a aceitar o novo cookie
     
     jogo = GameState()
     jogo.ui_handler = WebUIHandler()
     jogo.estado_atual = "AGUARDANDO_DIR"
     
-    # Guarda o jogo na memória RAM segura
     MEMORIA_SESSOES[sid] = jogo
     
     imprimir_tela_boot(jogo.ui_handler)
-    return gerar_resposta_json(jogo)
+    
+    resposta = gerar_resposta_json(jogo)
+    
+    # --- BLINDAGEM ANTI-CACHE ---
+    # Proíbe o navegador de fingir que recarregou a página
+    resposta.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    resposta.headers["Pragma"] = "no-cache"
+    resposta.headers["Expires"] = "0"
+    
+    return resposta
 
 @app.route('/comando', methods=['GET', 'POST'])
 def receber_comando():
@@ -210,12 +219,16 @@ def receber_comando():
 
     sid = session.get("sid")
     
-    # Se a sessão foi perdida ou o servidor reiniciou, cria uma nova
+    # Se a sessão foi perdida, cria uma nova e FORÇA o estado inicial
     if not sid or sid not in MEMORIA_SESSOES:
         sid = str(uuid.uuid4())
         session["sid"] = sid
         session.permanent = True
+        session.modified = True
+        
         MEMORIA_SESSOES[sid] = GameState()
+        # Faltava esta linha para impedir que o jogo nascesse travado:
+        MEMORIA_SESSOES[sid].estado_atual = "AGUARDANDO_DIR" 
         
     jogo = MEMORIA_SESSOES[sid]
     
@@ -239,6 +252,14 @@ def receber_comando():
             jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {str(e)}")
 
     return gerar_resposta_json(jogo)
+
+# --- OTIMIZAÇÃO DE PERFORMANCE (CACHE NATIVO) ---
+@app.after_request
+def adicionar_headers_de_cache(response):
+    # Se o arquivo for CSS ou JavaScript, manda o navegador guardar por 1 Hora (3600 segundos)
+    if response.content_type in ['text/css', 'application/javascript']:
+        response.cache_control.max_age = 3600
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

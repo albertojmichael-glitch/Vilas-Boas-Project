@@ -3,6 +3,25 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## [1.3.0] - 2026-07-20
+### Adicionado
+- **Histórico de Comandos:** Implementação de navegação de terminal via setas direcionais (`ArrowUp` e `ArrowDown`) com armazenamento em memória na sessão do navegador.
+- **Sintetizador de Áudio (MS-DOS):** Injeção de feedback sonoro de hardware via `AudioContext` nativo do JavaScript (sem dependência de arquivos de áudio externos), simulando os *beeps* e *boops* da placa-mãe.
+- **Atalhos Globais de Teclado:** Suporte a atalhos clássicos de terminal (`Ctrl+L` para limpar a tela, `Ctrl+S` para verificação visual de save e `?` para ajuda).
+- **Acessibilidade (a11y):** Inclusão de atributos ARIA, *Live Regions* (`aria-live="polite"`) e classes `.sr-only` para suporte a leitores de tela.
+- **Menu de Ajuda Contextual:** Adição de modal responsivo com lista de comandos básicos e atalhos, ativado via UI ou teclado.
+- **Cache de Estáticos:** Interceptador nativo no Flask (`@app.after_request`) para forçar o cache de CSS e JS no navegador do cliente (1 hora).
+
+### Modificado
+- **Direção Artística (Fim dos Emojis):** Expurgados todos os emojis modernos da interface gráfica, substituídos por padronização ASCII (ex: `⨹`, `☠`, `✕`) para maximizar a imersão de 1982.
+- **HUD Retrô:** Barra de progresso de HP reimaginada utilizando caracteres de bloco (`[██░]`) e reatividade de cor (verde para seguro, vermelho para perigo).
+- **Estética de Monitor CRT:** Adição de `text-shadow` sutil no CSS para emular o vazamento de luz (glow) do fósforo verde/âmbar e ajuste no `line-height` para otimização de leitura.
+- **UX de Carregamento (Anti-Flicker):** Inserção de uma barreira de atraso mínimo de 300ms na animação de carregamento (`spinner`) para evitar flashes visuais bruscos quando a latência de rede é próxima de zero.
+
+### Corrigido
+- **O Bug do "Fantasma do Cache" (F5):** Aplicação de cabeçalhos estritos de *No-Cache* na rota `/iniciar` e reestruturação da geração de *Session IDs* (SIDs). Agora, forçar a atualização da página pelo navegador reseta corretamente a máquina de estados do servidor para a tela de Boot, prevenindo bloqueios irreversíveis.
+- **Minotauro Silencioso (Timeout Exploit):** Refatoração no bloco de tratamento de comandos da classe `MinigameMinotauro`. Comandos inválidos ou não reconhecidos deixaram de ser ignorados silenciosamente e passaram a consumir o turno do jogador, deduzindo bateria e movendo o monstro, com o devido feedback narrativo de penalidade.
+
 ## [1.2.0] - 2026-07-17
 ### Adicionado
 - **Persistência em Nuvem (MongoDB):** Integração nativa com banco de dados NoSQL MongoDB (`pymongo`) via MongoDB Atlas, garantindo retenção perpétua dos dados de progresso e contornando a limpeza de arquivos efêmeros do Render.

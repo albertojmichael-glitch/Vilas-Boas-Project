@@ -3,61 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Villas-Boas</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>Sistema Villas-Boas 1982</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="game-container">
-        <main class="terminal-section" id="terminal">
-            <div class="crt-overlay"></div>
-            <div id="output"></div>
+    <div class="container">
+        <main class="terminal-section" id="terminal" role="main" aria-label="Terminal do Jogo">
+            <div class="crt-overlay" aria-hidden="true"></div>
+            <div id="output" role="log" aria-live="polite" aria-label="Saída do Jogo"></div>
+            
             <div class="input-line">
                 <span class="prompt">C:\></span>
-                <input type="text" id="comando" autocomplete="off" spellcheck="false" autofocus>
+                <input type="text" id="comando" autocomplete="off" spellcheck="false" autofocus
+                       aria-label="Campo de entrada de comandos" aria-describedby="help-btn">
             </div>
-            <div id="loading" class="spinner-container">
-                <div class="spinner"></div> Processando...
+            
+            <div id="loading" class="spinner-container hidden" role="status" aria-label="Processando comando...">
+                <div class="spinner" aria-hidden="true"></div>
+                <span class="sr-only">Carregando...</span>
             </div>
         </main>
 
         <aside class="sidebar">
             <div class="panel">
-                <h2>STATUS</h2>
-                <div class="status-item">
-                    <span>SALA:</span> <span id="hud-sala" class="amarelo">BOOT</span>
+                <h2>[ SISTEMA v20.08 ]</h2>
+                <div class="status-grid">
+                    <div class="status-item">HP: <span id="hp-val">...</span></div>
+                    <div class="status-item">LUZ: <span id="luz-val">...</span></div>
                 </div>
-                <div class="status-item">
-                    <span>HP:</span> <span id="hud-hp" class="vermelho">...</span>
+                <div class="inventory-box">
+                    <h3>INV:</h3>
+                    <ul id="inv-list"></ul>
                 </div>
-                <div class="status-item">
-                    <span>LUZ:</span> <span id="hud-luz" class="amarelo">...</span>
-                </div>
-            </div>
-
-            <div class="panel">
-                <h2>INVENTÁRIO</h2>
-                <ul id="hud-inv" class="verde">
-                    </ul>
-            </div>
-
-            <div class="panel">
-                <h2>MAPA / SAÍDAS</h2>
-                <ul id="hud-saidas" class="amarelo">
-                    </ul>
-            </div>
-
-            <div class="panel shortcuts">
-                <h2>ATALHOS</h2>
-                <p><strong>p</strong> = pegar</p>
-                <p><strong>l</strong> = largar</p>
-                <p><strong>u</strong> = usar</p>
-                <p><strong>x</strong> = examinar</p>
-                <p><strong>i</strong> = inventario</p>
-                <p><strong>ir [sala]</strong> = andar</p>
             </div>
         </aside>
     </div>
 
-    <script src="/script.js"></script>
+    <button id="help-btn" class="help-float" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
+    <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true">
+        <h2>[ COMANDOS BÁSICOS ]</h2>
+        <p><strong>Movimento:</strong> ir [sala/direção]</p>
+        <p><strong>Objetos:</strong> pegar [item] | largar [item] | usar [item]</p>
+        <p><strong>Inspeção:</strong> examinar [alvo] | inventario</p>
+        <p><strong>Abreviaturas:</strong> p=pegar | l=largar | u=usar | x=examinar</p>
+        <button class="close-btn" onclick="closeHelp()">FECHAR (ESC)</button>
+    </div>
+
+    <script src="script.js"></script>
 </body>
-</html>>
+</html>

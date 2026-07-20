@@ -24,34 +24,34 @@ class MinigameMinotauro:
     def imprimir_status(self):
         print("\n" + "-"*30)
         texto_bat = "∞" if self.bateria > 100 else str(self.bateria)
-        print(f"🔋 Bateria da Lanterna: {texto_bat} turnos restantes")
+        print(f" Bateria da Lanterna: {texto_bat} turnos restantes")
         
         distancia = abs(self.px - self.mx) + abs(self.py - self.my)
         
         if distancia > 1: 
-            print("👁️ Você sente uma presença distante, talvez não haja perigo por enquanto.")
+            print("[v] Você sente uma presença distante, talvez não haja perigo por enquanto.")
         elif distancia == 1:
             if random.random() < 0.2:
-                print("⚠️ Os ecos do labirinto te confundem... não dá pra saber de onde o som vem!")
+                print("[!] Os ecos do labirinto te confundem... não dá pra saber de onde o som vem!")
             else:
-                if self.mx < self.px: print("⚠️ Você sente um ar pesado em sua esquerda.")
-                elif self.mx > self.px: print("⚠️ Você enxerga um vulto a sua direita.")
-                elif self.my > self.py: print("⚠️ Você não enxerga nada a sua frente, uma mancha negra cobre o fundo.")
-                elif self.my < self.py: print("⚠️ Passos pesados são ouvidos atrás de você.")
+                if self.mx < self.px: print("⚠ Você sente um ar pesado em sua esquerda.")
+                elif self.mx > self.px: print("⚠ Você enxerga um vulto a sua direita.")
+                elif self.my > self.py: print("⚠ Você não enxerga nada a sua frente, uma mancha negra cobre o fundo.")
+                elif self.my < self.py: print("⚠ Passos pesados são ouvidos atrás de você.")
 
         opcoes = "ir frente | ir trás | ir esquerda | ir direita | esperar"
         
         if self.px == 0 and self.py == 3 and not self.fios_cortados:
-            print("⚡ Você encontrou a caixa de fusíveis na parede central!")
+            print(" ↯ Você encontrou a caixa de fusíveis na parede central!")
             if self.tesoura_chao:
-                print("Há uma tesoura caída no chão.")
+                print("	✂ Há uma tesoura caída no chão.")
                 opcoes += " | pegar tesoura"
             opcoes += " | cortar fios"
             
         if self.fios_cortados:
-            print(f"{DOS_VERMELHO}⚡ OS FIOS ESTÃO CORTADOS! A SALA ESTÁ DESMORONANDO! FUJA PARA A SAÍDA!{RESET}")
+            print(f"{DOS_VERMELHO} ↯ OS FIOS ESTÃO CORTADOS! A SALA ESTÁ DESMORONANDO! FUJA PARA A SAÍDA!{RESET}")
             if self.px == 0 and self.py == 0:
-                print(f"{DOS_VERDE}🚪 A porta de entrada está logo aqui! Você pode sair!{RESET}")
+                print(f"{DOS_VERDE}⍍ A porta de entrada está logo aqui! Você pode sair!{RESET}")
                 opcoes += " | sair"
                 
         print(f"\n[{opcoes}]")
@@ -70,106 +70,114 @@ class MinigameMinotauro:
         self.my = max(0, min(3, self.my))
 
     def processar_turno(self, acao, jogo):
+        ui = jogo.ui_handler # Puxa a interface gráfica/web
+        
         if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
-            print(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
-            print(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
-            pausar(2)
+            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
+            ui.exibir(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
+            ui.pausar(2)
             return "vitoria_minotauro"
 
         turno_gasto = False
         
         if acao == "ir esquerda":
             if self.px > -1: self.px -= 1
-            else: print("Você bate a cara na parede...")
+            else: ui.exibir("Você bate a cara na parede...")
             turno_gasto = True 
 
         elif acao == "ir direita":
             if self.px < 1: self.px += 1
-            else: print("Você bate a cara na parede...")
+            else: ui.exibir("Você bate a cara na parede...")
             turno_gasto = True
 
         elif acao == "ir frente":
             if self.py < 3: self.py += 1
-            else: print("Você bateu na parede do fundo...")
+            else: ui.exibir("Você bateu na parede do fundo...")
             turno_gasto = True
             
         elif acao in ["ir trás", "ir tras", "ir atrás", "ir atras"]:
             if self.py > 0: self.py -= 1
-            else: print("Você bate as costas na porta de metal. Ela não abre apenas encostando...")
+            else: ui.exibir("Você bate as costas na porta de metal. Ela não abre apenas encostando...")
             turno_gasto = True
 
         elif acao == "esperar": 
-            print("Você fica imóvel aguardando...")
+            ui.exibir("Você fica imóvel aguardando...")
             turno_gasto = True
 
         elif acao == "pegar tesoura":
             if self.px == 0 and self.py == 3 and self.tesoura_chao:
                 jogo.inventario.append("tesoura"); self.tesoura_chao = False
-                print("Você derruba a tesoura sem querer, fazendo um barulho, mas guarda na sua bolsa")
+                ui.exibir(" ✂ Você derruba a tesoura sem querer, fazendo um barulho, mas guarda na sua bolsa")
                 if random.random() < 0.50:
                     self.mover_minotauro() 
                 turno_gasto = True
             else: 
-                print("Não tem tesoura aqui.")
+                ui.exibir("Não tem tesoura aqui.")
 
         elif acao == "cortar fios":
             if self.px == 0 and self.py == 3 and not self.fios_cortados:
                 if "tesoura" in jogo.inventario:
-                    print(f"\n{DOS_VERMELHO}Você corta os fios principais! Faíscas voam e as poucas luzes estouram!{RESET}")
-                    print(f"{DOS_VERMELHO}Sua tesoura quebra com a força do choque elétrico!{RESET}")
-                    print(f"{DOS_VERMELHO}O Minotauro solta um RUGIDO DE FÚRIA ensurdecedor! Ele sabe onde você está!{RESET}")
-                    print(f"{DOS_VERMELHO}CORRA DE VOLTA PARA A PORTA!{RESET}")
+                    ui.exibir(f"\n{DOS_VERMELHO}Você corta os fios principais! Faíscas voam e as poucas luzes estouram!{RESET}")
+                    ui.exibir(f"{DOS_VERMELHO} ✂ Sua tesoura quebra com a força do choque elétrico!{RESET}")
+                    ui.exibir(f"{DOS_VERMELHO}O Minotauro solta um RUGIDO DE FÚRIA ensurdecedor! Ele sabe onde você está!{RESET}")
+                    ui.exibir(f"{DOS_VERMELHO}CORRA DE VOLTA PARA A PORTA!{RESET}")
                     jogo.inventario.remove("tesoura")
                     jogo.inventario.append("tesoura quebrada")
                     self.fios_cortados = True
                     jogo.fios_cortados_inventario = True
                     turno_gasto = True
                 else: 
-                    print("Você precisa de uma tesoura inteira para cortar os fios"); turno_gasto = True
+                    ui.exibir("Você precisa de uma tesoura inteira para cortar os fios")
+                    turno_gasto = True
             else: 
-                print("Não há mais fios aqui."); turno_gasto = True
+                ui.exibir("Não há mais fios aqui.")
+                turno_gasto = True
                 
         elif acao == "sair":
             if self.px == 0 and self.py == 0:
                 if self.fios_cortados:
-                    print(f"\n{DOS_VERDE}Você se joga contra a maçaneta, abre a porta e a tranca com toda a força! Você sobreviveu!{RESET}")
-                    pausar(2)
+                    ui.exibir(f"\n{DOS_VERDE}Você se joga contra a maçaneta, abre a porta e a tranca com toda a força! Você sobreviveu!{RESET}")
+                    ui.pausar(2)
                     return "vitoria_minotauro"
                 else:
-                    print("Você não pode fugir ainda! A missão não foi cumprida no fundo da sala.")
+                    ui.exibir("Você não pode fugir ainda! A missão não foi cumprida no fundo da sala.")
                     turno_gasto = True
             else:
-                print("A porta de saída não fica aqui! Tente voltar para trás.")
+                ui.exibir("A porta de saída não fica aqui! Tente voltar para trás.")
+        
+        # --- AQUI ESTÁ A CORREÇÃO DO BUG (UM ÚNICO ELSE) ---
         else: 
-            print("Ação inválida no momento.")
+            ui.exibir(f"{DOS_AMARELO}Comando não reconhecido no escuro. Você gasta segundos preciosos tropeçando...{RESET}")
+            turno_gasto = True # Gasta o turno para punir o jogador por errar!
 
+        # --- LÓGICA DE MORTE E MOVIMENTO ---
         if self.px == self.mx and self.py == self.my:
             if getattr(jogo, 'god_mode', False):
-                print(f"\n{DOS_AMARELO}[GOD MODE] Você esbarra no Minotauro. Ele tenta te arranhar, mas suas garras quebram na sua pele divina! Ele foge chorando.{RESET}")
-                pausar(2)
+                ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Você esbarra no Minotauro. Ele tenta te arranhar, mas suas garras quebram na sua pele divina! Ele foge chorando.{RESET}")
+                ui.pausar(2)
                 return "vitoria_minotauro"
             else:
-                print("\n Você andou direto para as mãos do monstro no escuro...")
-                pausar(2)
-                print("\n No vazio, você morre sozinho, sem poder salvar ninguem. ")
-                pausar(2)
+                ui.exibir("\n Você andou direto para as mãos do monstro no escuro...")
+                ui.pausar(2)
+                ui.exibir("\n No vazio, você morre sozinho, sem poder salvar ninguém. ")
+                ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                 return "morte"
 
         if turno_gasto:
             if not getattr(jogo, 'god_mode', False):
                 self.bateria -= 1
                 if self.bateria <= 0:
-                    print("\n A sua lanterna apaga, você entra em desespero e bate na bateria fazendo barulho.")
-                    pausar(2)
-                    print("\n Você sente uma mão atravessando seu estômago por trás, não há nada a se fazer.")
-                    pausar(2)
+                    ui.exibir("\n A sua lanterna apaga, você entra em desespero e bate na bateria fazendo barulho.")
+                    ui.pausar(2)
+                    ui.exibir("\n Você sente uma mão atravessando seu estômago por trás, não há nada a se fazer.")
+                    ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                     return "morte"
                 
             passos = 2 if random.randint(1, 100) <= self.chance_sprint else 1 
             
             if passos == 2:
-                print(f"\n{DOS_VERMELHO}⚠️ O CHÃO TREME! VOCÊ ESCUTA PASSOS PESADOS CORRENDO NA SUA DIREÇÃO!{RESET}")
-                pausar(1.5)
+                ui.exibir(f"\n{DOS_VERMELHO}⚠VOCÊ ESCUTA PASSOS PESADOS CORRENDO NA SUA DIREÇÃO!⚠{RESET}")
+                ui.pausar(1.5)
 
             dist_antes = abs(self.px - self.mx) + abs(self.py - self.my)
             mx_old, my_old = self.mx, self.my
@@ -180,17 +188,17 @@ class MinigameMinotauro:
             if self.px == self.mx and self.py == self.my:
                 if dist_antes > 1 and passos == 1:
                     self.mx, self.my = mx_old, my_old
-                    print(f"\n{DOS_VERMELHO}⚠️ VOCÊ TROMBA COM ALGO GIGANTE E METÁLICO NO ESCURO! ELE ESTÁ BEM NA SUA FRENTE!{RESET}")
-                    pausar(2)
+                    ui.exibir(f"\n{DOS_VERMELHO}⚠VOCÊ TROMBA COM ALGO GIGANTE E METÁLICO NO ESCURO! ELE ESTÁ BEM NA SUA FRENTE!⚠{RESET}")
+                    ui.pausar(2)
                     return "continuar"
                 else:
                     if getattr(jogo, 'god_mode', False):
-                        print(f"\n{DOS_AMARELO}[GOD MODE] O Minotauro pula em cima de você, mas é repelido por um escudo de energia! Ele desiste e foge.{RESET}")
-                        pausar(2)
+                        ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] O Minotauro pula em cima de você, mas é repelido por um escudo de energia! Ele desiste e foge.{RESET}")
+                        ui.pausar(2)
                         return "vitoria_minotauro"
                     else:
-                        print("\n o minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro")
-                        pausar(2)
+                        ui.exibir("\n ☠ O Minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro ☠")
+                        ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                         return "morte"
                 
         return "continuar"
@@ -366,7 +374,7 @@ class MinigameSeguranca:
             elif self.energia <= CUSTO_INFO_LEVE: 
                 print("Sistema de áudio offline (Bateria fraca).")
             elif self.usos_sistema_turno >= 2:
-                print(f"{DOS_VERMELHO}🚨 [SISTEMA SOBRECARREGADO]: Placa de áudio em curto. Passe o turno para resfriar!{RESET}")
+                print(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Placa de áudio em curto. Passe o turno para resfriar!{RESET}")
                 self.energia -= CUSTO_INFO_LEVE
             else:
                 self.usos_sistema_turno += 1
@@ -381,10 +389,10 @@ class MinigameSeguranca:
                     print("Apenas o zumbido dos fios elétricos e da lâmpada quase apagada.")
 
         elif acao == "cameras":
-            if self.apagao > 0 or self.erro_camera: print("📺 [SINAL PERDIDO]")
+            if self.apagao > 0 or self.erro_camera: print("⊠ [SINAL PERDIDO]")
             elif self.energia <= CUSTO_INFO_LEVE: print("Câmeras offline (Bateria fraca).")
             elif self.usos_sistema_turno >= 2:
-                print(f"{DOS_VERMELHO}🚨 [SISTEMA SOBRECARREGADO]: Monitor superaquecido. A tela exibe apenas estática!{RESET}")
+                print(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Monitor superaquecido. A tela exibe apenas estática!{RESET}")
                 self.energia -= CUSTO_INFO_LEVE
             else:
                 self.usos_sistema_turno += 1
@@ -393,7 +401,7 @@ class MinigameSeguranca:
                 
                 chance_bug_visual = self.caroline_pos * 10
                 if random.randint(1, 100) <= chance_bug_visual:
-                    print("📺 [SINAL COM INTERFERÊNCIA] Imagens distorcidas...")
+                    print("⊠ [SINAL COM INTERFERÊNCIA] Imagens distorcidas...")
                     print(f"Rick: Setor {random.randint(0,4)}/4 (???)")
                     print(f"Jon: Setor {random.randint(0,5)}/5 (???)")
                 else:
@@ -402,20 +410,20 @@ class MinigameSeguranca:
                 print("------------------------")
                 
                 if random.randint(1, 100) == 1:
-                    print(f"\n{DOS_VERMELHO}📺 [ANOMALIA DETECTADA]: O feed pisca. Em uma das câmeras escuras, o rosto quebrado de Caroline encara diretamente a lente... e ela está sorrindo para você.{RESET}")
+                    print(f"\n{DOS_VERMELHO}⊠ [ANOMALIA DETECTADA]: O feed pisca. Em uma das câmeras escuras, o rosto quebrado de Caroline encara diretamente a lente... e ela está sorrindo para você.{RESET}")
 
         elif acao == "ver tubulacao":
-            if self.apagao > 0 or self.erro_deteccao: print("🔴 [SENSORES OFFLINE]")
+            if self.apagao > 0 or self.erro_deteccao: print("◯ [SENSORES OFFLINE]")
             elif self.energia <= CUSTO_INFO_LEVE: print("Sensores offline (Bateria fraca).")
             elif self.usos_sistema_turno >= 2:
-                print(f"{DOS_VERMELHO}🚨 [SISTEMA SOBRECARREGADO]: Painel de detecção travado!{RESET}")
+                print(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Painel de detecção travado!{RESET}")
                 self.energia -= CUSTO_INFO_LEVE
             else:
                 self.usos_sistema_turno += 1
                 self.energia -= CUSTO_INFO_LEVE
                 print(f"(-{CUSTO_INFO_LEVE}% Energia)")
-                if self.jon_pos >= 3 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 4): print("🔴 Sensor fica vermelho, há um movimento nos dutos.")
-                else: print("🟢 Sensor não detecta nada")
+                if self.jon_pos >= 3 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 4): print("⭙Sensor fica vermelho, há algo nos dutos⭙")
+                else: print("◉ Sensor não detecta nada")
 
         elif acao in ["esperar", "pular noite", "pular", "set time 06:00"]:
             print("Você deixa o tempo passar...")
