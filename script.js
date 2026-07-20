@@ -203,7 +203,7 @@ async function fetchSeguro(url, options) {
         if (!res.ok) throw new Error("Servidor offline");
         const data = await res.json();
 
-        console.log("RESPOSTA DO PYTHON:", data);
+        console.log("PYTHON:", data);
         
         // 2. Calcula quanto tempo passou
         const tempoDecorrido = Date.now() - startTime;
@@ -261,17 +261,8 @@ function reproduzirBeep(tipo = 'sucesso') {
     }
 }
 
-function enviarComando() {
-    const comando = inputField.value;
-    if (!comando.trim()) return;
+async function enviarComando(comando) {
     
-    let p = document.createElement('p');
-    p.innerHTML = `<span class="branco">> C:\\> ${comando}</span>`;
-    outputDiv.appendChild(p);
-    
-    inputField.value = '';
-    terminal.scrollTop = terminal.scrollHeight;
-
     fetchSeguro('/comando', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
