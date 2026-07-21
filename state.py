@@ -61,6 +61,8 @@ class GameState(BaseModel):
     fast_mode: bool = False
     limite_inventario: int = 3  
     amanheceu: bool = False
+    jon_passos_dados: int = 0
+    jon_caminho_certo: List[str] = Field(default_factory=list)
     web_consertos: Dict[str, Any] = Field(default_factory=dict)
     web_julgamento: Dict[str, Any] = Field(default_factory=dict)      
     mapa: Dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
