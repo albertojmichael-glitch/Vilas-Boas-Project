@@ -64,10 +64,11 @@ body {
 }
 
 #output p {
-    margin-bottom: 8px;
-    white-space: pre-wrap;
+    margin-bottom: 0px;    
+    line-height: 1.1;      
+    white-space: pre-wrap; 
     word-wrap: break-word;
-    line-height: 1.6;
+    min-height: 1.1em;     
 }
 
 .input-line {

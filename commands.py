@@ -31,7 +31,7 @@ def cmd_ir(comando, jogo, mapa):
     
     match_direcao = encontrar_melhor_match(direcao, saidas_validas)
     if match_direcao:
-        if match_direcao != direcao: ui.exibir(f"{DOS_AMARELO}(Entendido como: 'ir {match_direcao}'){RESET}")
+        pass
         direcao = match_direcao
     else:
         ui.exibir(f"Você não pode ir para '{direcao_bruta}'.")
@@ -90,7 +90,7 @@ def cmd_pegar(comando, jogo, mapa):
     item_real_na_sala = encontrar_melhor_match(item_desejado, itens_sala)
     
     if item_real_na_sala:
-        if item_real_na_sala != item_desejado: ui.exibir(f"{DOS_AMARELO}(Entendido como: 'pegar {item_real_na_sala}'){RESET}")
+        pass
         
         if len(jogo.inventario) >= MAX_INVENTARIO and not getattr(jogo, 'god_mode', False):
             ui.exibir(f"{DOS_AMARELO}[INV] Sua mochila está cheia! (Máx: {MAX_INVENTARIO}). Use 'largar [item]' primeiro.{RESET}")
@@ -128,7 +128,6 @@ def cmd_largar(comando, jogo, mapa):
     
     match_inv = encontrar_melhor_match(item_desejado, jogo.inventario)
     if match_inv:
-        if match_inv != item_desejado: ui.exibir(f"{DOS_AMARELO}(Entendido como: 'largar {match_inv}'){RESET}")
         item_desejado = match_inv
 
     if item_desejado == "lanterna":
@@ -162,8 +161,7 @@ def cmd_examinar(comando, jogo, mapa):
     item_cenario = next((k for k in coisas_para_olhar.keys() if match_alvo == k), None)
     item_inventario = next((i for i in jogo.inventario if match_alvo == i), None)
 
-    if match_alvo and match_alvo != alvo_bruto:
-        ui.exibir(f"{DOS_AMARELO}(Entendido como: 'examinar {match_alvo}'){RESET}")
+    
 
     if item_cenario:
         ui.exibir(f"\n{DOS_VERDE}C:\\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
@@ -174,9 +172,9 @@ def cmd_examinar(comando, jogo, mapa):
         ui.exibir(f"\n🔎 {descricoes_itens.get(item_inventario, 'Não há nada de especial nisso.')}")
         if item_inventario == "tabua pequena de madeira" and not getattr(jogo, 'god_mode', False):
             jogo.hp -= 1
-            ui.exibir(f"Você se machucou nas farpas. (HP: {jogo.hp})")
+            ui.exibir(f"{DOS_VERMELHO}Você se machucou nas farpas. (HP: {jogo.hp}){RESET}")
             if jogo.hp <= 0:
-                ui.exibir("Você sangrou até desmaiar, caindo no chão e perdendo a consciencia.")
+                ui.exibir(f"{DOS_VERMELHO}Você sangrou até desmaiar, caindo no chão e perdendo a consciencia.{RESET}")
                 jogo.sala_atual = "morte"
         ui.pausar(2)
     else:
@@ -188,7 +186,7 @@ def cmd_abrir_cofre(jogo):
     if jogo.sala_atual == "01":
         ui.exibir(f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo.{RESET}")
         
-        # --- UI OBTER INPUT resolve o bloqueio do CLI vs Web! ---
+        
         senha = ui.obter_input(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}").strip()
         
         if senha == COFRE_SENHA: 
@@ -268,8 +266,8 @@ def cmd_usar(comando, jogo, mapa):
     match_item = encontrar_melhor_match(item_desejado, jogo.inventario)
     
     if match_item:
-        if match_item != item_desejado: ui.exibir(f"{DOS_AMARELO}(Entendido como: 'usar {match_item}'){RESET}")
         item = match_item
+
     else:
         ui.exibir(f"Você não tem '{item_desejado}' no inventário.")
         ui.pausar(1.5)
@@ -436,7 +434,7 @@ def processar_comando(comando, jogo, mapa):
         if sugestoes:
             verbo_corrigido = sugestoes[0]
             comando = f"{verbo_corrigido} {resto}".strip()
-            ui.exibir(f"{DOS_AMARELO}(Entendido como: '{comando}'){RESET}")
+            
         else:
             if verbo_bruto in ["correr", "fugir", "escapar"]:
                 ui.exibir(f"{DOS_BRANCO}Você está com muito medo, mas correr às cegas no escuro seria suicídio.{RESET}")
