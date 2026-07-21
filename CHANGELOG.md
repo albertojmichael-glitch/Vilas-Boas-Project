@@ -3,6 +3,27 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## [1.4.0] - 2026-07-21
+
+###  Adicionado
+- **Sintetizador de Áudio Retro (PC Speaker):** Implementação da Web Audio API no frontend para gerar ondas quadradas (`square`) e dente de serra (`sawtooth`) nativas. O jogo agora emite bipes mecânicos reais de placa-mãe de 1982 ao enviar comandos e avisos graves em caso de falhas críticas de conexão.
+- **Foco Automático Implacável:** Script utilitário em JavaScript que força o foco do teclado de volta à caixa de texto sempre que o jogador clica na área preta do terminal, impedindo digitações sem efeito e melhorando a usabilidade em teclados físicos.
+- **Auto-Scroll Milimétrico Interativo:** Integração do controle dinâmico de rolagem (`scrollTop`) diretamente no loop de renderização caractere por caractere (`digitarTextoAnimadoHTML`). A tela agora acompanha a escrita fluida das letras automaticamente, sem esconder o prompt de comando.
+- **Segurança contra Buffer Overflow:** Nova camada de validação em `app.py` que barra comandos abusivos acima de 256 bytes, retornando um alerta de erro de sistema estilizado em DOS e protegendo as rotas internas contra injeção de payloads de DoS.
+- **Coleta Automatizada de Lixo (Session TTL):** Implementação de um dicionário global de timestamps (`MEMORIA_SESSOES_TTL`) no servidor Flask. Sessões inativas há mais de 1 hora são eliminadas da RAM automaticamente, eliminando riscos de vazamento de memória com alta concorrência.
+- **Mecanismo de Auditoria com Logs Estruturados:** Configuração de logging padronizado (`logging.getLogger`) nos pontos críticos da Engine e das rotas HTTP, facilitando o diagnóstico de erros fatais diretamente na interface de produção do Railway/Render.
+
+### 🔧 Modificado
+- **Corretor Ortográfico Silencioso (Modo Ninja):** Remoção de todas as saídas de texto `(Entendido como: '...')` que poluíam o terminal. O algoritmo de distância de strings (`difflib`) agora corrige pequenas falhas de digitação (como erros em direções ou nomes de itens) 100% por baixo dos panos, elevando a percepção de inteligência do parser.
+- **Desativação do HUD Duplicado Textual:** Remoção completa da impressão em texto puro das estatísticas (`[ SISTEMA OPERACIONAL... ]`) no meio da tela narrativa. Toda a exibição de HP, Inventário e Níveis de Luz foi centralizada exclusivamente no componente Sidebar dinâmico do HTML/JS via JSON estável.
+- **Correção de Quebra no Comando `dir`:** Substituição da tag nativa `<DIR>` por referências em formato de entidades HTML (`&lt;DIR&gt;`) no `engine.py`. Isso impede que o navegador web interprete a string como uma tag obsoleta de bloco HTML, garantindo o alinhamento de colunas típico do MS-DOS.
+- **Ajuste Fino na Altura de Linha (Renderização ASCII):** Atualização da diretiva `#output p` no arquivo `style.css` definindo `margin-bottom: 0px` e `line-height: 1.1`. Agora, artes ASCII complexas impressas linha por linha via `ui.animar` grudam perfeitamente sem espaços ou falhas verticais.
+- **Otimização de Cache via Cache Busting:** Atualização da assinatura dos arquivos estáticos no `index.html` para `?v=1.4.0`, forçando os navegadores de jogadores antigos a invalidarem o cache local e carregarem o novo layout JS/CSS imediatamente.
+- **Ocultação Estética de Scrollbars:** Inclusão de pseudo-elementos CSS (`::-webkit-scrollbar` e `scrollbar-width: none`) para ocultar a barra de rolagem cinza padrão do Windows/Navegador, preservando a navegação por scroll intacta mas mantendo o fundo preto infinito.
+
+---
+
+
 ## [1.3.0] - 2026-07-20
 ### Adicionado
 - **Histórico de Comandos:** Implementação de navegação de terminal via setas direcionais (`ArrowUp` e `ArrowDown`) com armazenamento em memória na sessão do navegador.
