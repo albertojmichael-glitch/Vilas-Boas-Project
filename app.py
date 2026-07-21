@@ -254,16 +254,18 @@ def receber_comando():
     jogo.ui_handler = WebUIHandler()
 
     dados = request.json
-    comando = dados.get('comando', '')
-    tem_save = obter_caminho_autosave(sid).exists()
 
+    comando = dados.get('comando', '')
     
     if len(comando_bruto) > 256:
-        
         return jsonify({
             "linhas": ["@@TYPE@@vermelho@@15@@[ ERRO DE SISTEMA ] Buffer overflow detectado. Comando excede 256 bytes."],
             "estado": gerar_estado_dict(jogo) if 'jogo' in locals() else {}
         })
+
+    tem_save = obter_caminho_autosave(sid).exists()
+
+    
 
     try:
         processar_fluxo_jogo(comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web)
