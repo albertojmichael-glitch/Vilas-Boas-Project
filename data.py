@@ -165,7 +165,7 @@ MAPA_ORIGINAL = {
         "direita": "balcão",
         "atrás": "hall de entrada",
         "esquerda": "balcão",
-        "itens": ["tesoura quebrada", "pelucias", "doce", "moeda velha", "disquete"],
+        "itens": ["tesoura quebrada", "pelucias", "doce", "moeda velha", "disquete", "bolsa"],
         "inspecionaveis": {}
     },
     "quarto de refrigeração": {
@@ -253,7 +253,7 @@ MAPA_ORIGINAL = {
         "frente": "cama", 
         "esquerda": "parede",
         "direita": "parede",
-        "itens": ["pano", "fosforo", "garrafa vazia"],
+        "itens": ["pano", "fosforo", "garrafa vazia","bolsa"],
         "inspecionaveis": {}
     },
     "sala do gerador": {
@@ -348,7 +348,7 @@ MAPA_ORIGINAL = {
     "sala de mercadorias": {
         "descrição": "Caixas de papelão mofadas com camisetas do restaurante.",
         "atrás": "sala dos fundos",
-        "itens": [],
+        "itens": ["bolsa"],
         "inspecionaveis": {}
     },
     "sala de energia": {
@@ -404,5 +404,6 @@ descricoes_itens = {
     "jornal completo": "Os três recortes unidos. Conta a história das três vítimas de 1994, João.. Ângela... e Renato.",
     "lanterna": "Sua lanterna velha de plástico vermelha, você esqueceu de trocar a bateria antes de vir aqui.",
     "disquete": "Um disquete de 5¼ polegadas. Serve para salvar os dados do sistema no terminal.",
+    "bolsa": "Uma bolsa escolar antiga, desgastadas e um pouco rasgado, deve servir para guardar alguma coisa ainda..",
     "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir."
 }

@@ -75,9 +75,12 @@ def imprimir_contexto_sala(jogo):
         sala = jogo.mapa[jogo.sala_atual]
         ui.exibir("\n" + "="*50)
         
-        #0.01 segundos
         ui.animar(f"⚇ VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}", 0.01, DOS_VERDE, jogo)
         
+        
+        if getattr(jogo, 'amanheceu', False):
+            ui.animar(f"{DOS_BRANCO} ⊚ A luz pálida da manhã ilumina a sala através das frestas.{RESET}", 0.01, DOS_BRANCO, jogo)
+
         descricao_colorida = sala.get('descrição', '')
         for inspecionavel in sala.get("inspecionaveis", {}):
             descricao_colorida = descricao_colorida.replace(inspecionavel, f"{DOS_AMARELO}{inspecionavel}{RESET}")
@@ -86,12 +89,13 @@ def imprimir_contexto_sala(jogo):
             
         ui.animar(f"⏿ Visão: {descricao_colorida}", 0.01, DOS_BRANCO, jogo)
 
+        
         if len(sala.get("itens", [])) > 0:
-            if jogo.turnos_luz > 0:
+            if jogo.turnos_luz > 0 or getattr(jogo, 'amanheceu', False):
                 itens_formatados = [f"{DOS_VERDE}{item}{RESET}" for item in sala['itens']]
                 ui.animar(f"[i] Itens no chão: {', '.join(itens_formatados)}", 0.01, DOS_BRANCO, jogo)
             else:
-                ui.animar(f"� {DOS_BRANCO}Deve ter algo no chão, mas escuro demais para ver o quê.{RESET}", 0.01, DOS_BRANCO, jogo)
+                ui.animar(f" {DOS_BRANCO}Deve ter algo no chão, mas escuro demais para ver o quê.{RESET}", 0.01, DOS_BRANCO, jogo)
 
         chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
         saidas = [k for k in sala.keys() if k not in chaves_ignoradas and isinstance(sala[k], str)]
@@ -100,13 +104,7 @@ def imprimir_contexto_sala(jogo):
         else:
             ui.animar(f"⏱ Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}", 0.01, DOS_BRANCO, jogo)
 
-        ui.animar(f"\n[ SISTEMA OPERACIONAL VILLAS BOAS v20.08 ]", 0.01, DOS_BRANCO, jogo)
         
-        vida_visual = "9999" if jogo.god_mode else f"{jogo.hp}/3"
-        luz_visual = "9999" if jogo.god_mode else str(jogo.turnos_luz)
-        inv_visual = "∞" if jogo.god_mode else f"{len(jogo.inventario)}/{MAX_INVENTARIO}"
-        
-        #ui.animar(f"[ HP: {DOS_VERMELHO}{vida_visual}{DOS_BRANCO} | LUZ: {DOS_AMARELO}{luz_visual}{DOS_BRANCO} | INV: {inv_visual} ]", 0.01, DOS_BRANCO, jogo)
 
 
 def dar_tela_de_morte(jogo):
@@ -153,23 +151,73 @@ def rodar_final(tipo_final, jogo):
         liberou_deus = registrar_final("bom")
         
     elif tipo_final == "verdadeiro":
-        ui.animar("Voce se aproxima do animatronico... dela. E encaixa os fios na sua fiação...", 0.05, DOS_BRANCO, jogo)
-        ui.animar("Voce acende o isqueiro. Os olhos de plastico parecem te encarar.", 0.05, DOS_BRANCO, jogo)
-        ui.animar("Os olhos piscam em vermelho, ela tenta fazer algo... mas não consegue.\n", 0.05, DOS_BRANCO, jogo)
-        ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- '... voce fez dar certo'", 0.08, DOS_VERMELHO, jogo)
-        ui.animar("- Caro... Caroline? É você?", 0.05, DOS_AMARELO, jogo)
-        ui.animar("*(Você abraça a carcaça de pelugem rosa)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Meu corpo ficou em silencio, não sinto mais raiva.", 0.07, DOS_VERDE, jogo)
-        ui.animar("*(O fogo se alastra pelo restaurante, a fumaça chega no hall)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Me sinta pela ultima vez.", 0.07, DOS_VERDE, jogo)
-        ui.animar("*(Voce sente mãos invisíveis em seus ombros, um alivio inunda sua mente)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("- Obrigada por me deixar assim pela ultima vez.", 0.07, DOS_VERDE, jogo)
+        ui.limpar()
+        ui.animar(f"{DOS_VERMELHO}=================================================================={RESET}", 0.02, jogo=jogo)
+        ui.animar(f"{DOS_VERMELHO}                         [ FINAL VERDADEIRO ]                     {RESET}", 0.03, jogo=jogo)
+        ui.animar(f"{DOS_VERMELHO}=================================================================={RESET}\n", 0.02, jogo=jogo)
+
+        ui.animar("O estalo das chamas consome as cortinas velhas e a madeira podre da sala.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("A fumaça preta e espessa começa a subir, cobrindo o teto do restaurante.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("O calor é sufocante, mas você não corre para a saída ainda. Você caminha até o centro do hall de entrada.\n", 0.04, DOS_BRANCO, jogo)
+
+        ui.animar("Lá está a carcaça de pelúcia rosa, com o metal rangendo e o plástico derretendo.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("Você se aproxima do animatrônico... dela. E encaixa os fios na sua fiação exposta...", 0.05, DOS_BRANCO, jogo)
+        ui.animar("Você acende o isqueiro. Os olhos de plástico parecem te encarar.", 0.05, DOS_BRANCO, jogo)
+        ui.animar("Os LEDs vermelhos piscam fracos. Ela tenta se mover... mas o mecanismo emperra.\n", 0.05, DOS_BRANCO, jogo)
+
+        ui.animar("- Por que não deu certo? O que eu fiz de errado...?", 0.05, DOS_AMARELO, jogo)
+        ui.animar("Sua voz treme. As lágrimas cortam a fuligem no seu rosto.", 0.04, DOS_BRANCO, jogo)
+
+        ui.animar("\nUm zumbido eletrônico arranhado sai do alto-falante no peito da carcaça:", 0.04, DOS_BRANCO, jogo)
+        ui.animar("- '... v-você... fez... dar... certo...'", 0.08, DOS_VERMELHO, jogo)
+        ui.animar("- '... R-Rogério...?'", 0.08, DOS_VERMELHO, jogo)
+
+        ui.animar("\n- Caro... Caroline? É você?", 0.05, DOS_AMARELO, jogo)
+        ui.animar("*(Você abraça a carcaça de pelagem rosa)*", 0.04, DOS_BRANCO, jogo)
+        ui.animar("Mesmo com o calor das chamas se espalhando, o metal que te toca é frio e rígido.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("Mas você não solta. Você a segura com toda a força que te resta.", 0.04, DOS_BRANCO, jogo)
+
+        ui.animar("- Meu corpo ficou em silêncio... O barulho das molas parou, Rogério.", 0.07, DOS_VERDE, jogo)
+        ui.animar("- A dor nas minhas costas... o ferro rasgando minha pele... sumiu.", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Eu não sinto mais raiva.", 0.07, DOS_VERDE, jogo)
+
+        ui.animar("\n- Eu sinto muito, Caroline... Me desculpa por não ter chegado a tempo...", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- Eu li seus e-mails. Eu vim assim que veio as noticias, eu tenho te procurando em todo o lugar...", 0.05, DOS_AMARELO, jogo)
+
+        ui.animar("\n*(O fogo se alastra pelo restaurante, a fumaça chega no hall)*", 0.04, DOS_BRANCO, jogo)
+        ui.animar("O crepitar do incêndio abafa os ruídos metálicos dos outros robôs lá fora.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("O filtro de luz vermelha dos olhos de plástico do coelho se apaga para sempre.", 0.04, DOS_BRANCO, jogo)
+
+        ui.animar("\nNa penumbra dourada pelas chamas, a voz não vem mais do alto-falante. Ela ecoa suave na sua mente:", 0.04, DOS_BRANCO, jogo)
+        ui.animar("- Não peça desculpas, meu amor... Você veio.", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Durante semanas, no escuro dessa máquina, eu só pensava no quanto eu queria ver sangue...", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Eu queria fazer eles pagarem pelo que o Renato e o Michel me fizeram passar naquele quarto...", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Mas quando você me abraçou... a escuridão simplesmente evaporou.", 0.07, DOS_VERDE, jogo)
+
+        ui.animar("\n- Eu não podia te deixar presa aqui, Carol. Esse lugar precisa queimar até a última viga.", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- A gente ainda vai comer aquele Barreado... Nem que seja em outra vida.", 0.05, DOS_AMARELO, jogo)
+
+        ui.animar("\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("- Me sinta pela última vez.", 0.07, DOS_VERDE, jogo)
+
+        ui.animar("\n*(Você sente mãos invisíveis e macias em seus ombros, um alívio inunda sua mente)*", 0.04, DOS_BRANCO, jogo)
+        ui.animar("Toda a dor, a paranoia e o pavor que pesavam sobre seu peito desde que entrou no Vilas Boas desaparecem.", 0.04, DOS_BRANCO, jogo)
+
+        ui.animar("\n- Obrigado por não desistir de mim... Obrigado por me deixar assim pela última vez.", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Vai embora agora, Rogério. A prova da UFPR, o festival de cinema... viva por nós dois.", 0.07, DOS_VERDE, jogo)
         ui.animar("- Eu te amo.", 0.06, DOS_AMARELO, jogo)
-        ui.animar("*(O animatronico cai no chão, o fogo cobre o metal e o plástico)*", 0.05, DOS_BRANCO, jogo)
-        ui.animar("\n[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.", 0.05, DOS_VERDE, jogo)
-        ui.animar("Você se levanta e caminha para a saída antes que o teto desabe.", 0.05, DOS_BRANCO, jogo)
-        ui.exibir(f"\n{DOS_BRANCO}[ FINAL VERDADEIRO ]{RESET}")
+        ui.animar("- Eu também te amo, Carol. Pra sempre.", 0.06, DOS_AMARELO, jogo)
+
+        ui.animar("\n*(O animatrônico cai no chão, o fogo cobre o metal e o plástico rosa)*", 0.05, DOS_BRANCO, jogo)
+        ui.animar("A carcaça é consumida pelas chamas enquanto a estrutura do palco cede.", 0.04, DOS_BRANCO, jogo)
+
+        ui.animar(f"\n{DOS_VERDE}[DISPOSITIVO]: NENHUMA PRESENÇA DETECTADA.{RESET}", 0.05, jogo=jogo)
+
+        ui.animar("\nVocê se levanta e caminha para a saída antes que o teto desabe.", 0.05, DOS_BRANCO, jogo)
+        ui.animar("Você empurra as portas dos fundos e sai para o ar frio da madrugada de Curitiba.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("Pelo retrovisor, você vê a fumaça subindo ao amanhecer. O restaurante Vilas Boas virou cinzas.", 0.04, DOS_BRANCO, jogo)
+
+        ui.exibir(f"\n{DOS_BRANCO}[ FINAL VERDADEIRO: CINZAS & LIBERTAÇÃO ]{RESET}")
         liberou_deus = registrar_final("verdadeiro")
 
     if liberou_deus:

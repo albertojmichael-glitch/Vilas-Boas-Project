@@ -46,12 +46,19 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.limpar()
             ui.exibir(f"{DOS_BRANCO} Volume in drive A is VILLASBOAS{RESET}")
             ui.exibir(f"{DOS_BRANCO} Directory of A:\\{RESET}\n")
+            ui.exibir("")
             ui.exibir(f"{DOS_VERDE}COMMAND  COM        47.845  02-11-1982  6:00a{RESET}")
+            ui.exibir("")
             ui.exibir(f"{DOS_VERDE}SEGURA   SYS         2.048  02-11-1982  6:00a{RESET}")
+            ui.exibir("")
             ui.exibir(f"{DOS_VERDE}NOTURNO  EXE        18.204  02-11-1982  6:00a{RESET}")
+            ui.exibir("")
             ui.exibir(f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;              24-07-2007  4:00a{RESET}")
+            ui.exibir("")
             ui.exibir(f"{DOS_VERDE}SAVES    &lt;DIR&gt;              23-07-2008  4:00a{RESET}")
+            ui.exibir("")
             ui.exibir(f"{DOS_VERDE}PICTURE  &lt;DIR&gt;              05-11-1994  4:00a{RESET}")
+            ui.exibir("")
             ui.exibir(f"{DOS_VERDE}VALID    &lt;DIR&gt;              24-07-2007  4:00a{RESET}")
             ui.exibir("")
             ui.exibir(f"{DOS_AMARELO}         3 file(s)       68.097 bytes{RESET}")
@@ -343,6 +350,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             if resultado == "vitoria_seguranca":
                 jogo.minigame_atual = None
                 jogo.sala_atual = "01"
+                jogo.amanheceu = True
                 jogo.estado_atual = "JOGO"
                 imprimir_contexto_sala(jogo)
 

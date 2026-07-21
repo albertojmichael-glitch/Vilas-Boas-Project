@@ -93,6 +93,21 @@ def cmd_pegar(comando, jogo, mapa):
         pass
         
         if len(jogo.inventario) >= MAX_INVENTARIO and not getattr(jogo, 'god_mode', False):
+
+            # Se o item for a bolsa, trata como um upgrade automático
+            if item_desejado == "bolsa":
+                jogo.limite_inventario += 3
+                jogo.mapa[jogo.sala_atual]["itens"].remove("bolsa")
+                ui.exibir(f"{DOS_VERDE}Você colocou a pequena bolsa escolar nas costas. ainda está resistente.{RESET}")
+                ui.exibir(f"{DOS_BRANCO}Seu limite de inventário aumentou para {jogo.limite_inventario} espaços!{RESET}")
+                return
+
+            
+            if len(jogo.inventario) >= jogo.limite_inventario:
+                ui.exibir(f"Suas mãos estão cheias! Você só consegue carregar {jogo.limite_inventario} itens.")
+                return
+
+
             ui.exibir(f"{DOS_AMARELO}[INV] Sua mochila está cheia! (Máx: {MAX_INVENTARIO}). Use 'largar [item]' primeiro.{RESET}")
             ui.pausar(1.5)
             return
