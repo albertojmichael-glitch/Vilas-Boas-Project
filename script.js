@@ -119,16 +119,23 @@ function atualizarSidebar(estado) {
 }
 
 async function processarLinhas(linhas, estado) {
+    const terminal = document.querySelector('.terminal-section'); 
+
     for (let linha of linhas) {
-        await novaLinha(linha);
+        await novaLinha(linha, terminal); 
+        
+        
+        if (terminal) terminal.scrollTop = terminal.scrollHeight;
     }
     atualizarSidebar(estado);
 }
 
-function novaLinha(linha) {
+function novaLinha(linha, terminal) {
     return new Promise((resolve) => {
         if (linha.startsWith("@@CLEAR@@")) {
             outputDiv.innerHTML = "";
+            
+            if (terminal) terminal.scrollTop = terminal.scrollHeight;
             resolve();
         } else if (linha.startsWith("@@TYPE@@")) {
             let parts = linha.split("@@");
@@ -137,11 +144,11 @@ function novaLinha(linha) {
             let texto = parts.slice(4).join("@@"); 
             digitarTextoAnimadoHTML(texto, cor, ms, resolve);
         } else {
-            
             digitarTextoAnimadoHTML(linha, "", 15, resolve);
         }
     });
 }
+
 
 function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) {
     const p = document.createElement('p');
@@ -314,3 +321,44 @@ document.addEventListener('keydown', function (e) {
         openHelp(); 
     }
 });
+
+
+document.addEventListener('click', () => {
+    const inputTerminal = document.querySelector('input');
+    const textoSelecionado = window.getSelection().toString();
+    
+    
+    if (!textoSelecionado && inputTerminal) {
+        inputTerminal.focus();
+    }
+});
+
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playBip(tipo) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    if (tipo === 'erro') {
+        
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.3);
+    } else {
+        
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.08);
+    }
+}
+
