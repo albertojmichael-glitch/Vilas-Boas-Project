@@ -60,7 +60,9 @@ class GameState(BaseModel):
     alberto_desativado: bool = False 
     fast_mode: bool = False
     limite_inventario: int = 3  
-    amanheceu: bool = False      
+    amanheceu: bool = False
+    web_consertos: Dict[str, Any] = Field(default_factory=dict)
+    web_julgamento: Dict[str, Any] = Field(default_factory=dict)      
     mapa: Dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
     
     
