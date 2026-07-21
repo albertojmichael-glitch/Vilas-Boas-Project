@@ -177,25 +177,25 @@ def rodar_final(tipo_final, jogo):
         ui.animar("Mesmo com o calor das chamas se espalhando, o metal que te toca é frio e rígido.", 0.04, DOS_BRANCO, jogo)
         ui.animar("Mas você não solta. Você a segura com toda a força que te resta.", 0.04, DOS_BRANCO, jogo)
 
-        ui.animar("- Meu corpo ficou em silêncio... O barulho das molas parou, Rogério.", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Meu corpo ficou em silêncio... O barulho da minha cabeça, simplesmente parou.", 0.07, DOS_VERDE, jogo)
         ui.animar("- A dor nas minhas costas... o ferro rasgando minha pele... sumiu.", 0.07, DOS_VERDE, jogo)
         ui.animar("- Eu não sinto mais raiva.", 0.07, DOS_VERDE, jogo)
 
         ui.animar("\n- Eu sinto muito, Caroline... Me desculpa por não ter chegado a tempo...", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- Eu li seus e-mails. Eu vim assim que veio as noticias, eu tenho te procurando em todo o lugar...", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- Eu... Eu li seus e-mails. Eu vim assim que veio as noticias, eu tenho te procurando em todo o lugar...", 0.05, DOS_AMARELO, jogo)
 
         ui.animar("\n*(O fogo se alastra pelo restaurante, a fumaça chega no hall)*", 0.04, DOS_BRANCO, jogo)
-        ui.animar("O crepitar do incêndio abafa os ruídos metálicos dos outros robôs lá fora.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("O crepitar do incêndio abafa os ruídos metálicos dos outros robôs, gritando, tentando sobreviver, mesmo já mortos.", 0.04, DOS_BRANCO, jogo)
         ui.animar("O filtro de luz vermelha dos olhos de plástico do coelho se apaga para sempre.", 0.04, DOS_BRANCO, jogo)
 
         ui.animar("\nNa penumbra dourada pelas chamas, a voz não vem mais do alto-falante. Ela ecoa suave na sua mente:", 0.04, DOS_BRANCO, jogo)
         ui.animar("- Não peça desculpas, meu amor... Você veio.", 0.07, DOS_VERDE, jogo)
-        ui.animar("- Durante semanas, no escuro dessa máquina, eu só pensava no quanto eu queria ver sangue...", 0.07, DOS_VERDE, jogo)
-        ui.animar("- Eu queria fazer eles pagarem pelo que o Renato e o Michel me fizeram passar naquele quarto...", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Durante semanas, no escuro dessa máquina, eu não tinha consciencia...", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Eu queria fazer eles pagarem pelo que 'eles' me fizeram passar nesse lugar...", 0.07, DOS_VERDE, jogo)
         ui.animar("- Mas quando você me abraçou... a escuridão simplesmente evaporou.", 0.07, DOS_VERDE, jogo)
 
-        ui.animar("\n- Eu não podia te deixar presa aqui, Carol. Esse lugar precisa queimar até a última viga.", 0.05, DOS_AMARELO, jogo)
-        ui.animar("- A gente ainda vai comer aquele Barreado... Nem que seja em outra vida.", 0.05, DOS_AMARELO, jogo)
+        ui.animar("\n- Eu não podia te deixar presa aqui, Caroline. Esse lugar precisa queimar, eu procurei por arquivos, e achei os horrores que aconteceu, vim para te salvar, e os outros também.", 0.05, DOS_AMARELO, jogo)
+        ui.animar("- A gente ainda vai viver juntos... Pena que seja em outra vida.", 0.05, DOS_AMARELO, jogo)
 
         ui.animar("\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.", 0.04, DOS_BRANCO, jogo)
         ui.animar("- Me sinta pela última vez.", 0.07, DOS_VERDE, jogo)
@@ -204,9 +204,9 @@ def rodar_final(tipo_final, jogo):
         ui.animar("Toda a dor, a paranoia e o pavor que pesavam sobre seu peito desde que entrou no Vilas Boas desaparecem.", 0.04, DOS_BRANCO, jogo)
 
         ui.animar("\n- Obrigado por não desistir de mim... Obrigado por me deixar assim pela última vez.", 0.07, DOS_VERDE, jogo)
-        ui.animar("- Vai embora agora, Rogério. A prova da UFPR, o festival de cinema... viva por nós dois.", 0.07, DOS_VERDE, jogo)
+        ui.animar("- Vai embora agora, viva por nós dois. Eu sempre estarei contigo.", 0.07, DOS_VERDE, jogo)
         ui.animar("- Eu te amo.", 0.06, DOS_AMARELO, jogo)
-        ui.animar("- Eu também te amo, Carol. Pra sempre.", 0.06, DOS_AMARELO, jogo)
+        ui.animar("- Eu também te amo, amor. Pra sempre.", 0.06, DOS_AMARELO, jogo)
 
         ui.animar("\n*(O animatrônico cai no chão, o fogo cobre o metal e o plástico rosa)*", 0.05, DOS_BRANCO, jogo)
         ui.animar("A carcaça é consumida pelas chamas enquanto a estrutura do palco cede.", 0.04, DOS_BRANCO, jogo)
@@ -215,9 +215,9 @@ def rodar_final(tipo_final, jogo):
 
         ui.animar("\nVocê se levanta e caminha para a saída antes que o teto desabe.", 0.05, DOS_BRANCO, jogo)
         ui.animar("Você empurra as portas dos fundos e sai para o ar frio da madrugada de Curitiba.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("Pelo retrovisor, você vê a fumaça subindo ao amanhecer. O restaurante Vilas Boas virou cinzas.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("Pelo calçada, você vê a fumaça subindo ao amanhecer. O restaurante Vilas Boas virou cinzas.", 0.04, DOS_BRANCO, jogo)
 
-        ui.exibir(f"\n{DOS_BRANCO}[ FINAL VERDADEIRO: CINZAS & LIBERTAÇÃO ]{RESET}")
+        ui.exibir(f"\n{DOS_BRANCO}[ FINAL VERDADEIRO: LIBERTAÇÃO ]{RESET}")
         liberou_deus = registrar_final("verdadeiro")
 
     if liberou_deus:
