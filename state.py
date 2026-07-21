@@ -59,8 +59,8 @@ class GameState(BaseModel):
     god_mode: bool = False
     alberto_desativado: bool = False 
     fast_mode: bool = False
-    self.limite_inventario = 3  
-    self.amanheceu = False      
+    limite_inventario: int = 3  
+    amanheceu: bool = False      
     mapa: Dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
     
     
