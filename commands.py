@@ -380,7 +380,7 @@ def cmd_jogar(comando, jogo):
     ui.pausar(2)
 
 def processar_comando(comando, jogo, mapa):
-    if comando_bruto.strip().lower() == "dir" and jogo.estado_atual == "AGUARDANDO_DIR":
+    if comando.strip().lower() == "dir" and jogo.estado_atual == "AGUARDANDO_DIR":
         jogo.estado_atual = "JOGANDO"
         return "olhar"
     ui = jogo.ui_handler or default_ui

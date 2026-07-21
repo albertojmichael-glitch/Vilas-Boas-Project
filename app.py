@@ -256,8 +256,8 @@ def receber_comando():
     dados = request.json
 
     comando = dados.get('comando', '')
-    
-    if len(comando_bruto) > 256:
+
+    if len(comando) > 256:
         return jsonify({
             "linhas": ["@@TYPE@@vermelho@@15@@[ ERRO DE SISTEMA ] Buffer overflow detectado. Comando excede 256 bytes."],
             "estado": gerar_estado_dict(jogo) if 'jogo' in locals() else {}
