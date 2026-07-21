@@ -3,6 +3,7 @@ import sys
 import logging
 import json
 import uuid
+import time
 import certifi
 from datetime import timedelta
 from pathlib import Path
@@ -48,6 +49,7 @@ CORS(app, supports_credentials=True)
 
 # COFRE DE MEMÓRIA RAM (Blindado contra falhas de Pickling)
 MEMORIA_SESSOES = {}
+MEMORIA_SESSOES_TTL = {}
 
 class WebUIHandler(UIHandler):
     def __init__(self):
@@ -173,9 +175,11 @@ def gerar_resposta_json(jogo):
 def raiz(): return send_from_directory(BASE_DIR, "index.html")
 @app.route("/ping")
 def ping():
-    # Rota super leve apenas para o Uptime Robot bater e manter o servidor acordado
+    
     return "Estou vivo!", 200
+
 @app.route("/style.css")
+
 def serve_css(): return send_from_directory(BASE_DIR, "style.css")
 @app.route("/script.js")
 def serve_js(): return send_from_directory(BASE_DIR, "script.js")
@@ -210,6 +214,24 @@ def iniciar_jogo():
 
 @app.route('/comando', methods=['GET', 'POST'])
 def receber_comando():
+
+    agora = time.time()
+    sessoes_para_remover = []
+    
+    for sessao_id in list(MEMORIA_SESSOES.keys()):
+        # Se a sessão está inativa há mais de 1 hora (3600 segundos)
+        if agora - MEMORIA_SESSOES_TTL.get(sessao_id, agora) > 3600:
+            sessoes_para_remover.append(sessao_id)
+            
+    for sessao_id in sessoes_para_remover:
+        MEMORIA_SESSOES.pop(sessao_id, None)
+        MEMORIA_SESSOES_TTL.pop(sessao_id, None)
+
+    sid = session.get("sid")
+
+    MEMORIA_SESSOES_TTL[sid] = agora
+
+
     if request.method == 'GET':
         return send_from_directory(BASE_DIR, "index.html")
 
@@ -234,6 +256,14 @@ def receber_comando():
     dados = request.json
     comando = dados.get('comando', '')
     tem_save = obter_caminho_autosave(sid).exists()
+
+    
+    if len(comando_bruto) > 256:
+        
+        return jsonify({
+            "linhas": ["@@TYPE@@vermelho@@15@@[ ERRO DE SISTEMA ] Buffer overflow detectado. Comando excede 256 bytes."],
+            "estado": gerar_estado_dict(jogo) if 'jogo' in locals() else {}
+        })
 
     try:
         processar_fluxo_jogo(comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web)

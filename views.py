@@ -106,7 +106,7 @@ def imprimir_contexto_sala(jogo):
         luz_visual = "9999" if jogo.god_mode else str(jogo.turnos_luz)
         inv_visual = "∞" if jogo.god_mode else f"{len(jogo.inventario)}/{MAX_INVENTARIO}"
         
-        ui.animar(f"[ HP: {DOS_VERMELHO}{vida_visual}{DOS_BRANCO} | LUZ: {DOS_AMARELO}{luz_visual}{DOS_BRANCO} | INV: {inv_visual} ]", 0.01, DOS_BRANCO, jogo)
+        #ui.animar(f"[ HP: {DOS_VERMELHO}{vida_visual}{DOS_BRANCO} | LUZ: {DOS_AMARELO}{luz_visual}{DOS_BRANCO} | INV: {inv_visual} ]", 0.01, DOS_BRANCO, jogo)
 
 
 def dar_tela_de_morte(jogo):
