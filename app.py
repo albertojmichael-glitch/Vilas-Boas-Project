@@ -7,25 +7,33 @@ import time
 import certifi
 from datetime import timedelta
 from pathlib import Path
+from logging.handlers import RotatingFileHandler
 
 from pymongo import MongoClient
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from cachetools import TTLCache
 
 from state import GameState
 from ui import UIHandler, DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from engine import processar_fluxo_jogo
 from views import imprimir_tela_boot
 
-# Configuração de Logs para auditoria no Render
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
-
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+# --- CONFIGURAÇÃO DE LOGS COM ROTAÇÃO (EVITA QUEBRA DE DISCO EM PRODUÇÃO) ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+log_file = os.path.join(BASE_DIR, "villas_boas.log")
+file_handler = RotatingFileHandler(log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8")
+file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+logging.getLogger().addHandler(file_handler)
 
 # --- SEGURANÇA E CONFIGURAÇÃO ---
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982")
 
-if os.environ.get("RENDER"):
+if os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
     assert SECRET_KEY != "DEV_SECRET_DO_NOT_USE_IN_PROD_1982", "CRÍTICO: FLASK_SECRET_KEY não configurada em produção! Abortando boot."
 
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
@@ -37,7 +45,7 @@ if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
     db = mongo_client["villasboas_db"]
     saves_collection = db["saves"]
-    logging.info("conectado ao MongoDB com sucesso...")
+    logging.info("Conectado ao MongoDB com sucesso...")
 else:
     mongo_client = None
     logging.warning("⚠ Rodando sem Banco de Dados. Usando arquivos locais.")
@@ -47,15 +55,23 @@ app.secret_key = SECRET_KEY
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 CORS(app, supports_credentials=True)
 
-# COFRE DE MEMÓRIA RAM (Blindado contra falhas de Pickling)
-MEMORIA_SESSOES = {}
-MEMORIA_SESSOES_TTL = {}
+# --- CONTROLE DE FLUXO E DEFESA ANTI-DoS (RATE LIMITING) ---
+# Limita a 60 comandos por minuto por IP para evitar ataques automatizados, mantendo a fluidez do jogo
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    storage_uri="memory://"
+)
+
+# --- COFRE DE MEMÓRIA RAM OTIMIZADO (EVITA MEMORY LEAK) ---
+# O TTLCache remove automaticamente sessões inativas há mais de 1 hora, limitando a RAM a 1000 instâncias simultâneas
+MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
 
 class WebUIHandler(UIHandler):
     def __init__(self):
         self.buffer = [] 
         
-    def limpar(self): 
+    def limpiar(self): 
         self.buffer.append("@@CLEAR@@")
         
     def pausar(self, segs): 
@@ -102,7 +118,6 @@ def carregar_save_web(jogo):
     if not sid: return False
 
     if mongo_client:
-        # Busca o save no Banco de Dados MongoDB
         try:
             doc = saves_collection.find_one({"sid": sid})
             if doc and "dados" in doc:
@@ -114,7 +129,6 @@ def carregar_save_web(jogo):
         except Exception as e:
             logging.exception(f"Erro ao buscar save no MongoDB: {e}")
     else:
-        # Busca o save no Disco Local (Fallback)
         caminho = obter_caminho_autosave(sid)
         if caminho.exists():
             try:
@@ -134,7 +148,6 @@ def salvar_save_web(jogo):
     if not sid: return
     
     if mongo_client:
-        # Salva / Atualiza o progresso no Banco de Dados MongoDB
         try:
             saves_collection.update_one(
                 {"sid": sid},
@@ -144,7 +157,6 @@ def salvar_save_web(jogo):
         except Exception as e:
             logging.exception(f"Erro ao salvar progresso no MongoDB: {e}")
     else:
-        # Salva o progresso no Disco Local (Fallback)
         try:
             caminho = obter_caminho_autosave(sid)
             caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
@@ -173,16 +185,25 @@ def gerar_resposta_json(jogo):
 
 @app.route("/")
 def raiz(): return send_from_directory(BASE_DIR, "index.html")
+
 @app.route("/ping")
-def ping():
-    
-    return "Estou vivo!", 200
+def ping(): return "Estou vivo!", 200
 
 @app.route("/style.css")
+def serve_css():
+    
+    if os.path.exists(os.path.join(BASE_DIR, "style.min.css")):
+        return send_from_directory(BASE_DIR, "style.min.css")
+    
+    return send_from_directory(BASE_DIR, "style.css")
 
-def serve_css(): return send_from_directory(BASE_DIR, "style.css")
 @app.route("/script.js")
-def serve_js(): return send_from_directory(BASE_DIR, "script.js")
+def serve_js():
+    
+    if os.path.exists(os.path.join(BASE_DIR, "script.min.js")):
+        return send_from_directory(BASE_DIR, "script.min.js")
+    
+    return send_from_directory(BASE_DIR, "script.js")
 
 @app.errorhandler(404)
 @app.errorhandler(405)
@@ -191,12 +212,11 @@ def page_not_found(e):
 
 @app.route('/iniciar', methods=['GET'])
 def iniciar_jogo():
-    # Cria uma sessão 100% nova e limpa
     session.clear()
     sid = str(uuid.uuid4())
     session["sid"] = sid
     session.permanent = True
-    session.modified = True # Força o navegador a aceitar o novo cookie
+    session.modified = True 
     
     jogo = GameState()
     jogo.ui_handler = WebUIHandler()
@@ -207,37 +227,17 @@ def iniciar_jogo():
     imprimir_tela_boot(jogo.ui_handler)
     
     resposta = gerar_resposta_json(jogo)
-    
     resposta.headers["Cache-Control"] = "no-store"
-    
     return resposta
 
 @app.route('/comando', methods=['GET', 'POST'])
+@limiter.limit("60 per minute")
 def receber_comando():
-
-    agora = time.time()
-    sessoes_para_remover = []
-    
-    for sessao_id in list(MEMORIA_SESSOES.keys()):
-        # Se a sessão está inativa há mais de 1 hora (3600 segundos)
-        if agora - MEMORIA_SESSOES_TTL.get(sessao_id, agora) > 3600:
-            sessoes_para_remover.append(sessao_id)
-            
-    for sessao_id in sessoes_para_remover:
-        MEMORIA_SESSOES.pop(sessao_id, None)
-        MEMORIA_SESSOES_TTL.pop(sessao_id, None)
-
-    sid = session.get("sid")
-
-    MEMORIA_SESSOES_TTL[sid] = agora
-
-
     if request.method == 'GET':
         return send_from_directory(BASE_DIR, "index.html")
 
     sid = session.get("sid")
     
-    # Se a sessão foi perdida, cria uma nova e FORÇA o estado inicial
     if not sid or sid not in MEMORIA_SESSOES:
         sid = str(uuid.uuid4())
         session["sid"] = sid
@@ -245,27 +245,21 @@ def receber_comando():
         session.modified = True
         
         MEMORIA_SESSOES[sid] = GameState()
-        # Faltava esta linha para impedir que o jogo nascesse travado:
         MEMORIA_SESSOES[sid].estado_atual = "AGUARDANDO_DIR" 
         
     jogo = MEMORIA_SESSOES[sid]
-    
-    # Injeta um handler novo e limpo para capturar o texto desta requisição
     jogo.ui_handler = WebUIHandler()
 
-    dados = request.json
-
+    dados = request.json or {}
     comando = dados.get('comando', '')
 
     if len(comando) > 256:
         return jsonify({
             "linhas": ["@@TYPE@@vermelho@@15@@[ ERRO DE SISTEMA ] Buffer overflow detectado. Comando excede 256 bytes."],
-            "estado": gerar_estado_dict(jogo) if 'jogo' in locals() else {}
+            "estado": {}
         })
 
     tem_save = obter_caminho_autosave(sid).exists()
-
-    
 
     try:
         processar_fluxo_jogo(comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web)
@@ -280,8 +274,6 @@ def receber_comando():
             jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {str(e)}")
 
     return gerar_resposta_json(jogo)
-
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
