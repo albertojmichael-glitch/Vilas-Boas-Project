@@ -31,7 +31,6 @@ def cmd_ir(comando, jogo, mapa):
     
     match_direcao = encontrar_melhor_match(direcao, saidas_validas)
     if match_direcao:
-        pass
         direcao = match_direcao
     else:
         ui.exibir(f"Você não pode ir para '{direcao_bruta}'.")
@@ -90,11 +89,9 @@ def cmd_pegar(comando, jogo, mapa):
     item_real_na_sala = encontrar_melhor_match(item_desejado, itens_sala)
     
     if item_real_na_sala:
-        pass
         
         if len(jogo.inventario) >= MAX_INVENTARIO and not getattr(jogo, 'god_mode', False):
 
-            # Se o item for a bolsa, trata como um upgrade automático
             if item_desejado == "bolsa":
                 jogo.limite_inventario += 3
                 jogo.mapa[jogo.sala_atual]["itens"].remove("bolsa")
@@ -102,11 +99,9 @@ def cmd_pegar(comando, jogo, mapa):
                 ui.exibir(f"{DOS_BRANCO}Seu limite de inventário aumentou para {jogo.limite_inventario} espaços!{RESET}")
                 return
 
-            
             if len(jogo.inventario) >= jogo.limite_inventario:
                 ui.exibir(f"Suas mãos estão cheias! Você só consegue carregar {jogo.limite_inventario} itens.")
                 return
-
 
             ui.exibir(f"{DOS_AMARELO}[INV] Sua mochila está cheia! (Máx: {MAX_INVENTARIO}). Use 'largar [item]' primeiro.{RESET}")
             ui.pausar(1.5)
@@ -176,10 +171,8 @@ def cmd_examinar(comando, jogo, mapa):
     item_cenario = next((k for k in coisas_para_olhar.keys() if match_alvo == k), None)
     item_inventario = next((i for i in jogo.inventario if match_alvo == i), None)
 
-    
-
     if item_cenario:
-        ui.exibir(f"\n{DOS_VERDE}C:\\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
+        ui.exibir(f"\n{DOS_VERDE}C:\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
         ui.pausar(1)
         ui.animar(coisas_para_olhar[item_cenario], 0.03, DOS_AMARELO)
         ui.pausar(2)
@@ -200,7 +193,6 @@ def cmd_abrir_cofre(jogo):
     ui = jogo.ui_handler or default_ui
     if jogo.sala_atual == "01":
         ui.exibir(f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo.{RESET}")
-        
         
         senha = ui.obter_input(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}").strip()
         
@@ -282,7 +274,6 @@ def cmd_usar(comando, jogo, mapa):
     
     if match_item:
         item = match_item
-
     else:
         ui.exibir(f"Você não tem '{item_desejado}' no inventário.")
         ui.pausar(1.5)
@@ -314,7 +305,6 @@ def cmd_usar(comando, jogo, mapa):
         jogo.inventario.remove("bateria nova")
         ui.exibir(f"{DOS_VERDE} Você conectou a bateria na sua lanterna, ela brilha com força total.{RESET}")
         ui.pausar(2)
-
     elif item == "tesoura":
         if jogo.sala_atual == "02":
             if mapa["corredor"]["02"] != "cozinha privada":
@@ -346,7 +336,33 @@ def cmd_usar(comando, jogo, mapa):
         else:
             ui.exibir("Não há nenhuma porta ou tranca aqui que precise ser arrombada com a tesoura.")
             ui.pausar(1.5)
-
+    elif item in ["usar tabua", "arrombar porta", "usar tabua pequena de madeira", "forçar porta", "tabua pequena de madeira"] and jogo.sala_atual == "03":
+        if "tabua pequena de madeira" in jogo.inventario:
+            ui.exibir(f"{DOS_VERDE}Você encaixa a tábua de madeira na fresta da porta emperrada e faz alavanca.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}CRACK! A tábua quebra ao meio, mas a porta de metal cede e se abre!{RESET}")
+            jogo.inventario.remove("tabua pequena de madeira")
+            jogo.mapa["03"]["frente"] = "sala do gerador"
+            jogo.mapa["03"]["descrição"] = "A porta emperrada foi arrombada com a tábua. A passagem para frente está livre."
+        else:
+            ui.exibir("Você tenta forçar com as mãos, mas precisa de algo firme para fazer alavanca.")
+    elif item in ["usar fios cortados", "montar armadilha", "fazer armadilha", "usar garrafa vazia", "fios cortados", "garrafa vazia", "pano", "fita isolante"] and jogo.sala_atual == "hall de entrada":
+        if not getattr(jogo, 'amanheceu', False):
+            ui.exibir(f"{DOS_AMARELO}Ainda é noite. Sobreviva até as 6:00 da manhã antes de tentar uma fuga barulhenta.{RESET}")
+            return
+        itens_necessarios = ["fios cortados", "garrafa vazia", "pano", "fita isolante"]
+        tem_tudo = all(it in jogo.inventario for it in itens_necessarios)
+        tem_fogo = "isqueiro" in jogo.inventario or "fosforo" in jogo.inventario
+        if tem_tudo and tem_fogo:
+            ui.limpar()
+            ui.exibir(f"{DOS_VERMELHO}Você junta a garrafa de vidro, o pano e a fita isolante.{RESET}")
+            ui.exibir(f"{DOS_VERMELHO}Usando os fios cortados do Minotauro, você improvisa um pavio perfeito para a mistura inflamável!{RESET}")
+            ui.exibir(f"{DOS_AMARELO}Você joga a armadilha no centro do hall de entrada e risca o fogo...{RESET}")
+            ui.pausar(2.5)
+            jogo.estado_atual = "FIM" 
+            jogo.sala_atual = "hall de entrada"
+            jogo.incendio = True
+        else:
+            ui.exibir(f"{DOS_AMARELO}Você tenta montar algo, mas faltam peças. Você precisa de: fios cortados, garrafa vazia, pano, fita isolante e uma fonte de fogo.{RESET}")
     elif item == "fios cortados" and jogo.sala_atual == "sala do gerador":
         ui.exibir("\n Você joga os fios na fiação principal desencapada")
         ui.exibir(" O painel explode e as chamas começam a lamber as paredes")

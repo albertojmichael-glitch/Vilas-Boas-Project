@@ -372,17 +372,20 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 jogo.minigame_atual = None
                 jogo.sala_atual = "morte"
                 dar_tela_de_morte(jogo)
+
             elif resultado == "vitoria_minotauro":
                 jogo.minigame_atual = None
                 jogo.sala_atual = "sala dos fundos" 
                 jogo.estado_atual = "JOGO"
                 jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
-                ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você e travou para sempre.{RESET}")
+                ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você e travou para sempre. Mas você sobreviveu.{RESET}")
                 imprimir_contexto_sala(jogo)
+
             elif resultado == "vitoria_seguranca":
                 jogo.minigame_atual = None
                 jogo.sala_atual = "01" 
                 jogo.estado_atual = "JOGO"
                 imprimir_contexto_sala(jogo)
+                
             else:
                 jogo.minigame_atual.imprimir_status()

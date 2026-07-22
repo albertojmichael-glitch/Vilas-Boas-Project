@@ -143,7 +143,8 @@ class MinigameMinotauro:
 
         elif acao == "pegar tesoura":
             if self.px == 0 and self.py == 3 and self.tesoura_chao:
-                jogo.inventario.append("tesoura"); self.tesoura_chao = False
+                jogo.inventario.append("tesoura")
+                self.tesoura_chao = False
                 ui.exibir(" ✂ Você derruba a tesoura sem querer, fazendo um barulho, mas guarda na sua bolsa")
                 if random.random() < 0.50:
                     self.mover_minotauro() 
@@ -154,17 +155,23 @@ class MinigameMinotauro:
         elif acao == "cortar fios":
             if self.px == 0 and self.py == 3 and not self.fios_cortados:
                 if "tesoura" in jogo.inventario:
-                    ui.exibir(f"\n{DOS_VERMELHO}Você corta os fios principais! Faíscas voam e as poucas luzes estouram!{RESET}")
-                    ui.exibir(f"{DOS_VERMELHO} ✂ Sua tesoura quebra com a força do choque elétrico!{RESET}")
-                    ui.exibir(f"{DOS_VERMELHO}O Minotauro solta um RUGIDO DE FÚRIA ensurdecedor! Ele sabe onde você está!{RESET}")
+                    ui.exibir(f"\\n{DOS_VERMELHO}Você corta os fios principais. Faíscas voam no seu rosto, mas não causam queimaduras.{RESET}")
+                    ui.exibir(f"{DOS_VERMELHO} ✂ Sua tesoura quebra com a força do choque elétrico{RESET}")
+                    ui.exibir(f"{DOS_VERMELHO}Ele sabe onde você está!{RESET}")
                     ui.exibir(f"{DOS_VERMELHO}CORRA DE VOLTA PARA A PORTA!{RESET}")
+                    
                     jogo.inventario.remove("tesoura")
                     jogo.inventario.append("tesoura quebrada")
+                    
+                    # ADICIONANDO OS FIOS AO INVENTÁRIO DO JOGADOR
+                    jogo.inventario.append("fios cortados")
+                    ui.exibir(f"{DOS_AMARELO}Você guarda os 'fios cortados' na mochila.{RESET}")
+                    
                     self.fios_cortados = True
                     jogo.fios_cortados_inventario = True
                     turno_gasto = True
                 else: 
-                    ui.exibir("Você precisa de uma tesoura inteira para cortar os fios")
+                    ui.exibir("Você precisa de uma tesoura inteira para cortar os fios.")
                     turno_gasto = True
             else: 
                 ui.exibir("Não há mais fios aqui.")
@@ -172,12 +179,13 @@ class MinigameMinotauro:
                 
         elif acao == "sair":
             if self.px == 0 and self.py == 0:
-                if self.fios_cortados:
-                    ui.exibir(f"\n{DOS_VERDE}Você se joga contra a maçaneta, abre a porta e a tranca com toda a força! Você sobreviveu!{RESET}")
+                # O JOGADOR SÓ VENCE SE TIVER CORTADO OS FIOS E ELES ESTIVEREM NO INVENTÁRIO
+                if self.fios_cortados and "fios cortados" in jogo.inventario:
+                    ui.exibir(f"\\n{DOS_VERDE}Você se joga contra a maçaneta, abre a porta e a tranca com toda a força! Você sobreviveu!{RESET}")
                     ui.pausar(2)
                     return "vitoria_minotauro"
                 else:
-                    ui.exibir("Você não pode fugir ainda! A missão não foi cumprida no fundo da sala.")
+                    ui.exibir("Você está na porta de saída, mas a missão não foi cumprida. Você precisa cortar e pegar os fios no fundo da sala!")
                     turno_gasto = True
             else:
                 ui.exibir("A porta de saída não fica aqui! Tente voltar para trás.")
