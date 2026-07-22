@@ -23,14 +23,14 @@ from views import imprimir_tela_boot
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# --- CONFIGURAÇÃO DE LOGS COM ROTAÇÃO (EVITA QUEBRA DE DISCO EM PRODUÇÃO) ---
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 log_file = os.path.join(BASE_DIR, "villas_boas.log")
 file_handler = RotatingFileHandler(log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8")
 file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
 logging.getLogger().addHandler(file_handler)
 
-# --- SEGURANÇA E CONFIGURAÇÃO ---
+
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982")
 
 if os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
@@ -39,7 +39,7 @@ if os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 
-# --- CONEXÃO COM O BANCO DE DADOS (MONGODB) ---
+
 MONGO_URI = os.environ.get("MONGO_URI")
 if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
@@ -55,23 +55,21 @@ app.secret_key = SECRET_KEY
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 CORS(app, supports_credentials=True)
 
-# --- CONTROLE DE FLUXO E DEFESA ANTI-DoS (RATE LIMITING) ---
-# Limita a 60 comandos por minuto por IP para evitar ataques automatizados, mantendo a fluidez do jogo
+
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
     storage_uri="memory://"
 )
 
-# --- COFRE DE MEMÓRIA RAM OTIMIZADO (EVITA MEMORY LEAK) ---
-# O TTLCache remove automaticamente sessões inativas há mais de 1 hora, limitando a RAM a 1000 instâncias simultâneas
+
 MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
 
 class WebUIHandler(UIHandler):
     def __init__(self):
         self.buffer = [] 
         
-    def limpiar(self): 
+    def limpar(self): 
         self.buffer.append("@@CLEAR@@")
         
     def pausar(self, segs): 

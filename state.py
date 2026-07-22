@@ -93,7 +93,7 @@ class GameState(BaseModel):
     @minigame_atual.setter
     def minigame_atual(self, v): self._minigame_atual = v
 
-    #so pra dar push nessa merda KKKKKKKKK
+    
 
 ARQUIVO_CONQUISTAS = Path("conquistas.json")
 AUTOSAVE_FILE = Path("autosave.json")
