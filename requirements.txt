@@ -3,10 +3,9 @@ Flask-CORS==4.0.0
 Flask-Limiter==3.5.0
 pymongo==4.6.2
 certifi==2024.2.2
-pydantic==2.6.1
+pydantic>=2.9.2
 cachetools==5.3.3
 gunicorn==21.2.0
-colorama>=0.4
 rcssmin==1.1.2
 rjsmin==1.2.2
-
+colorama>=0.4
