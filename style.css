@@ -4,6 +4,22 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    -ms-overflow-style: none; /* Esconde scrollbar no IE/Edge */
+}
+
+::-webkit-scrollbar {
+    display: none; /* Esconde scrollbar no Chrome/Safari */
+}
+
+/* --- EFEITOS DE MONITOR CRT (TUBO) --- */
+
+@keyframes crt-flicker {
+    0% { opacity: 0.98; }
+    5% { opacity: 0.95; }
+    10% { opacity: 0.99; }
+    15% { opacity: 1; }
+    50% { opacity: 0.98; }
+    100% { opacity: 1; }
 }
 
 body {
@@ -13,28 +29,57 @@ body {
     font-size: 1.3rem;
     font-weight: 500;
     overflow: hidden;
+    animation: crt-flicker 0.15s infinite; /* Tremor constante do tubo */
+    position: relative; /* Necessário para os pseudo-elementos cobrirem a tela */
 }
 
+/* Scanlines (Linhas de varredura horizontais) */
+body::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 998;
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none; /* CRÍTICO: Permite clicar através do efeito */
+}
+
+/* Vinheta (Escurecimento nas bordas simulando vidro curvo) */
+body::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%);
+    z-index: 999;
+    pointer-events: none;
+}
+
+/* --- CORES E GLOW (BRILHO DO FÓSFORO) --- */
+
+#terminal, .linha, span {
+    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor; /* O brilho mágico */
+}
 
 .amarelo { 
     color: #ffdd00; 
-    text-shadow: 0 0 3px rgba(255, 221, 0, 0.4);
 }
 
 .vermelho { 
     color: #ff4444; 
-    text-shadow: 0 0 3px rgba(255, 68, 68, 0.4);
 }
 
 .verde { 
     color: #44ff44; 
-    text-shadow: 0 0 3px rgba(68, 255, 68, 0.4);
 }
 
 .branco {
     color: #ffffff;
 }
 
+/* --- ESTRUTURA PRINCIPAL --- */
 
 .container {
     display: flex;
@@ -43,7 +88,6 @@ body {
     width: 100vw;
 }
 
-
 .terminal-section {
     flex: 3;
     padding: 20px;
@@ -51,16 +95,6 @@ body {
     position: relative;
     display: flex;
     flex-direction: column;
-}
-
-
-.crt-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-    background-size: 100% 2px, 3px 100%;
-    pointer-events: none;
-    z-index: 100;
 }
 
 #output p {
@@ -92,8 +126,10 @@ input {
     outline: none;
     caret-color: #33ff00;
     caret-shape: block;
+    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor; /* Input também brilha */
 }
 
+/* --- SIDEBAR E PAINÉIS --- */
 
 .sidebar {
     flex: 1;
@@ -125,6 +161,7 @@ input {
 ul { list-style-type: none; }
 ul li { margin-bottom: 5px; }
 
+/* --- UI COMPONENTS --- */
 
 .spinner-container {
     display: none;
@@ -159,8 +196,9 @@ ul li { margin-bottom: 5px; }
     border-radius: 50%;
     z-index: 200;
     transition: 0.2s;
+    box-shadow: 0 0 10px #33ff00;
 }
-.help-float:hover { background: #33ff00; color: #000; }
+.help-float:hover { background: #33ff00; color: #000; box-shadow: 0 0 20px #33ff00; }
 
 .modal {
     position: fixed;
@@ -177,12 +215,15 @@ ul li { margin-bottom: 5px; }
     cursor: pointer; font-family: inherit; font-weight: bold;
 }
 .modal .close-btn:hover { background: #33ff00; color: #000; }
+
 .hidden { display: none !important; }
+
 .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0;
     margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
 }
 
+/* --- RESPONSIVIDADE --- */
 
 @media (max-width: 1024px) {
     body {
@@ -209,14 +250,4 @@ ul li { margin-bottom: 5px; }
     input { font-size: 1.1rem; }
     .sidebar { padding: 15px; gap: 10px; }
     .help-float { bottom: 10px; right: 10px; width: 40px; height: 40px; font-size: 1.2rem; }
-}
-
-
-::-webkit-scrollbar {
-    display: none;
-}
-
-
-* {
-    -ms-overflow-style: none;  
 }

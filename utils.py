@@ -105,3 +105,22 @@ def atualizar_eventos_de_tempo(jogo):
                 conexoes_jogador = [v for k, v in jogo.mapa[jogo.sala_atual].items() if k not in ["descrição", "itens", "inspecionaveis"] and isinstance(v, str)]
                 if jogo.posicao_perseguidor in conexoes_jogador:
                     ui.exibir(f"\n{DOS_AMARELO}O chão vibra. Você ouve passos de metal maciço na sala ao lado...{RESET}")
+
+
+
+def corromper_texto(texto, intensidade=0.5):
+    """Adiciona caracteres Zalgo (ruído visual) simulando perda de sanidade."""
+    if intensidade <= 0: return texto
+        
+    zalgo_chars = [chr(i) for i in range(0x0300, 0x036F)] # Marcas diacríticas
+    resultado = []
+    
+    for char in texto:
+        resultado.append(char)
+        # Só corrompe letras, ignora espaços e pontuações para não quebrar tudo
+        if char.isalpha() and random.random() < intensidade:
+            num_zalgos = random.randint(1, 3)
+            for _ in range(num_zalgos):
+                resultado.append(random.choice(zalgo_chars))
+                
+    return "".join(resultado)

@@ -132,15 +132,18 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.minigame_atual = MinigameMinotauro(jogo)
             jogo.estado_atual = "MINIGAME_MINOTAURO"
             jogo.minigame_atual.imprimir_status()
+
         elif jogo.sala_atual == "cadeira" and not getattr(jogo, 'noite_vencida', False):
             jogo.minigame_atual = MinigameSeguranca(jogo)
             jogo.estado_atual = "MINIGAME_SEGURANCA"
             jogo.minigame_atual.imprimir_status()
+
         elif comando == "abrir cofre" and jogo.sala_atual == "01":
             jogo.estado_atual = "MINIGAME_COFRE"
             ui.animar(f"{DOS_BRANCO}{ARTE_COFRE}{RESET}", 0.015, jogo=jogo)
             ui.exibir(f"{DOS_BRANCO}O cofre de ferro possui um teclado numérico antigo.{RESET}")
             ui.exibir(f"{DOS_VERDE}Digite a senha de 4 dígitos: {RESET}")
+
         elif (comando == "jogar jon" or comando == "jogar fome de jon") and jogo.sala_atual == "sala de fliperamas":
             jogo.estado_atual = "MINIGAME_JON"
             jogo.jon_passos_dados = 0
@@ -152,6 +155,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.exibir("Comandos: [F] Frente | [E] Esquerda | [D] Direita")
             dar_dica_jon(jogo.jon_caminho_certo[0], ui)
             ui.exibir(f"Passo 1/4 - Direção (F/E/D): ")
+
         elif comando == "jogar consertos" and jogo.sala_atual == "sala de fliperamas":
             if "moeda velha" not in jogo.inventario:
                 ui.exibir("A máquina 'Consertos & Sorrisos' exige uma ficha (moeda velha) para iniciar.")
@@ -165,6 +169,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.exibir("Bem-vindo, Mecânico! Vamos montar nosso novo Festeiro!")
                 ui.exibir(f"\n{DOS_AMARELO}[ FASE 1: SELEÇÃO DE PEÇAS ]{RESET}")
                 ui.exibir("Escolha a Cabeça (1- Urso | 2- Coelho): ")
+
         elif (comando == "jogar adivinha" or comando == "jogar julgamento") and jogo.sala_atual == "sala de fliperamas":
             jogo.estado_atual = "MINIGAME_JULGAMENTO_Q1"
             jogo.web_julgamento = {"pontos": 0, "vitimas": ["angela", "joao", "renato"]}
@@ -173,9 +178,16 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.animar("--- O JULGAMENTO DO PIANISTA ---", 0.03, DOS_VERDE, jogo)
             ui.exibir(f"{DOS_BRANCO}O animatrônico desperta. Ele detém todas as respostas.{RESET}")
             ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 1: Em que ano a nossa música parou para sempre?{RESET}")
+
         else:
             gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
             if gastou_turno: atualizar_eventos_de_tempo(jogo)
+            
+            # --- GATILHO DO FINAL VERDADEIRO ---
+            if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
+                rodar_final("verdadeiro", jogo)
+                return
+            # -----------------------------------
             
             if jogo.sala_atual == "morte":
                 dar_tela_de_morte(jogo)
@@ -378,7 +390,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 jogo.sala_atual = "sala dos fundos" 
                 jogo.estado_atual = "JOGO"
                 jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
-                ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você e travou para sempre. Mas você sobreviveu.{RESET}")
+                ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
                 imprimir_contexto_sala(jogo)
 
             elif resultado == "vitoria_seguranca":

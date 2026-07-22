@@ -345,24 +345,36 @@ def cmd_usar(comando, jogo, mapa):
             jogo.mapa["03"]["descrição"] = "A porta emperrada foi arrombada com a tábua. A passagem para frente está livre."
         else:
             ui.exibir("Você tenta forçar com as mãos, mas precisa de algo firme para fazer alavanca.")
+
     elif item in ["usar fios cortados", "montar armadilha", "fazer armadilha", "usar garrafa vazia", "fios cortados", "garrafa vazia", "pano", "fita isolante"] and jogo.sala_atual == "hall de entrada":
         if not getattr(jogo, 'amanheceu', False):
             ui.exibir(f"{DOS_AMARELO}Ainda é noite. Sobreviva até as 6:00 da manhã antes de tentar uma fuga barulhenta.{RESET}")
             return
+        
         itens_necessarios = ["fios cortados", "garrafa vazia", "pano", "fita isolante"]
         tem_tudo = all(it in jogo.inventario for it in itens_necessarios)
         tem_fogo = "isqueiro" in jogo.inventario or "fosforo" in jogo.inventario
+        
         if tem_tudo and tem_fogo:
             ui.limpar()
+            
+            ui.exibir(f"{DOS_VERMELHO}Você vê ela ao fundo da sala, apenas esperando o momento certo.{RESET}")
+            ui.pausar(2)
+            
             ui.exibir(f"{DOS_VERMELHO}Você junta a garrafa de vidro, o pano e a fita isolante.{RESET}")
             ui.exibir(f"{DOS_VERMELHO}Usando os fios cortados do Minotauro, você improvisa um pavio perfeito para a mistura inflamável!{RESET}")
             ui.exibir(f"{DOS_AMARELO}Você joga a armadilha no centro do hall de entrada e risca o fogo...{RESET}")
             ui.pausar(2.5)
+            
             jogo.estado_atual = "FIM" 
             jogo.sala_atual = "hall de entrada"
             jogo.incendio = True
         else:
-            ui.exibir(f"{DOS_AMARELO}Você tenta montar algo, mas faltam peças. Você precisa de: fios cortados, garrafa vazia, pano, fita isolante e uma fonte de fogo.{RESET}")
+            
+            ui.exibir(f"{DOS_VERMELHO}Você vê ela ao fundo da sala, bloqueando a porta de saída. Apenas esperando...{RESET}")
+            ui.exibir(f"{DOS_AMARELO}Você tenta montar a armadilha para acabar com tudo isso, mas faltam peças. Você precisa de: fios cortados, garrafa vazia, pano, fita isolante e fogo.{RESET}")
+            ui.exibir(f"{DOS_BRANCO}Volte e vasculhe o restaurante.{RESET}")
+
     elif item == "fios cortados" and jogo.sala_atual == "sala do gerador":
         ui.exibir("\n Você joga os fios na fiação principal desencapada")
         ui.exibir(" O painel explode e as chamas começam a lamber as paredes")

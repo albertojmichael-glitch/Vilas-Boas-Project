@@ -2,6 +2,7 @@ import random
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from data import CAVEIRA_MORTE, MAX_INVENTARIO
 from state import registrar_final, carregar_conquistas, AUTOSAVE_FILE
+from utils import corromper_texto
 
 def imprimir_tela_boot(ui):
     ui.animar("VILLAS-BOAS INDUSTRIES (C) 1982", 0.04, DOS_BRANCO)
@@ -14,10 +15,10 @@ def imprimir_tela_boot(ui):
 def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
     ui.animar("==================================================", 0.005, DOS_VERDE, jogo)
     ui.animar("__     _____ _     _        _ ____   ___   ____ ", 0.005, DOS_VERDE, jogo)
-    ui.animar("\\ \\   / /_ _| |   | |      / / ___| / _ \\ / ___|", 0.005, DOS_VERDE, jogo)
-    ui.animar(" \\ \\ / / | || |   | |     / /\\___ \\| | | |\\___ \\", 0.005, DOS_VERDE, jogo)
-    ui.animar("  \\ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.005, DOS_VERDE, jogo)
-    ui.animar("   \\_/  |___|_____|_____/_/  |____/ \\___/ |____/", 0.005, DOS_VERDE, jogo)
+    ui.animar("\ \   / /_ _| |   | |      / / ___| / _ \ / ___|", 0.005, DOS_VERDE, jogo)
+    ui.animar(" \ \ / / | || |   | |     / /\___ \| | | |\___ \\", 0.005, DOS_VERDE, jogo)
+    ui.animar("  \ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.005, DOS_VERDE, jogo)
+    ui.animar("   \_/  |___|_____|_____/_/  |____/ \___/ |____/", 0.005, DOS_VERDE, jogo)
     ui.animar("==================================================", 0.005, DOS_VERDE, jogo)
     ui.animar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.02, DOS_BRANCO, jogo)
 
@@ -28,7 +29,7 @@ def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
     c_ver = "[X]" if "verdadeiro" in conquistas else "[ ]"
     qtd = len(set(conquistas) & {"mediocre", "bons_sonhos", "bom", "verdadeiro"})
 
-    ui.animar(f"{DOS_AMARELO}🏆 FINAIS ALCANÇADOS: {qtd}/4{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"{DOS_AMARELO}♔ FINAIS ALCANÇADOS: {qtd}/4{RESET}", 0.01, DOS_BRANCO, jogo)
     ui.animar(f"{DOS_BRANCO}{c_med} Medíocre  {c_son} Bons Sonhos  {c_bom} Bom  {c_ver} Verdadeiro{RESET}\n", 0.01, DOS_BRANCO, jogo)
 
     ui.animar(f"{DOS_BRANCO}[1] INICIAR: MODO NORMAL (Velocidade MS-DOS Padrão){RESET}", 0.01, DOS_BRANCO, jogo)
@@ -62,7 +63,7 @@ def dar_dica_jon(passo_certo, ui):
 def falar_pianista(acertou, ui, jogo):
     if acertou:
         ui.exibir(f"{DOS_BRANCO}A máquina toca uma nota suave e agradável.{RESET}")
-        ui.animar(f'"{random.choice(["Você lembra bem, Rogério. Isso é bom.", "O ritmo continua. Você ainda tem ouvido para isso.", "Correto. Ele sempre soube que você voltaria.", "Sim... exatamente como aconteceu."])}"', 0.04, DOS_AMARELO, jogo)
+        ui.animar(f'"{random.choice(["Você lembra bem,", "O ritmo continua. Você ainda tem ouvido para isso.", "Correto. Nós sempre soubemos que você voltaria.", "Sim... exatamente como aconteceu."])}"', 0.04, DOS_AMARELO, jogo)
     else:
         ui.exibir(f"{DOS_VERMELHO}Acorde dissonante.{RESET}")
         ui.animar(f'"{random.choice(["Errado. As teclas pretas não perdoam mentiras.", "Você deveria lembrar melhor do que isso, Rogério.", "Uma nota fora do lugar... como você, aquela noite.", "Isso não é o que consta no registro do restaurante."])}"', 0.04, DOS_AMARELO, jogo)
@@ -77,11 +78,17 @@ def imprimir_contexto_sala(jogo):
         
         ui.animar(f"⚇ VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}", 0.01, DOS_VERDE, jogo)
         
-        
         if getattr(jogo, 'amanheceu', False):
-            ui.animar(f"{DOS_BRANCO} ⊚ A luz pálida da manhã ilumina a sala através das frestas.{RESET}", 0.01, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO} ☀ A luz pálida da manhã ilumina a sala através das frestas.{RESET}", 0.01, DOS_BRANCO, jogo)
 
         descricao_colorida = sala.get('descrição', '')
+
+        
+        if jogo.hp <= 1 and not getattr(jogo, 'god_mode', False):
+            descricao_colorida = corromper_texto(descricao_colorida, intensidade=0.4)
+            ui.animar(f"{DOS_VERMELHO}[SISTEMA NEUROLÓGICO COMPROMETIDO]{RESET}", 0.01, DOS_VERMELHO, jogo)
+
+        # Colore as palavras-chave normalmente
         for inspecionavel in sala.get("inspecionaveis", {}):
             descricao_colorida = descricao_colorida.replace(inspecionavel, f"{DOS_AMARELO}{inspecionavel}{RESET}")
         for item in sala.get("itens", []):
@@ -90,6 +97,12 @@ def imprimir_contexto_sala(jogo):
         ui.animar(f"⏿ Visão: {descricao_colorida}", 0.01, DOS_BRANCO, jogo)
 
         
+
+        # --- RADAR DE INSPECIONÁVEIS ---
+        inspecionaveis = list(sala.get("inspecionaveis", {}).keys())
+        if inspecionaveis:
+            ui.animar(f"☞ Investigar: {DOS_AMARELO}{', '.join(inspecionaveis)}{RESET}", 0.01, DOS_BRANCO, jogo)
+
         if len(sala.get("itens", [])) > 0:
             if jogo.turnos_luz > 0 or getattr(jogo, 'amanheceu', False):
                 itens_formatados = [f"{DOS_VERDE}{item}{RESET}" for item in sala['itens']]
@@ -104,9 +117,6 @@ def imprimir_contexto_sala(jogo):
         else:
             ui.animar(f"⏱ Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}", 0.01, DOS_BRANCO, jogo)
 
-        
-
-
 def dar_tela_de_morte(jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
@@ -114,8 +124,6 @@ def dar_tela_de_morte(jogo):
     ui.animar("☠ GAME OVER. A NOITE ENGOLIU VOCÊ.", 0.05, DOS_VERMELHO, jogo)
     ui.animar("=== SISTEMA CORROMPIDO. APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)
 
-
-    
 def rodar_final(tipo_final, jogo):
     jogo.estado_atual = "FIM"
     ui = jogo.ui_handler
@@ -215,7 +223,7 @@ def rodar_final(tipo_final, jogo):
 
         ui.animar("\nVocê se levanta e caminha para a saída antes que o teto desabe.", 0.05, DOS_BRANCO, jogo)
         ui.animar("Você empurra as portas dos fundos e sai para o ar frio da madrugada de Curitiba.", 0.04, DOS_BRANCO, jogo)
-        ui.animar("Pelo calçada, você vê a fumaça subindo ao amanhecer. O restaurante Vilas Boas virou cinzas.", 0.04, DOS_BRANCO, jogo)
+        ui.animar("Pela calçada, você vê a fumaça subindo ao amanhecer. O restaurante Vilas Boas virou cinzas.", 0.04, DOS_BRANCO, jogo)
 
         ui.exibir(f"\n{DOS_BRANCO}[ FINAL VERDADEIRO: LIBERTAÇÃO ]{RESET}")
         liberou_deus = registrar_final("verdadeiro")
@@ -226,4 +234,4 @@ def rodar_final(tipo_final, jogo):
         ui.exibir(f"{DOS_AMARELO}DIGITE O ANO EM QUE TUDO ACABOU NA TELA DE MENU: {DOS_BRANCO}2007{RESET}")
         ui.exibir(f"{DOS_AMARELO}=================================================={RESET}")
         
-    ui.animar("\n=== APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)    
+    ui.animar("\n=== APERTE F5 PARA REINICIAR ===", 0.05, DOS_AMARELO, jogo)
