@@ -29,11 +29,59 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     ui = jogo.ui_handler
 
     if jogo.estado_atual == "FIM":
-        if comando in ["f5", "reiniciar", "restart", "reset"]:
+        if comando in ["f5", "reiniciar", "restart", "reset", "dir"]:
+
+            # Reseta o mapa original para fechar portas e restaurar o estado inicial
+            import copy
+            try:
+                from data import MAPA_ORIGINAL
+                jogo.mapa = copy.deepcopy(MAPA_ORIGINAL)
+            except:
+                pass
+
+            # Reseta TODAS as variáveis da partida
             jogo.estado_atual = "AGUARDANDO_DIR"
-            ui.limpar()
-            imprimir_tela_boot(ui)
-            return
+            jogo.inventario = []
+            jogo.hp = 3
+            jogo.sala_atual = "entrada"
+            jogo.incendio = False
+            jogo.noite_vencida = False
+            jogo.fios_cortados_inventario = False
+            jogo.amanheceu = False
+            jogo.alberto_desativado = False
+            jogo.god_mode = False
+            jogo.turnos_luz = 0
+            
+            
+            if comando == "dir":
+                ui.limpar()
+                ui.exibir(f"{DOS_BRANCO} Volume in drive A is VILLASBOAS{RESET}")
+                ui.exibir(f"{DOS_BRANCO} Directory of A:\\{RESET}\n")
+                ui.exibir("")
+                ui.exibir(f"{DOS_VERDE}COMMAND  COM        47.845  02-11-1982  6:00a{RESET}")
+                ui.exibir("")
+                ui.exibir(f"{DOS_VERDE}SEGURA   SYS         2.048  02-11-1982  6:00a{RESET}")
+                ui.exibir("")
+                ui.exibir(f"{DOS_VERDE}NOTURNO  EXE        18.204  02-11-1982  6:00a{RESET}")
+                ui.exibir("")
+                ui.exibir(f"{DOS_VERDE}DESKTOP  &lt;DIR&gt;              24-07-2007  4:00a{RESET}")
+                ui.exibir("")
+                ui.exibir(f"{DOS_VERDE}SAVES    &lt;DIR&gt;              23-07-2008  4:00a{RESET}")
+                ui.exibir("")
+                ui.exibir(f"{DOS_VERDE}PICTURE  &lt;DIR&gt;              05-11-1994  4:00a{RESET}")
+                ui.exibir("")
+                ui.exibir(f"{DOS_VERDE}VALID    &lt;DIR&gt;              24-07-2007  4:00a{RESET}")
+                ui.exibir("")
+                ui.exibir(f"{DOS_AMARELO}         3 file(s)       68.097 bytes{RESET}")
+                ui.exibir(f"{DOS_AMARELO}         4 dir(s)       655.360 bytes free{RESET}")
+                ui.exibir(f"{DOS_VERDE}=================================================={RESET}")
+                jogo.estado_atual = "MENU"
+                imprimir_menu_dificuldade(ui, tem_autosave=tem_save, jogo=jogo)
+                return
+            else:
+                ui.limpar()
+                imprimir_tela_boot(ui)
+                return
             
         ui.exibir(f"{DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{RESET}")
         return
