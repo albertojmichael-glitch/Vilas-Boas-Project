@@ -402,50 +402,83 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala(jogo)
 
-    elif jogo.estado_atual in ["MINIGAME_MINOTAURO", "MINIGAME_SEGURANCA"]:
-        if comando in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_SEGURANCA":
-            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você altera os ponteiros do universo. O relógio salta para as 06:00 instantaneamente.{RESET}")
-            jogo.minigame_atual.turno = 24 
-            resultado = jogo.minigame_atual.processar_turno("esperar", jogo) 
-            if resultado == "vitoria_seguranca":
-                jogo.minigame_atual = None
-                jogo.sala_atual = "01"
-                jogo.amanheceu = True
-                jogo.estado_atual = "JOGO"
-                imprimir_contexto_sala(jogo)
+    # ==========================================
+    # BLOCO: MINIGAME DE SEGURANÇA
+    # ==========================================
+    elif jogo.estado_atual == "MINIGAME_SEGURANCA":
+        from minigames import MinigameSeguranca
+        
+        # 1. Proteção contra o Apagão do Banco de Dados
+        if type(jogo.minigame_atual) is dict:
+            dados_salvos = jogo.minigame_atual
+            jogo.minigame_atual = MinigameSeguranca(jogo)
+            jogo.minigame_atual.__dict__.update(dados_salvos) # Resgata a energia e os turnos!
+            jogo.minigame_atual.jogo = jogo
+        elif not isinstance(jogo.minigame_atual, MinigameSeguranca):
+            jogo.minigame_atual = MinigameSeguranca(jogo)
+            
+        # 2. Transforma as setinhas (f, e, d, t) no nome completo
+        from utils import extrair_argumentos
+        partes = extrair_argumentos(comando)
+        verbo = partes[0] if partes else ""
+        mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
+        if verbo in mapa_direcoes: comando = mapa_direcoes[verbo]
 
-        elif comando in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False) and jogo.estado_atual == "MINIGAME_MINOTAURO":
-            ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre e dá uma voadora no peito do Minotauro! Ele foge.{RESET}")
-            jogo.minigame_atual = None
-            jogo.sala_atual = "sala dos fundos"
+        # 3. Processa a ação
+        resultado = jogo.minigame_atual.processar_turno(comando, jogo)
+        
+        if resultado == "continuar":
+            jogo.minigame_atual.imprimir_status()
+        elif resultado == "vitoria_seguranca":
             jogo.estado_atual = "JOGO"
+            jogo.minigame_atual = None
+            jogo.sala_atual = "01" 
             imprimir_contexto_sala(jogo)
-        else:
-            partes = extrair_argumentos(comando)
-            verbo = partes[0] if partes else ""
-            mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
-            if verbo in mapa_direcoes: comando = mapa_direcoes[verbo]
-            
-            resultado = jogo.minigame_atual.processar_turno(comando, jogo)
-            
-            if resultado == "morte":
-                jogo.minigame_atual = None
-                jogo.sala_atual = "morte"
-                dar_tela_de_morte(jogo)
+        elif resultado == "morte":
+            jogo.estado_atual = "FIM"
+            jogo.sala_atual = "morte"
+            jogo.minigame_atual = None
+            dar_tela_de_morte(jogo)
 
-            elif resultado == "vitoria_minotauro":
-                jogo.minigame_atual = None
-                jogo.sala_atual = "sala dos fundos" 
-                jogo.estado_atual = "JOGO"
-                jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
-                ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
-                imprimir_contexto_sala(jogo)
 
-            elif resultado == "vitoria_seguranca":
-                jogo.minigame_atual = None
-                jogo.sala_atual = "01" 
-                jogo.estado_atual = "JOGO"
-                imprimir_contexto_sala(jogo)
+    # ==========================================
+    # BLOCO: MINIGAME DO MINOTAURO
+    # ==========================================
+    elif jogo.estado_atual == "MINIGAME_MINOTAURO":
+        from minigames import MinigameMinotauro
+        
+        # 1. Proteção contra o Apagão do Banco de Dados
+        if type(jogo.minigame_atual) is dict:
+            dados_salvos = jogo.minigame_atual
+            jogo.minigame_atual = MinigameMinotauro(jogo)
+            jogo.minigame_atual.__dict__.update(dados_salvos) # Resgata bateria e monstros!
+            jogo.minigame_atual.jogo = jogo
+        elif not isinstance(jogo.minigame_atual, MinigameMinotauro):
+            jogo.minigame_atual = MinigameMinotauro(jogo)
+            
+        # 2. Transforma as setinhas (f, e, d, t) no nome completo
+        from utils import extrair_argumentos
+        partes = extrair_argumentos(comando)
+        verbo = partes[0] if partes else ""
+        mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
+        if verbo in mapa_direcoes: comando = mapa_direcoes[verbo]
+
+        # 3. Processa a ação
+        resultado = jogo.minigame_atual.processar_turno(comando, jogo)
+        
+        if resultado == "continuar":
+            jogo.minigame_atual.imprimir_status()
+        elif resultado == "vitoria_minotauro":
+            jogo.estado_atual = "JOGO"
+            jogo.sala_atual = "sala dos fundos"
+            jogo.minigame_atual = None
+            jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
+            ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
+            imprimir_contexto_sala(jogo)
+        elif resultado == "morte":
+            jogo.estado_atual = "FIM"
+            jogo.sala_atual = "morte"
+            jogo.minigame_atual = None
+            dar_tela_de_morte(jogo)
                 
-            else:
-                jogo.minigame_atual.imprimir_status()
+            
