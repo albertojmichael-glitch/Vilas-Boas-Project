@@ -487,7 +487,7 @@ class MinigameSeguranca:
                 self.usos_sistema_turno += 1
                 self.energia -= CUSTO_INFO_LEVE
                 ui.exibir(f"(-{CUSTO_INFO_LEVE}% Energia)")
-                if self.jon_pos >= 3 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 4): ui.exibir("⭙Sensor fica vermelho, há algo nos dutos⭙")
+                if self.jon_pos >= 3 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 4): ui.exibir("⭙ Sensor fica vermelho, há algo nos dutos ⭙")
                 else: ui.exibir("◉ Sensor não detecta nada")
 
         elif acao in ["esperar", "pular noite", "pular", "set time 06:00"]:
@@ -514,7 +514,7 @@ class MinigameSeguranca:
                 if (self.caroline_caminho == "porta" and self.caroline_pos >= 6):
                     self.caroline_pos = 0
                     self.caroline_caminho = random.choice(["porta", "tubulacao"])
-                    ui.exibir(f"\n{DOS_AMARELO} Um estrondo na porta. Ela recuou frustrada.{RESET}")
+                    ui.exibir(f"\n{DOS_AMARELO} Um estrondo na porta. Ela recuou...{RESET}")
         
         ui.pausar(4)
 
