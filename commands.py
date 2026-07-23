@@ -21,7 +21,7 @@ def cmd_ir(comando, jogo, mapa):
 
     if jogo.sala_atual == "03" and direcao == "frente":
         ui.exibir(f"{DOS_AMARELO}Você toma distância e dá um chute violento na porta emperrada!{RESET}")
-        ui.exibir(f"{DOS_VERDE}CRASH! A madeira velha cede e a porta escancara.{RESET}")
+        ui.exibir(f"{DOS_VERDE}A madeira velha cede e a porta escancara.{RESET}")
         mapa["corredor"]["03"] = "sala do gerador"
         jogo.sala_atual = "sala do gerador"
         ui.pausar(2)

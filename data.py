@@ -458,5 +458,7 @@ descricoes_itens = {
     "lanterna": "Sua lanterna velha de plástico vermelha, você esqueceu de trocar a bateria antes de vir aqui.",
     "disquete": "Um disquete de 5¼ polegadas. Serve para salvar os dados do sistema no terminal.",
     "bolsa": "Uma bolsa escolar antiga, desgastadas e um pouco rasgado, deve servir para guardar alguma coisa ainda..",
-    "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir."
+    "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir.",
+    "fios cortados": "Um punhado de fios elétricos grossos e coloridos. Estão sujos com o óleo preto do Minotauro.",
+    "chave dos fundos": "Uma chave de metal pesada e enferrujada. Parece pertencer à porta da Sala dos Fundos."
 }
