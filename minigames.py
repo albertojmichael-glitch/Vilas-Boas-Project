@@ -261,8 +261,14 @@ class MinigameMinotauro:
 
 # minigame sala de segurança
 
+import random
+from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
+
+# ... (código do minotauro fica acima) ...
+
 class MinigameSeguranca:
     def __init__(self, jogo):
+        self.ui = jogo.ui_handler # Puxa o manipulador web!
         self.turno = 0
         self.energia = 9999 if getattr(jogo, 'god_mode', False) else random.randint(getattr(jogo, 'energia_min_noite', 70), getattr(jogo, 'energia_max_noite', 100)) 
         self.porta_fechada = False
@@ -281,14 +287,19 @@ class MinigameSeguranca:
         self.turnos_gerador_ativo = 0
         self.usos_sistema_turno = 0
         
-        print("\n" + "="*50)
-        print(f"{DOS_BRANCO}{ARTE_MESA_SEGURANCA}{RESET}")
-        print("Você senta na cadeira da sala de segurança.")
-        pausar(1)
+        try:
+            from data import ARTE_MESA_SEGURANCA
+            self.ui.exibir(f"{DOS_BRANCO}{ARTE_MESA_SEGURANCA}{RESET}")
+        except:
+            pass
+        
+        self.ui.exibir("\n" + "="*50)
+        self.ui.exibir("Você senta na cadeira da sala de segurança.")
+        self.ui.pausar(1)
 
     def imprimir_status(self):
-        limpar_tela()
-        print("\n" + "=" * 50)
+        self.ui.limpar()
+        self.ui.exibir("\n" + "=" * 50)
         chance_bug = self.caroline_pos * 15 
 
         def bug(texto, chance):
@@ -299,29 +310,30 @@ class MinigameSeguranca:
         else: hora_disp = f"0{(self.turno * 15) // 60}:{(self.turno * 15) % 60:02d}"
 
         texto_energia = "∞" if self.energia > 100 else f"{self.energia}%"
-        print(bug(f"RELOGIO: {hora_disp}", chance_bug))
-        print(bug(f"ENERGIA: {texto_energia}", chance_bug))
-        print(bug(f"PORTA CENTRAL: {'Fechada' if self.porta_fechada else 'Aberta'}", chance_bug))
+        self.ui.exibir(bug(f"RELOGIO: {hora_disp}", chance_bug))
+        self.ui.exibir(bug(f"ENERGIA: {texto_energia}", chance_bug))
+        self.ui.exibir(bug(f"PORTA CENTRAL: {'Fechada' if self.porta_fechada else 'Aberta'}", chance_bug))
 
         erros = []
         if self.erro_camera: erros.append("CÂMERAS")
         if self.erro_relogio: erros.append("RELÓGIO")
         if self.erro_deteccao: erros.append("DETECÇÃO")
-        print(f"ERROS ATIVOS: {', '.join(erros)}" if erros else bug("ERROS: Nenhum", chance_bug))
+        self.ui.exibir(f"ERROS ATIVOS: {', '.join(erros)}" if erros else bug("ERROS: Nenhum", chance_bug))
 
         if self.turnos_gerador_ativo > 0:
-            print(f"{DOS_VERDE}Gerador reserva: Ativo({self.turnos_gerador_ativo} turnos restantes){RESET}")
+            self.ui.exibir(f"{DOS_VERDE}Gerador reserva: Ativo({self.turnos_gerador_ativo} turnos restantes){RESET}")
         elif not self.gerador_reserva_usado:
-            print(f"{DOS_AMARELO}Gerador Reserva: Disponível{RESET}")
+            self.ui.exibir(f"{DOS_AMARELO}Gerador Reserva: Disponível{RESET}")
 
-        if self.alberto_troll: print("\n[MENSAGEM]: ERRO CRÍTICO! FECHAR PORTA AGORA!")
-        if self.indio_janela and not self.erro_deteccao: print("\n" + bug("Você sente como se algo estivesse te olhando pelo vidro...", chance_bug))
+        if self.alberto_troll: self.ui.exibir("\n[MENSAGEM]: ERRO CRÍTICO! FECHAR PORTA AGORA!")
+        if self.indio_janela and not self.erro_deteccao: self.ui.exibir("\n" + bug("Você sente como se algo estivesse te olhando pelo vidro...", chance_bug))
 
-        print("\nAção (ouvir | cameras | ver tubulacao | iluminar tubulacao | fechar porta | abrir porta | olhar vidro | Ligar Gerador | consertar [sistema] | esperar)")
+        self.ui.exibir("\nAção (ouvir | cameras | ver tubulacao | iluminar tubulacao | fechar porta | abrir porta | olhar vidro | ligar gerador | consertar [sistema] | esperar)")
 
     def processar_turno(self, acao, jogo):
+        ui = self.ui
         if acao in ["pular noite", "pular", "set time 06:00"] and getattr(jogo, 'god_mode', False):
-            print(f"{DOS_AMARELO}[GOD MODE] O tempo se contorce. O relógio salta para as 06:00.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}[GOD MODE] O tempo se contorce. O relógio salta para as 06:00.{RESET}")
             self.turno = 24
             
         turno_passou = False
@@ -338,44 +350,48 @@ class MinigameSeguranca:
         CUSTO_MOTOR = 2 + custo_extra
 
         if acao == "fechar porta":
-            if self.apagao > 0 or self.energia <= CUSTO_MOTOR: print("Sem energia, o botão não faz nada.")
-            elif self.porta_fechada: print("A porta já está fechada.")
+            if self.apagao > 0 or self.energia <= CUSTO_MOTOR: ui.exibir("Sem energia! O botão faz um clique morto.")
+            elif self.porta_fechada: ui.exibir("A porta já está fechada.")
             else:
                 self.porta_fechada = True
                 self.energia -= CUSTO_MOTOR
-                print(f"A pesada porta de metal fecha. (-{CUSTO_MOTOR}% Energia)")
+                ui.exibir(f"A pesada porta de metal desce com um estrondo. (-{CUSTO_MOTOR}% Energia)")
                 if self.alberto_troll:
-                    print("\n Como você é tão tolo? Hahahaha")
+                    ui.exibir("\n Como você é tão tolo? Hahahaha")
                     self.erro_camera = True; self.erro_deteccao = True; self.alberto_troll = False
 
         elif acao == "abrir porta":
-            if self.apagao > 0 or self.energia <= CUSTO_MOTOR: print("sem energia, a porta não responde.")
-            elif not self.porta_fechada: print("A porta já está aberta.")
+            if self.apagao > 0 or self.energia <= CUSTO_MOTOR: ui.exibir("Sem energia! A porta não responde.")
+            elif not self.porta_fechada: ui.exibir("A porta já está aberta.")
             else: 
                 self.porta_fechada = False
                 self.energia -= CUSTO_MOTOR
-                print(f"A porta de metal se ergue lentamente. (-{CUSTO_MOTOR}% Energia)")
+                ui.exibir(f"A porta de metal se ergue lentamente. (-{CUSTO_MOTOR}% Energia)")
 
         elif acao == "iluminar tubulacao":
-            if self.apagao > 0 or self.energia <= CUSTO_INFO_PESADO: print("Sem força nas luzes.")
+            if self.apagao > 0 or self.energia <= CUSTO_INFO_PESADO: ui.exibir("Sem força nas luzes.")
             elif self.usos_sistema_turno >= 2:
-                print(f"{DOS_VERMELHO} [SISTEMA SOBRECARREGADO]: Muitas requisições simultâneas. Hardware travado{RESET}")
+                ui.exibir(f"{DOS_VERMELHO} [SISTEMA SOBRECARREGADO]: Muitas requisições simultâneas. Hardware travado{RESET}")
                 self.energia -= CUSTO_INFO_PESADO
             else:
                 self.usos_sistema_turno += 1
                 self.energia -= CUSTO_INFO_PESADO
-                print(f"Você liga o projetor nos dutos (-{CUSTO_INFO_PESADO}% Energia)")
-                if self.jon_pos >= 4: self.jon_pos = 0; print("Jon recua apressado pela tubulação")
+                ui.exibir(f"Você liga o projetor nos dutos (-{CUSTO_INFO_PESADO}% Energia)")
+                if self.jon_pos >= 4: self.jon_pos = 0; ui.exibir("Jon recua apressado pela tubulação")
                 if self.caroline_caminho == "tubulacao" and self.caroline_pos >= 5:
                     self.caroline_pos = 0; self.caroline_caminho = random.choice(["porta", "tubulacao"]) 
-                    print("A Caroline fugiu do duto")
+                    ui.exibir("A Caroline fugiu do duto")
 
         elif acao == "olhar vidro":
             if self.indio_janela:
-                limpar_tela()
-                print(f"{DOS_BRANCO}{ARTE_INDIO}{RESET}")
-                pausar(2)
-                print("Você não enxerga nada, até que 2 olhos te encaram pela janela, a figura do indio jones faz você perder a cabeça")
+                ui.limpar()
+                try:
+                    from data import ARTE_INDIO
+                    ui.exibir(f"{DOS_BRANCO}{ARTE_INDIO}{RESET}")
+                except:
+                    pass
+                ui.pausar(2)
+                ui.exibir("Você não enxerga nada, até que 2 olhos te encaram pela janela, a figura do indio jones faz você perder a cabeça")
                 falha = random.choice(["camera", "relogio", "deteccao"])
                 if falha == "camera": self.erro_camera = True
                 elif falha == "relogio": self.erro_relogio = True
@@ -386,27 +402,21 @@ class MinigameSeguranca:
                 carol_na_porta = (self.caroline_caminho == "porta" and self.caroline_pos >= 5)
                 
                 if rick_na_porta and carol_na_porta:
-                    print(" Seu corpo treme. Você vê a carcaça maciça de Rick, o mosqueteiro e a carcaça de coelho rosa retorcido de Caroline")
-                    print("parados lado a lado no corredor, olhando diretamente para você através do vidro")
+                    ui.exibir(" Seu corpo treme. Você vê a carcaça maciça de Rick, o mosqueteiro e a carcaça de coelho rosa retorcido de Caroline parados lado a lado no corredor, olhando diretamente para você através do vidro")
                 elif rick_na_porta:
-                    print(" Você olha pelo vidro e vê a silhueta gigantesca do Rick, o mosqueteiro, parado nas sombras.")
-                    print("Os olhos de plástico sem vida dele estão focados em você.")
+                    ui.exibir(" Você olha pelo vidro e vê a silhueta gigantesca do Rick, o mosqueteiro, parado nas sombras. Os olhos de plástico sem vida dele estão focados em você.")
                 elif carol_na_porta:
-                    print(" Através da sujeira do vidro, você enxerga a carcaça do coelho rosa tentando se esconder nas sombras.")
-                    print("Ela está encostada na parede do corredor")
+                    ui.exibir(" Através da sujeira do vidro, você enxerga a carcaça do coelho rosa tentando se esconder nas sombras. Ela está encostada na parede do corredor")
                 else:
-                    print("Você limpa o embaçado do vidro e força a vista para o corredor escuro.")
-                    print("Consegue distinguir as portas fechadas das outras salas, os cartazes rasgados nas paredes")
-                    print("e o chão de linóleo imundo refletindo a pouca luz que resta.")
-                    print("Nenhum movimento... Além das sombras, há apenas o seu reflexo devolvendo o olhar.")
+                    ui.exibir("Você limpa o embaçado do vidro e força a vista para o corredor escuro. Consegue distinguir as portas fechadas das outras salas, os cartazes rasgados nas paredes e o chão de linóleo imundo refletindo a pouca luz que resta. Nenhum movimento... Além das sombras, há apenas o seu reflexo devolvendo o olhar.")
 
-        elif acao == "ligar gerador" or acao == "Ligar gerador":
+        elif acao.lower() == "ligar gerador":
             if self.apagao >0:
-                print("Tarde demais, o sistema principal já foi totalmente desligado")
+                ui.exibir("Tarde demais, o sistema principal já foi totalmente desligado")
             elif self.gerador_reserva_usado:
-                print("O combustivel do gerador reserva já foi queimado, ele só pode ser usado uma vez")
+                ui.exibir("O combustivel do gerador reserva já foi queimado, ele só pode ser usado uma vez")
             else:
-                print(f"\n{DOS_VERDE} Você aperta o botão do gerador reserva, ele cospe uma fumaça preta, sistemas basicos operando sem custo de energia.{RESET}")
+                ui.exibir(f"\n{DOS_VERDE} Você aperta o botão do gerador reserva, ele cospe uma fumaça preta, sistemas basicos operando sem custo de energia.{RESET}")
                 self.gerador_reserva_usado = True
                 self.turnos_gerador_ativo = 2
                 turno_passou = True
@@ -415,78 +425,78 @@ class MinigameSeguranca:
         
         elif acao.startswith("consertar "):
             sistema = acao.replace("consertar ", "")
-            if self.apagao > 0: print("Não há energia.")
-            elif sistema == "camera": self.erro_camera = False; print("Câmeras online.")
-            elif sistema == "relogio": self.erro_relogio = False; print("Relógio sincronizado.")
-            elif sistema == "deteccao": self.erro_deteccao = False; print("Sensores calibrados.")
-            else: print("Sistema não reconhecido.")
+            if self.apagao > 0: ui.exibir("Não há energia.")
+            elif sistema == "camera": self.erro_camera = False; ui.exibir("Câmeras online.")
+            elif sistema == "relogio": self.erro_relogio = False; ui.exibir("Relógio sincronizado.")
+            elif sistema == "deteccao": self.erro_deteccao = False; ui.exibir("Sensores calibrados.")
+            else: ui.exibir("Sistema não reconhecido.")
 
         elif acao == "ouvir":
             if self.apagao > 0: 
-                print("No apagão, você ouve sua própria respiração...")
+                ui.exibir("No apagão, você ouve sua própria respiração...")
             elif self.erro_deteccao: 
-                print(f"{DOS_VERMELHO}⚠ ⚠ ⚠ O alarme estridente de falha nos sensores ecoa na sala. Você não consegue ouvir nada além disso ⚠ ⚠ ⚠{RESET}")
+                ui.exibir(f"{DOS_VERMELHO}⚠ ⚠ ⚠ O alarme estridente de falha nos sensores ecoa na sala. Você não consegue ouvir nada além disso ⚠ ⚠ ⚠{RESET}")
             elif self.energia <= CUSTO_INFO_LEVE: 
-                print("Sistema de áudio offline (Bateria fraca).")
+                ui.exibir("Sistema de áudio offline (Bateria fraca).")
             elif self.usos_sistema_turno >= 2:
-                print(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Placa de áudio em curto. Passe o turno para resfriar!{RESET}")
+                ui.exibir(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Placa de áudio em curto. Passe o turno para resfriar!{RESET}")
                 self.energia -= CUSTO_INFO_LEVE
             else:
                 self.usos_sistema_turno += 1
                 self.energia -= CUSTO_INFO_LEVE
-                print(f"(-{CUSTO_INFO_LEVE}% Energia)")
+                ui.exibir(f"(-{CUSTO_INFO_LEVE}% Energia)")
                 ouviu = False
                 if self.rick_pos >= 3 or (self.caroline_caminho == "porta" and self.caroline_pos >= 5):
-                    print(" Passos metálicos pesados são ouvidos do corredor"); ouviu = True
+                    ui.exibir(" Passos metálicos pesados são ouvidos do corredor"); ouviu = True
                 if self.jon_pos >= 4 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 5):
-                    print(" Você escuta arranhões e batidas vindo da tubulação"); ouviu = True
+                    ui.exibir(" Você escuta arranhões e batidas vindo da tubulação"); ouviu = True
                 if not ouviu: 
-                    print("Apenas o zumbido dos fios elétricos e da lâmpada quase apagada.")
+                    ui.exibir("Apenas o zumbido dos fios elétricos e da lâmpada quase apagada.")
 
         elif acao == "cameras":
-            if self.apagao > 0 or self.erro_camera: print("⊠ [SINAL PERDIDO]")
-            elif self.energia <= CUSTO_INFO_LEVE: print("Câmeras offline (Bateria fraca).")
+            if self.apagao > 0 or self.erro_camera: ui.exibir("⊠ [SINAL PERDIDO]")
+            elif self.energia <= CUSTO_INFO_LEVE: ui.exibir("Câmeras offline (Bateria fraca).")
             elif self.usos_sistema_turno >= 2:
-                print(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Monitor superaquecido. A tela exibe apenas estática!{RESET}")
+                ui.exibir(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Monitor superaquecido. A tela exibe apenas estática!{RESET}")
                 self.energia -= CUSTO_INFO_LEVE
             else:
                 self.usos_sistema_turno += 1
                 self.energia -= CUSTO_INFO_LEVE
-                print(f"(-{CUSTO_INFO_LEVE}% Energia)")
+                ui.exibir(f"(-{CUSTO_INFO_LEVE}% Energia)")
                 
                 chance_bug_visual = self.caroline_pos * 10
                 if random.randint(1, 100) <= chance_bug_visual:
-                    print("⊠ [SINAL COM INTERFERÊNCIA] Imagens distorcidas...")
-                    print(f"Rick: Setor {random.randint(0,4)}/4 (???)")
-                    print(f"Jon: Setor {random.randint(0,5)}/5 (???)")
+                    ui.exibir("⊠ [SINAL COM INTERFERÊNCIA] Imagens distorcidas...")
+                    ui.exibir(f"Rick: Setor {random.randint(0,4)}/4 (???)")
+                    ui.exibir(f"Jon: Setor {random.randint(0,5)}/5 (???)")
                 else:
-                    print(f"\n--- FEED DAS CÂMERAS ---\nRick: Setor {self.rick_pos}/4")
-                    print(f"Jon: Setor {self.jon_pos}/5" if self.jon_pos < 3 else "Jon: [não é visivel nas cameras]")
-                print("------------------------")
+                    ui.exibir(f"\n--- FEED DAS CÂMERAS ---\nRick: Setor {self.rick_pos}/4")
+                    ui.exibir(f"Jon: Setor {self.jon_pos}/5" if self.jon_pos < 3 else "Jon: [não é visivel nas cameras]")
+                ui.exibir("------------------------")
                 
                 if random.randint(1, 100) == 1:
-                    print(f"\n{DOS_VERMELHO}⊠ [ANOMALIA DETECTADA]: O feed pisca. Em uma das câmeras escuras, o rosto quebrado de Caroline encara diretamente a lente... e ela está sorrindo para você.{RESET}")
+                    ui.exibir(f"\n{DOS_VERMELHO}⊠ [ANOMALIA DETECTADA]: O feed pisca. Em uma das câmeras escuras, o rosto quebrado de Caroline encara diretamente a lente... e ela está sorrindo para você.{RESET}")
 
         elif acao == "ver tubulacao":
-            if self.apagao > 0 or self.erro_deteccao: print("◯ [SENSORES OFFLINE]")
-            elif self.energia <= CUSTO_INFO_LEVE: print("Sensores offline (Bateria fraca).")
+            if self.apagao > 0 or self.erro_deteccao: ui.exibir("◯ [SENSORES OFFLINE]")
+            elif self.energia <= CUSTO_INFO_LEVE: ui.exibir("Sensores offline (Bateria fraca).")
             elif self.usos_sistema_turno >= 2:
-                print(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Painel de detecção travado!{RESET}")
+                ui.exibir(f"{DOS_VERMELHO}⚠ [SISTEMA SOBRECARREGADO]: Painel de detecção travado!{RESET}")
                 self.energia -= CUSTO_INFO_LEVE
             else:
                 self.usos_sistema_turno += 1
                 self.energia -= CUSTO_INFO_LEVE
-                print(f"(-{CUSTO_INFO_LEVE}% Energia)")
-                if self.jon_pos >= 3 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 4): print("⭙Sensor fica vermelho, há algo nos dutos⭙")
-                else: print("◉ Sensor não detecta nada")
+                ui.exibir(f"(-{CUSTO_INFO_LEVE}% Energia)")
+                if self.jon_pos >= 3 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 4): ui.exibir("⭙Sensor fica vermelho, há algo nos dutos⭙")
+                else: ui.exibir("◉ Sensor não detecta nada")
 
         elif acao in ["esperar", "pular noite", "pular", "set time 06:00"]:
-            print("Você deixa o tempo passar...")
+            ui.exibir("Você deixa o tempo passar...")
             turno_passou = True
             self.turno += 1
             self.alberto_troll = False
         else:
-            print("Comando inválido.")
+            ui.exibir("Comando inválido.")
             acao_valida = False
 
         if acao_valida and acao not in ["esperar", "pular noite", "pular", "set time 06:00"]:
@@ -495,64 +505,62 @@ class MinigameSeguranca:
                 if quem == "rick": self.rick_pos += 1
                 elif quem == "jon": self.jon_pos += 1
                 elif quem == "caroline": self.caroline_pos += 1
-                print(f"\n{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}")
+                ui.exibir(f"\n{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}")
 
             if self.porta_fechada:
                 if self.rick_pos >= 4:
                     self.rick_pos = 0
-                    print(f"\n{DOS_AMARELO} ALGO SOCA A PORTA COM VIOLÊNCIA E RECUA{RESET}")
+                    ui.exibir(f"\n{DOS_AMARELO} ALGO SOCA A PORTA COM VIOLÊNCIA E RECUA{RESET}")
                 if (self.caroline_caminho == "porta" and self.caroline_pos >= 6):
                     self.caroline_pos = 0
                     self.caroline_caminho = random.choice(["porta", "tubulacao"])
-                    print(f"\n{DOS_AMARELO} Um estrondo na porta. Ela recuou frustrada.{RESET}")
+                    ui.exibir(f"\n{DOS_AMARELO} Um estrondo na porta. Ela recuou frustrada.{RESET}")
         
-        pausar(4)
+        ui.pausar(4)
 
         if acao_valida:
             chance_evento = random.randint(1,100)
             if chance_evento <= 3:
-                print(f"\n{DOS_AMARELO} Toc.. Toc.. Você escuta batidas fracas na janela, você não sabe se há algo ali, o vidro está muito sujo.{RESET}")
+                ui.exibir(f"\n{DOS_AMARELO} Toc.. Toc.. Você escuta batidas fracas na janela, você não sabe se há algo ali, o vidro está muito sujo.{RESET}")
             elif chance_evento <= 7:
-                print(f"\n{DOS_AMARELO} Você escuta ruidos vindo da ventilação... Parece que algo está arranhando o aluminio. {RESET}")
+                ui.exibir(f"\n{DOS_AMARELO} Você escuta ruidos vindo da ventilação... Parece que algo está arranhando o aluminio. {RESET}")
             elif chance_evento <= 9:
-                print(f"\n{DOS_VERMELHO} 'Rogerio'... Você escuta algo chamar seu nome vindo do fundo do corredor.{RESET}")
+                ui.exibir(f"\n{DOS_VERMELHO} 'Rogerio'... Você escuta algo chamar seu nome vindo do fundo do corredor.{RESET}")
             elif chance_evento <= 10:
-                print(f"\n{DOS_VERMELHO} Pelo canto do seu olho, você jura ter visto algo acenando da janela, você não sabe se é algo real ou não.{RESET}")
+                ui.exibir(f"\n{DOS_VERMELHO} Pelo canto do seu olho, você jura ter visto algo acenando da janela, você não sabe se é algo real ou não.{RESET}")
             elif chance_evento <= 12:
-                print(f"\n{DOS_VERMELHO} Você jura ter visto algo na ventilação... Será que é coisa da sua cabeça?{RESET}")
+                ui.exibir(f"\n{DOS_VERMELHO} Você jura ter visto algo na ventilação... Será que é coisa da sua cabeça?{RESET}")
         
-        pausar(4)
+        ui.pausar(4)
 
         if turno_passou:
-
             self.usos_sistema_turno = 0
-
-            if self.turnos_gerador_ativo > 0 and acao != "ligar gerador" and acao != "Ligar gerador":
+            if self.turnos_gerador_ativo > 0 and acao.lower() != "ligar gerador":
                 self.turnos_gerador_ativo -= 1
                 if self.turnos_gerador_ativo == 0:
-                    print(f"\n{DOS_AMARELO} O gerador reserva para de soltar fumaça, e começa a dar gargalos, e depois deliga. A energia volta a ser drenada normalmente{RESET}")
+                    ui.exibir(f"\n{DOS_AMARELO} O gerador reserva para de soltar fumaça, e começa a dar gargalos, e depois deliga. A energia volta a ser drenada normalmente{RESET}")
 
             if self.turno == 12:
-                print(f"\n{DOS_AMARELO} [SISTEMA] O antigo gerador está superaquecendo, cada acão custará mais energia a partir de agora.{RESET}")
+                ui.exibir(f"\n{DOS_AMARELO} [SISTEMA] O antigo gerador está superaquecendo, cada acão custará mais energia a partir de agora.{RESET}")
             elif self.turno == 22:
-                print(f"\n {DOS_AMARELO} [SISTEMA] [AVISO CRITICO!!!] O gerador superaqueceu! Geradores reservas ligados, dreno de energia aumentou!{RESET}")
+                ui.exibir(f"\n {DOS_AMARELO} [SISTEMA] [AVISO CRITICO!!!] O gerador superaqueceu! Geradores reservas ligados, dreno de energia aumentou!{RESET}")
             
             if self.porta_fechada and self.energia > 0:
                 self.energia -= 2
-                print(" A pesada porta de metal consome energia contínua... (-2% Energia)")
+                ui.exibir(" A pesada porta de metal consome energia contínua... (-2% Energia)")
 
             if self.energia <= 0 and self.apagao == 0 and not getattr(jogo, 'god_mode', False):
-                print("\n [ ENERGIA ESGOTADA ] Tudo fica escuro. A porta abre sozinha...")
-                self.porta_fechada = False; self.apagao = 1; pausar(2)
+                ui.exibir("\n [ ENERGIA ESGOTADA ] Tudo fica escuro. A porta abre sozinha...")
+                self.porta_fechada = False; self.apagao = 1; ui.pausar(2)
 
             if self.porta_fechada:
                 if self.rick_pos == 4: 
                     self.rick_pos = 0 
-                    print("\n Você escuta batidas na porta, e passos para fora do corredor logo depois.")
+                    ui.exibir("\n Você escuta batidas na porta, e passos para fora do corredor logo depois.")
                 if self.caroline_caminho == "porta" and self.caroline_pos >= 5:
                     self.caroline_pos = 0
                     self.caroline_caminho = random.choice(["porta", "tubulacao"])
-                    print("\n Você escuta um estrondo na porta, e depois passos apressados para a sala de jantar.")
+                    ui.exibir("\n Você escuta um estrondo na porta, e depois passos apressados para a sala de jantar.")
 
             rick_ataque = (self.rick_pos >= 4) or (self.rick_pos == 3 and random.random() < 0.3)
             carol_porta_ataque = (self.caroline_caminho == "porta") and ((self.caroline_pos >= 6) or (self.caroline_pos == 5 and random.random() < 0.3))
@@ -561,16 +569,16 @@ class MinigameSeguranca:
             
             if (rick_ataque and not self.porta_fechada) or (carol_porta_ataque and not self.porta_fechada) or jon_ataque or carol_duto_ataque:
                 if getattr(jogo, 'god_mode', False):
-                    print(f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara. Ele pede desculpas e sai de fininho.{RESET}")
+                    ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Um animatrônico entra na sala... mas você o encara. Ele pede desculpas e sai de fininho.{RESET}")
                     self.rick_pos = 0; self.caroline_pos = 0; self.jon_pos = 0
                 else:
-                    print("\n Um animatronico conseguiu entrar.")
-                    pausar(2)
+                    ui.exibir("\n Um animatronico conseguiu entrar.")
+                    ui.pausar(2)
                     return "morte"
             
             if self.rick_pos == 3 and not self.porta_fechada and random.random() < 0.25:
                 self.rick_pos = 1 
-                print(" Ouve passos pesados a se afastar da porta")
+                ui.exibir(" Ouve passos pesados a se afastar da porta")
             else:
                 furia_atual = self.furia + (self.turno // 6) 
                 if self.rick_pos < 3: 
@@ -591,15 +599,22 @@ class MinigameSeguranca:
             if random.randint(1, 100) > 80 and not getattr(jogo, 'alberto_desativado', False): 
                 self.alberto_troll = True
 
-            print("\n[A atualizar sistema...]")
-            pausar(3.5)
+            ui.exibir("\n[A atualizar sistema...]")
+            ui.pausar(3.5)
 
         if self.turno >= 24:
-            limpar_tela()
-            digitar("Você se sente aliviado quando a luz do sol começa a invadir a janela do restaurante, e o relogio marca pontualmente '06:00' ", 0.03, DOS_BRANCO)
-            pausar(2)
-            digitar("O sol começa a nascer. A energia retorna aos poucos.", 0.03, DOS_BRANCO)
-            digitar("A porta da sala destranca.", 0.03, DOS_BRANCO)
+            ui.limpar()
+            try:
+                from views import digitar
+                digitar("Você se sente aliviado quando a luz do sol começa a invadir a janela do restaurante, e o relogio marca pontualmente '06:00' ", 0.03, DOS_BRANCO)
+                ui.pausar(2)
+                digitar("O sol começa a nascer. A energia retorna aos poucos.", 0.03, DOS_BRANCO)
+                digitar("A porta da sala destranca.", 0.03, DOS_BRANCO)
+            except:
+                ui.exibir("Você se sente aliviado quando a luz do sol começa a invadir a janela do restaurante, e o relogio marca pontualmente '06:00' ")
+                ui.pausar(2)
+                ui.exibir("O sol começa a nascer. A energia retorna aos poucos.")
+                ui.exibir("A porta da sala destranca.")
             
             jogo.mapa["sala de jantar"]["descrição"] = "A luz da manhã invade as janelas sujas."
             jogo.mapa["hall de entrada"]["descrição"] = "O hall está iluminado."
@@ -608,13 +623,26 @@ class MinigameSeguranca:
             jogo.noite_vencida = True
 
             if getattr(jogo, 'fios_cortados_inventario', False):
-                pausar(2)
-                digitar("\nVocê saca o dispositivo.", 0.03, DOS_AMARELO)
-                print(f"{DOS_VERDE}{ARTE_RADAR}{RESET}")
-                pausar(1)
-                digitar("[DISPOSITIVO]: PRESENÇA ULTERIOR DETECTADA.", 0.03, DOS_VERDE)
-                digitar("Ela ainda está aqui...\n", 0.04, DOS_AMARELO)
-                pausar(3)
+                ui.pausar(2)
+                try:
+                    from data import ARTE_RADAR
+                    radar = ARTE_RADAR
+                except:
+                    radar = "   .---.\n /   |   \\\n|----O----|\n \\   |   /\n   '---'"
+                
+                try:
+                    digitar("\nVocê saca o dispositivo.", 0.03, DOS_AMARELO)
+                    ui.exibir(f"{DOS_VERDE}{radar}{RESET}")
+                    ui.pausar(1)
+                    digitar("[DISPOSITIVO]: PRESENÇA ULTERIOR DETECTADA.", 0.03, DOS_VERDE)
+                    digitar("Ela ainda está aqui...\n", 0.04, DOS_AMARELO)
+                except:
+                    ui.exibir("\nVocê saca o dispositivo.")
+                    ui.exibir(f"{DOS_VERDE}{radar}{RESET}")
+                    ui.pausar(1)
+                    ui.exibir("[DISPOSITIVO]: PRESENÇA ULTERIOR DETECTADA.")
+                    ui.exibir("Ela ainda está aqui...\n")
+                ui.pausar(3)
             return "vitoria_seguranca"
             
         return "continuar"
