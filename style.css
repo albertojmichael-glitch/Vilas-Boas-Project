@@ -83,23 +83,22 @@ body::after {
 
 .container {
     display: flex;
-    justify-content: center; /* Centraliza o conteúdo horizontalmente */
-    align-items: center;     /* Centraliza o conteúdo verticalmente */
+    flex-direction: row;
     height: 100vh;
     width: 100vw;
+    align-items: flex-start; /* Garante que a sidebar fique no topo direito */
 }
 
 .terminal-section {
-    flex: none; /* Remove o crescimento automático para focar na largura fixa */
-    width: 100%;
-    max-width: 800px; /* Define uma largura máxima confortável para leitura estilo monitor CRT */
-    height: 90vh; /* Altura do terminal ocupando a maior parte da tela */
+    flex: 1; /* Ocupa o espaço restante à esquerda */
+    height: 100vh;
     padding: 20px;
     overflow-y: auto;
     position: relative;
     display: flex;
     flex-direction: column;
-    margin: 0 auto; /* Força a centralização */
+    max-width: 900px; /* Mantém uma largura confortável para leitura */
+    margin: 0 auto; /* Centraliza a caixa do terminal no espaço principal */
 }
 
 #output p {
@@ -137,9 +136,8 @@ input {
 /* --- SIDEBAR E PAINÉIS --- */
 
 .sidebar {
-    flex: 1;
     min-width: 250px;
-    max-width: 350px;
+    max-width: 300px;
     background-color: #0a0a0a;
     border-left: 2px solid #33ff00;
     padding: 20px;
@@ -147,6 +145,7 @@ input {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    align-self: flex-start; /* Trava a sidebar no topo superior direito */
 }
 
 .panel h2 {
