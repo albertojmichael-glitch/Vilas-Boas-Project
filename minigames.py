@@ -134,7 +134,7 @@ class MinigameMinotauro:
             
         elif acao in ["ir trás", "ir tras", "ir atrás", "ir atras"]:
             if self.py > 0: self.py -= 1
-            else: ui.exibir("Você bate as costas na porta de metal. Ela não abre apenas encostando...")
+            else: ui.exibir("Você bate as costas na porta de metal. Ela não abre...")
             turno_gasto = True
 
         elif acao == "esperar": 
@@ -157,8 +157,8 @@ class MinigameMinotauro:
                 if "tesoura" in jogo.inventario:
                     ui.exibir(f"\\n{DOS_VERMELHO}Você corta os fios principais. Faíscas voam no seu rosto, mas não causam queimaduras.{RESET}")
                     ui.exibir(f"{DOS_VERMELHO} ✂ Sua tesoura quebra com a força do choque elétrico{RESET}")
-                    ui.exibir(f"{DOS_VERMELHO}Ele sabe onde você está!{RESET}")
-                    ui.exibir(f"{DOS_VERMELHO}CORRA DE VOLTA PARA A PORTA!{RESET}")
+                    ui.exibir(f"{DOS_VERMELHO}Ele sabe onde você está.{RESET}")
+                    ui.exibir(f"{DOS_VERMELHO}CORRA DE VOLTA PARA A PORTA{RESET}")
                     
                     jogo.inventario.remove("tesoura")
                     jogo.inventario.append("tesoura quebrada")
@@ -185,10 +185,10 @@ class MinigameMinotauro:
                     ui.pausar(2)
                     return "vitoria_minotauro"
                 else:
-                    ui.exibir("Você está na porta de saída, mas a missão não foi cumprida. Você precisa cortar e pegar os fios no fundo da sala!")
+                    ui.exibir("Você está na porta de saída, Você precisa cortar e pegar os fios eletricos.")
                     turno_gasto = True
             else:
-                ui.exibir("A porta de saída não fica aqui! Tente voltar para trás.")
+                ui.exibir("A porta de saída não fica aqui. Tente voltar para trás.")
         
         
         else: 
@@ -328,18 +328,18 @@ class MinigameSeguranca:
         CUSTO_MOTOR = 2 + custo_extra
 
         if acao == "fechar porta":
-            if self.apagao > 0 or self.energia <= CUSTO_MOTOR: print("Sem energia! O botão faz um clique morto.")
+            if self.apagao > 0 or self.energia <= CUSTO_MOTOR: print("Sem energia, o botão não faz nada.")
             elif self.porta_fechada: print("A porta já está fechada.")
             else:
                 self.porta_fechada = True
                 self.energia -= CUSTO_MOTOR
-                print(f"A pesada porta de metal desce com um estrondo. (-{CUSTO_MOTOR}% Energia)")
+                print(f"A pesada porta de metal fecha. (-{CUSTO_MOTOR}% Energia)")
                 if self.alberto_troll:
                     print("\n Como você é tão tolo? Hahahaha")
                     self.erro_camera = True; self.erro_deteccao = True; self.alberto_troll = False
 
         elif acao == "abrir porta":
-            if self.apagao > 0 or self.energia <= CUSTO_MOTOR: print("Sem energia! A porta não responde.")
+            if self.apagao > 0 or self.energia <= CUSTO_MOTOR: print("sem energia, a porta não responde.")
             elif not self.porta_fechada: print("A porta já está aberta.")
             else: 
                 self.porta_fechada = False
