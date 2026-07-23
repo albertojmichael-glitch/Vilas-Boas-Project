@@ -264,11 +264,11 @@ class MinigameMinotauro:
 import random
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 
-# ... (código do minotauro fica acima) ...
+
 
 class MinigameSeguranca:
     def __init__(self, jogo):
-        self.ui = jogo.ui_handler # Puxa o manipulador web!
+        self.ui = jogo.ui_handler 
         self.turno = 0
         self.energia = 9999 if getattr(jogo, 'god_mode', False) else random.randint(getattr(jogo, 'energia_min_noite', 70), getattr(jogo, 'energia_max_noite', 100)) 
         self.porta_fechada = False
