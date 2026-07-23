@@ -29,11 +29,11 @@ body {
     font-size: 1.3rem;
     font-weight: 500;
     overflow: hidden;
-    animation: crt-flicker 0.15s infinite; /* Tremor constante do tubo */
-    position: relative; /* Necessário para os pseudo-elementos cobrirem a tela */
+    animation: crt-flicker 0.15s infinite;
+    position: relative;
 }
 
-/* Scanlines (Linhas de varredura horizontais) */
+/* Scanlines (Linhas de varredura horizontais leves) */
 body::before {
     content: " ";
     display: block;
@@ -43,62 +43,36 @@ body::before {
                 linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
     z-index: 998;
     background-size: 100% 3px, 3px 100%;
-    pointer-events: none; /* CRÍTICO: Permite clicar através do efeito */
-}
-
-/* Vinheta (Escurecimento nas bordas simulando vidro curvo) */
-body::after {
-    content: " ";
-    display: block;
-    position: absolute;
-    top: 0; left: 0; bottom: 0; right: 0;
-    background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%);
-    z-index: 999;
     pointer-events: none;
 }
 
 /* --- CORES E GLOW (BRILHO DO FÓSFORO) --- */
 
 #terminal, .linha, span {
-    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor; /* O brilho mágico */
+    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor;
 }
 
-.amarelo { 
-    color: #ffdd00; 
-}
+.amarelo { color: #ffdd00; }
+.vermelho { color: #ff4444; }
+.verde { color: #44ff44; }
+.branco { color: #ffffff; }
 
-.vermelho { 
-    color: #ff4444; 
-}
-
-.verde { 
-    color: #44ff44; 
-}
-
-.branco {
-    color: #ffffff;
-}
-
-/* --- ESTRUTURA PRINCIPAL --- */
+/* --- ESTRUTURA ORIGINAL REVERTIDA --- */
 
 .container {
     display: flex;
-    flex-direction: row;
+    flex-direction: row; 
     height: 100vh;
     width: 100vw;
-    align-items: flex-start; /* Garante que a sidebar fique no topo direito */
 }
 
 .terminal-section {
-    flex: 1; /* Ocupa o espaço restante à esquerda */
-    height: 100vh;
+    flex: 3;
     padding: 20px;
     overflow-y: auto;
     position: relative;
     display: flex;
     flex-direction: column;
-    max-width: 900px; /* Mantém uma largura confortável para leitura */
-    margin: 0 auto; /* Centraliza a caixa do terminal no espaço principal */
 }
 
 #output p {
@@ -130,14 +104,15 @@ input {
     outline: none;
     caret-color: #33ff00;
     caret-shape: block;
-    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor; /* Input também brilha */
+    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor;
 }
 
-/* --- SIDEBAR E PAINÉIS --- */
+/* --- SIDEBAR NA POSIÇÃO ORIGINAL (TOPO DIREITO) --- */
 
 .sidebar {
+    flex: 1;
     min-width: 250px;
-    max-width: 300px;
+    max-width: 350px;
     background-color: #0a0a0a;
     border-left: 2px solid #33ff00;
     padding: 20px;
@@ -145,7 +120,6 @@ input {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    align-self: flex-start; /* Trava a sidebar no topo superior direito */
 }
 
 .panel h2 {
@@ -165,7 +139,7 @@ input {
 ul { list-style-type: none; }
 ul li { margin-bottom: 5px; }
 
-/* --- UI COMPONENTS --- */
+/* --- COMPONENTES DA UI --- */
 
 .spinner-container {
     display: none;
