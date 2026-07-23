@@ -15,10 +15,10 @@ def imprimir_tela_boot(ui):
 def imprimir_menu_dificuldade(ui, tem_autosave=False, jogo=None):
     ui.animar("==================================================", 0.005, DOS_VERDE, jogo)
     ui.animar("__     _____ _     _        _ ____   ___   ____ ", 0.005, DOS_VERDE, jogo)
-    ui.animar("\ \   / /_ _| |   | |      / / ___| / _ \ / ___|", 0.005, DOS_VERDE, jogo)
-    ui.animar(" \ \ / / | || |   | |     / /\___ \| | | |\___ \\", 0.005, DOS_VERDE, jogo)
-    ui.animar("  \ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.005, DOS_VERDE, jogo)
-    ui.animar("   \_/  |___|_____|_____/_/  |____/ \___/ |____/", 0.005, DOS_VERDE, jogo)
+    ui.animar(r"\ \   / /_ _| |   | |      / / ___| / _ \ / ___|", 0.005, DOS_VERDE, jogo)
+    ui.animar(r" \ \ / / | || |   | |     / /\___ \| | | |\___ \\", 0.005, DOS_VERDE, jogo)
+    ui.animar(r"  \ V /  | || |___| |___ / /  ___) | |_| | ___) |", 0.005, DOS_VERDE, jogo)
+    ui.animar(r"   \_/  |___|_____|_____/_/  |____/ \___/ |____/", 0.005, DOS_VERDE, jogo)
     ui.animar("==================================================", 0.005, DOS_VERDE, jogo)
     ui.animar("        SISTEMA DE SEGURANÇA INTEGRADO v1.0       \n", 0.02, DOS_BRANCO, jogo)
 

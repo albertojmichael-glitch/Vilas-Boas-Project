@@ -172,12 +172,12 @@ def cmd_examinar(comando, jogo, mapa):
     item_inventario = next((i for i in jogo.inventario if match_alvo == i), None)
 
     if item_cenario:
-        ui.exibir(f"\n{DOS_VERDE}C:\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
+        ui.exibir(fr"\n{DOS_VERDE}C:\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
         ui.pausar(1)
         ui.animar(coisas_para_olhar[item_cenario], 0.03, DOS_AMARELO)
         ui.pausar(2)
     elif item_inventario:
-        ui.exibir(f"\n🔎 {descricoes_itens.get(item_inventario, 'Não há nada de especial nisso.')}")
+        ui.exibir(f"\n ☞ {descricoes_itens.get(item_inventario, 'Não há nada de especial nisso.')}")
         if item_inventario == "tabua pequena de madeira" and not getattr(jogo, 'god_mode', False):
             jogo.hp -= 1
             ui.exibir(f"{DOS_VERMELHO}Você se machucou nas farpas. (HP: {jogo.hp}){RESET}")
@@ -453,7 +453,9 @@ def processar_comando(comando, jogo, mapa):
         comando = mapa_direcoes[comando]
 
     if jogo.sala_atual in mapa:
-        saidas_validas = [str(k).lower() for k in mapa[jogo.sala_atual].keys() if k not in ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]]
+        sala = mapa[jogo.sala_atual] 
+        
+        saidas_validas = [str(k).lower() for k in sala.keys() if k not in ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]]
         if normalizar(comando) in saidas_validas:
             comando = f"ir {normalizar(comando)}"
 
