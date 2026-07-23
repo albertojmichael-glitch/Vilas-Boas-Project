@@ -83,18 +83,23 @@ body::after {
 
 .container {
     display: flex;
-    flex-direction: row; 
+    justify-content: center; /* Centraliza o conteúdo horizontalmente */
+    align-items: center;     /* Centraliza o conteúdo verticalmente */
     height: 100vh;
     width: 100vw;
 }
 
 .terminal-section {
-    flex: 3;
+    flex: none; /* Remove o crescimento automático para focar na largura fixa */
+    width: 100%;
+    max-width: 800px; /* Define uma largura máxima confortável para leitura estilo monitor CRT */
+    height: 90vh; /* Altura do terminal ocupando a maior parte da tela */
     padding: 20px;
     overflow-y: auto;
     position: relative;
     display: flex;
     flex-direction: column;
+    margin: 0 auto; /* Força a centralização */
 }
 
 #output p {
