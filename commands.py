@@ -141,7 +141,7 @@ def cmd_largar(comando, jogo, mapa):
         item_desejado = match_inv
 
     if item_desejado == "lanterna":
-        ui.exibir(f"{DOS_VERMELHO}Você enlouqueceu? Se largar a lanterna, não vai sobrar nada para iluminar.{RESET}")
+        ui.exibir(f"{DOS_VERMELHO}Se largar a lanterna, não vai sobrar nada para iluminar.{RESET}")
         ui.pausar(2)
         return
         
@@ -457,20 +457,25 @@ def processar_comando(comando, jogo, mapa):
         if normalizar(comando) in saidas_validas:
             comando = f"ir {normalizar(comando)}"
 
+        inspecionaveis_sala = [normalizar(k) for k in sala.get("inspecionaveis", {}).keys()]
+        if normalizar(comando) in inspecionaveis_sala:
+            comando = f"examinar {normalizar(comando)}"
+
     partes = extrair_argumentos(comando)
     verbo_bruto = partes[0] if partes else ""
     resto = " ".join(partes[1:]) if len(partes) > 1 else ""
 
     aliases_verbos = {
         "p": "pegar", "l": "largar", "u": "usar", "c": "combinar", 
-        "j": "jogar", "x": "examinar", "ex": "examinar", "o": "olhar", 
+        "j": "jogar", "x": "examinar", "ex": "examinar", "o": "examinar", 
+        "olhar": "examinar", "ver": "examinar", "investigar": "examinar",
         "i": "inventario", "inv": "inventario"
     }
     if verbo_bruto in aliases_verbos:
         verbo_bruto = aliases_verbos[verbo_bruto]
         comando = f"{verbo_bruto} {resto}".strip()
 
-    verbos_validos = ["ir", "pegar", "largar", "usar", "combinar", "juntar", "examinar", "jogar", "abrir", "salvar", "carregar", "ajuda", "comandos", "inventario", "olhar", "cls", "limpar", "clear", "clean", "whoami", "sair", "tp", "gerar", "atacar", "bater", "chutar", "lutar", "pular", "desligar", "desativar"]
+    verbos_validos = ["ir", "ver", "investigar", "pegar", "largar", "usar", "combinar", "juntar", "examinar", "jogar", "abrir", "salvar", "carregar", "ajuda", "comandos", "inventario", "olhar", "cls", "limpar", "clear", "clean", "whoami", "sair", "tp", "gerar", "atacar", "bater", "chutar", "lutar", "pular", "desligar", "desativar"]
     
     if verbo_bruto not in verbos_validos:
         sugestoes = difflib.get_close_matches(verbo_bruto, verbos_validos, n=1, cutoff=0.75)
