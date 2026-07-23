@@ -284,15 +284,18 @@ def cmd_usar(comando, jogo, mapa):
         mapa["entrada"]["atrás"] = "parede"
         jogo.inventario.remove(item)
         ui.pausar(2)
+
     elif item == "doce":
         jogo.hp += 1; jogo.inventario.remove("doce")
         ui.exibir(f"Você engoliu o doce velho. Ganhou 1 HP! (HP: {jogo.hp})")
         ui.exibir("Mas o gosto de açúcar mofado embrulha seu estômago...")
         ui.pausar(2)
+
     elif item == "sanduiche estragado":
         jogo.hp -= 1; jogo.turnos_enjoado = 4; jogo.inventario.remove("sanduiche estragado")
         ui.exibir(f" Você deu uma mordida na gosma cinza. Seu estômago revira violentamente! (HP: {jogo.hp})")
         ui.pausar(2)
+
     elif item == "remedio":
         if jogo.hp < 3:
             jogo.hp = min(3, jogo.hp + 2)
@@ -300,11 +303,38 @@ def cmd_usar(comando, jogo, mapa):
             ui.exibir(f" Você engole as pílulas secas. A dor diminui (HP restaurado para {jogo.hp})")
         else: ui.exibir("Você já está com a saúde máxima.")
         ui.pausar(2)
+
     elif item == "bateria nova":
         jogo.turnos_luz = 10 if not getattr(jogo, 'god_mode', False) else 9999
         jogo.inventario.remove("bateria nova")
         ui.exibir(f"{DOS_VERDE} Você conectou a bateria na sua lanterna, ela brilha com força total.{RESET}")
         ui.pausar(2)
+    
+    elif item == "disquete":
+        if jogo.sala_atual == "01":
+            ui.exibir(f"{DOS_VERDE}Você insere o disquete sujo no drive do terminal de segurança...{RESET}")
+            ui.pausar(1.5)
+            ui.exibir(f"{DOS_BRANCO}LENDO A:\\ ...{RESET}")
+            ui.pausar(2)
+            
+            
+            ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: ANGELA.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Hoje vim mostrar para meu esposo João, meu local de trabalho, o Vilas Boas. Talvez não tenha sido uma boa ideia.'{RESET}", 0.06, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'A gente brigou feio no meio do salão, pois aparentemente ele achava que tinha alguém me observando atrás das cortinas, sendo que não... Não tinha nada lá.'{RESET}", 0.09, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Ele foi falar com meu chefe, o Sr. Renato, lá na salas dos fundos, enquanto eu escrevo isso.'{RESET}", 0.08, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Talvez... Seja loucura minha, mas eu vi alguem me chamando para a cozinha privada pela janela do escritório, vou ir lá ver.'{RESET}", 0.05, DOS_VERMELHO, jogo)
+            ui.animar(f"{DOS_BRANCO}'Ela foi libertada.'{RESET}", 0.10, DOS_VERMELHO, jogo)
+            ui.pausar(2)
+
+
+            ui.exibir(f"{DOS_VERMELHO}O drive faz um ruído horrível e ejeta o disquete arranhado. Ele está arruinado.{RESET}")
+            jogo.inventario.remove("disquete")
+            ui.pausar(2)
+        else:
+            ui.exibir(f"{DOS_BRANCO}Você segura o velho disquete, mas não há nenhum computador neste cômodo para lê-lo. Talvez na sala de segurança?{RESET}")
+            ui.pausar(1.5)
+
+
     elif item == "tesoura":
         if jogo.sala_atual == "02":
             if mapa["corredor"]["02"] != "cozinha privada":
@@ -526,16 +556,26 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir("Desativar o quê?")
         ui.pausar(2)
         return True
+
     elif comando.startswith("tp ") and getattr(jogo, 'god_mode', False):
         destino = comando.replace("tp ", "").strip()
         jogo.sala_atual = destino
         ui.exibir(f"{DOS_AMARELO}[GOD MODE] Teleportado instantaneamente para '{destino}'.{RESET}")
         return True 
+
     elif comando.startswith("gerar ") and getattr(jogo, 'god_mode', False):
-        item = comando.replace("gerar ", "").strip()
-        jogo.inventario.append(item)
-        ui.exibir(f"{DOS_AMARELO}[GOD MODE] O item '{item}' materializou-se na sua mochila.{RESET}")
+        item_desejado = comando.replace("gerar ", "").strip()
+        
+        
+        match_item = encontrar_melhor_match(item_desejado, list(descricoes_itens.keys()))
+        
+        if match_item:
+            jogo.inventario.append(match_item)
+            ui.exibir(f"{DOS_AMARELO}[GOD MODE] O item '{match_item}' materializou-se na sua mochila.{RESET}")
+        else:
+            ui.exibir(f"{DOS_VERMELHO}[GOD MODE ERRO] Matéria não catalogada. O sistema não sabe como fabricar '{item_desejado}'.{RESET}")
         return True
+
     elif verbo_bruto in ["atacar", "bater", "chutar", "lutar"]:
         if getattr(jogo, 'god_mode', False):
             ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você dá um soco no ar! A pressão rompe as partículas de poeira ao seu redor. Você se sente incrivelmente forte.{RESET}")
@@ -543,11 +583,13 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(f"{DOS_BRANCO}Você não tem armas. Suas mãos estão tremendo demais para lutar.{RESET}")
         ui.pausar(1.5)
         return False
+
     elif comando == "salvar":
         salvar_autosave(jogo)
         ui.exibir(f"{DOS_VERDE}Progresso salvo no sistema unificado de Autosave.{RESET}")
         ui.pausar(1.5)
         return False
+
     elif comando == "carregar":
         if carregar_autosave(jogo):
             ui.exibir(f"{DOS_VERDE} Jogo carregado com sucesso do Autosave.{RESET}")
@@ -557,6 +599,7 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(f"{DOS_AMARELO}Nenhum Autosave encontrado no disco.{RESET}")
             ui.pausar(1.5)
         return False
+
     elif comando == "ajuda" or comando == "comandos":
         ui.exibir(f"\n{DOS_AMARELO}--- COMANDOS DO SISTEMA ---{RESET}")
         ui.exibir("Mover: 'ir [direcao]' ou apenas o nome da sala! | Itens: 'pegar', 'largar', 'usar', 'combinar'")
@@ -567,6 +610,7 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(f"{DOS_VERMELHO}'tp [sala]' -> Teleporta | 'gerar [item]' -> Cria item | 'atacar' -> Insta-Kill{RESET}")
             ui.exibir(f"{DOS_VERMELHO}'pular noite' -> Vence a noite 06:00 (Apenas no minigame de Segurança){RESET}")
         ui.pausar(2); return False
+
     elif comando == "inventario" or comando == "i":
         if len(jogo.inventario) > 0: 
             itens_inv = [f"{DOS_VERDE}{i}{RESET}" for i in jogo.inventario]
@@ -575,17 +619,22 @@ def processar_comando(comando, jogo, mapa):
         else: 
             ui.exibir("[INV] Seu inventário está vazio.")
         ui.pausar(2); return False
+
     elif comando == "olhar" or comando == "o":
         return False 
+
     elif comando in ["cls", "limpar", "clear", "clean"]:
         ui.limpar(); return False
+
     elif comando == "whoami":
         ui.animar("Sou eu, Rogério.", 0.08, DOS_VERMELHO, jogo)
         ui.pausar(2); return False
+
     elif comando == "format c:":
         ui.animar("FORMATAÇÃO INICIADA...", 0.05, DOS_VERMELHO, jogo)
         ui.exibir(f"{DOS_VERMELHO} ☣ ERRO CRÍTICO 0x0000: PRESENÇA ULTERIOR PRESA NO DISCO. ☣{RESET}")
         ui.pausar(2); return False
+
     elif comando == "sair":
         raise QuitGameException()
     else:
