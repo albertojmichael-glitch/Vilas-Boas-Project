@@ -172,10 +172,17 @@ def cmd_examinar(comando, jogo, mapa):
     item_inventario = next((i for i in jogo.inventario if match_alvo == i), None)
 
     if item_cenario:
-        ui.exibir(fr"\n{DOS_VERDE}C:\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
+        ui.exibir(f"\n{DOS_VERDE}C:\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
         ui.pausar(1)
+        
+        
+        if item_cenario == "papeis":
+            from data import ARTE_PASTA
+            ui.animar(f"{DOS_BRANCO}{ARTE_PASTA}{RESET}", 0.015, jogo=jogo)
+            
         ui.animar(coisas_para_olhar[item_cenario], 0.03, DOS_AMARELO)
         ui.pausar(2)
+
     elif item_inventario:
         ui.exibir(f"\n ☞ {descricoes_itens.get(item_inventario, 'Não há nada de especial nisso.')}")
         if item_inventario == "tabua pequena de madeira" and not getattr(jogo, 'god_mode', False):
@@ -184,7 +191,8 @@ def cmd_examinar(comando, jogo, mapa):
             if jogo.hp <= 0:
                 ui.exibir(f"{DOS_VERMELHO}Você sangrou até desmaiar, caindo no chão e perdendo a consciencia.{RESET}")
                 jogo.sala_atual = "morte"
-        ui.pausar(2)
+                ui.pausar(2)
+
     else:
         ui.exibir(f"Você olha para '{alvo_bruto}', mas não há nada de interessante ou você não possui o objeto.")
         ui.pausar(1.5)

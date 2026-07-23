@@ -282,6 +282,7 @@ class MinigameSeguranca:
         self.usos_sistema_turno = 0
         
         print("\n" + "="*50)
+        print(f"{DOS_BRANCO}{ARTE_MESA_SEGURANCA}{RESET}")
         print("Você senta na cadeira da sala de segurança.")
         pausar(1)
 
@@ -608,9 +609,8 @@ class MinigameSeguranca:
 
             if getattr(jogo, 'fios_cortados_inventario', False):
                 pausar(2)
-                radar = "   .---.\n /   |   \\\n|----O----|\n \\   |   /\n   '---'"
                 digitar("\nVocê saca o dispositivo.", 0.03, DOS_AMARELO)
-                print(f"{DOS_VERDE}{radar}{RESET}")
+                print(f"{DOS_VERDE}{ARTE_RADAR}{RESET}")
                 pausar(1)
                 digitar("[DISPOSITIVO]: PRESENÇA ULTERIOR DETECTADA.", 0.03, DOS_VERDE)
                 digitar("Ela ainda está aqui...\n", 0.04, DOS_AMARELO)
