@@ -3,6 +3,7 @@ from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from data import CAVEIRA_MORTE, MAX_INVENTARIO
 from state import registrar_final, carregar_conquistas, AUTOSAVE_FILE
 from utils import corromper_texto
+from minigames import MinigameSeguranca, MinigameMinotauro
 
 def imprimir_tela_boot(ui):
     ui.animar("VILLAS-BOAS INDUSTRIES (C) 1982", 0.04, DOS_BRANCO)

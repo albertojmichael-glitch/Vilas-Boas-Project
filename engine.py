@@ -4,8 +4,8 @@ from minigames import MinigameMinotauro, MinigameSeguranca
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from utils import extrair_argumentos, atualizar_eventos_de_tempo
 from data import MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
-from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial,
-                   dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
+from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial, dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
+from minigames import MinigameSeguranca, MinigameMinotauro
 
 ARTE_COFRE = r'''
   __________________________
