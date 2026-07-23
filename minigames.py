@@ -107,7 +107,16 @@ class MinigameMinotauro:
         self.my = max(0, min(3, self.my))
 
     def processar_turno(self, acao, jogo):
-        ui = jogo.ui_handler # Puxa a interface gráfica/web
+        ui = jogo.ui_handler 
+
+        if acao in ["celular quebrado", "ver celular quebrado", "olhar celular quebrado", "examinar celular quebrado", "investigar celular quebrado", "celular"]:
+            if self.px == 0 and self.py == 3: 
+                desc = jogo.mapa.get("sala de energia", {}).get("inspecionaveis", {}).get("celular quebrado", "Parece ser dela...")
+                ui.exibir(f"\n{DOS_AMARELO}🔎 {desc}{RESET}")
+                return "continuar"
+            else:
+                ui.exibir("O celular quebrado está no fundo da sala (na parede central).")
+                return "continuar"
         
         if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
             ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")

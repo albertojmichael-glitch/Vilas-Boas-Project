@@ -27,7 +27,7 @@ def cmd_ir(comando, jogo, mapa):
         ui.pausar(2)
         return True
 
-    saidas_validas = [k for k in sala.keys() if k not in ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"] and isinstance(sala[k], str)]
+    saidas_validas = [str(k).lower() for k in sala.keys() if k not in ["descrição", "itens", "inspecionaveis", "cofre_important"]]
     
     match_direcao = encontrar_melhor_match(direcao, saidas_validas)
     if match_direcao:
