@@ -1,13 +1,23 @@
 import random
+import copy
+import logging
+
 from commands import processar_comando, normalizar
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from utils import extrair_argumentos, atualizar_eventos_de_tempo
-from data import MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
-from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial, dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
-from minigames import MinigameSeguranca
-from minigames import MinigameMinotauro
+from data import MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, MAPA_ORIGINAL
+from views import (
+    imprimir_tela_boot,
+    imprimir_menu_dificuldade,
+    imprimir_tutorial,
+    dar_dica_jon,
+    falar_pianista,
+    imprimir_contexto_sala,
+    dar_tela_de_morte,
+    rodar_final
+)
+from minigames import MinigameSeguranca, MinigameMinotauro
 
-import logging
 logger = logging.getLogger(__name__)
 
 ARTE_COFRE = r'''
@@ -36,24 +46,25 @@ def desbloquear_conquista(jogo, id_conquista, nome_exibicao):
         jogo.conquistas.append(id_conquista)
         ui = jogo.ui_handler
         ui.buffer.append(f"@@TYPE@@amarelo@@0@@♔ CONQUISTA DESBLOQUEADA: {nome_exibicao} ♔")
-        
-
 
 
 def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save=None):
     comando = normalizar(comando_bruto)
     ui = jogo.ui_handler
 
+    # Safeguard: Restaura ID de sala válido se estiver corrompido
+    if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
+        jogo.sala_atual = "01"
+
+    # ==========================================
+    # ESTADO: FIM DE JOGO
+    # ==========================================
     if jogo.estado_atual == "FIM":
         if comando in ["f5", "reiniciar", "restart", "reset", "dir"]:
-
-            # Reseta o mapa original para fechar portas e restaurar o estado inicial
-            import copy
             try:
-                from data import MAPA_ORIGINAL
                 jogo.mapa = copy.deepcopy(MAPA_ORIGINAL)
-            except:
-                pass
+            except Exception as e:
+                logger.error(f"Erro ao restaurar MAPA_ORIGINAL: {e}")
 
             # Reseta TODAS as variáveis da partida
             jogo.estado_atual = "AGUARDANDO_DIR"
@@ -69,7 +80,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.turnos_luz = 0
             jogo.fast_mode = False 
             jogo.dificuldade_escolhida = "NORMAL"
-            
+            jogo.minigame_atual = None
             
             if comando == "dir":
                 ui.limpar()
@@ -104,6 +115,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         ui.exibir(f"{DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{RESET}")
         return
 
+    # ==========================================
+    # ESTADO: AGUARDANDO_DIR
+    # ==========================================
     if jogo.estado_atual == "AGUARDANDO_DIR":
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
@@ -136,6 +150,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
             ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
+    # ==========================================
+    # ESTADO: MENU
+    # ==========================================
     elif jogo.estado_atual == "MENU":
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
@@ -190,6 +207,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         else:
             ui.animar(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}", 0.04, jogo=jogo)
 
+    # ==========================================
+    # ESTADO: JOGO / COMBATE
+    # ==========================================
     elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
@@ -200,7 +220,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "MINIGAME_MINOTAURO"
             jogo.minigame_atual.imprimir_status()
 
-        elif jogo.sala_atual == "cadeira" and not getattr(jogo, 'noite_vencida', False):
+        elif (comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"] or jogo.sala_atual == "01") and not getattr(jogo, 'noite_vencida', False) and comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]:
+            jogo.sala_atual = "01"
             jogo.minigame_atual = MinigameSeguranca(jogo)
             jogo.estado_atual = "MINIGAME_SEGURANCA"
             jogo.minigame_atual.imprimir_status()
@@ -248,54 +269,68 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
         else:
             gastou_turno = processar_comando(comando_bruto, jogo, jogo.mapa)
-            if gastou_turno: atualizar_eventos_de_tempo(jogo)
+            if gastou_turno:
+                atualizar_eventos_de_tempo(jogo)
             
+            # Restaura sala se ficou invalida
+            if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
+                jogo.sala_atual = "01"
+
             # --- GATILHO DO FINAL VERDADEIRO ---
             if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
-                except: pass
+                except Exception:
+                    pass
                 rodar_final("verdadeiro", jogo)
                 return
-            # -----------------------------------
             
             if jogo.sala_atual == "morte":
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa")
-                except: pass
+                except Exception:
+                    pass
                 dar_tela_de_morte(jogo)
             elif jogo.sala_atual == "saida":
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Covarde")
-                except: pass
+                except Exception:
+                    pass
                 rodar_final("saida", jogo)
             elif jogo.sala_atual == "cama":
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Dorminhoco")
-                except: pass
+                except Exception:
+                    pass
                 rodar_final("cama", jogo)
             elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
                 if getattr(jogo, 'incendio', False): 
                     try: 
                         from app import registrar_telemetria
                         registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
-                    except: pass
+                    except Exception:
+                        pass
                     rodar_final("verdadeiro", jogo)
                 else: 
                     try: 
                         from app import registrar_telemetria
                         registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Bom")
-                    except: pass
+                    except Exception:
+                        pass
                     rodar_final("final_bom", jogo)
             elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
                 pass 
             else:
-                imprimir_contexto_sala(jogo)
+                if jogo.estado_atual == "JOGO":
+                    imprimir_contexto_sala(jogo)
 
+    # ==========================================
+    # BLOCO: MINIGAME DO COFRE
+    # ==========================================
     elif jogo.estado_atual == "MINIGAME_COFRE":
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
@@ -322,6 +357,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "JOGO"
             imprimir_contexto_sala(jogo)
 
+    # ==========================================
+    # BLOCO: MINIGAME DO PORCO JON
+    # ==========================================
     elif jogo.estado_atual == "MINIGAME_JON":
         passo = getattr(jogo, 'jon_passos_dados', 0)
         if comando in ["f", "e", "d", "frente", "esquerda", "direita"]:
@@ -346,7 +384,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     try: 
                         from app import registrar_telemetria
                         registrar_telemetria("MORTE", "MINIGAME_JON", jogo.dificuldade_escolhida, "Morto pelo Porco")
-                    except: pass
+                    except Exception:
+                        pass
                     dar_tela_de_morte(jogo)
                 else:
                     jogo.estado_atual = "JOGO"
@@ -354,6 +393,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         else:
             ui.exibir("Direção inválida. Use F, E ou D.")
 
+    # ==========================================
+    # BLOCO: MINIGAME DE CONSERTOS
+    # ==========================================
     elif jogo.estado_atual == "MINIGAME_CONSERTOS_CABECA":
         jogo.web_consertos["cabeca"] = comando
         jogo.estado_atual = "MINIGAME_CONSERTOS_TRONCO"
@@ -392,27 +434,42 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         jogo.estado_atual = "JOGO"
         imprimir_contexto_sala(jogo)
 
+    # ==========================================
+    # BLOCO: MINIGAME DO PIANISTA
+    # ==========================================
     elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q1":
-        if comando == "1994": jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui, jogo)
-        else: falar_pianista(False, ui, jogo)
+        if comando == "1994": 
+            jogo.web_julgamento["pontos"] += 1
+            falar_pianista(True, ui, jogo)
+        else: 
+            falar_pianista(False, ui, jogo)
         jogo.estado_atual = "MINIGAME_JULGAMENTO_Q2"
         ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 2: Qual animatrônico está atrás de você agora?{RESET}")
 
     elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q2":
-        if "caroline" in comando or "ela" in comando: jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui, jogo)
-        else: falar_pianista(False, ui, jogo)
+        if "caroline" in comando or "ela" in comando: 
+            jogo.web_julgamento["pontos"] += 1
+            falar_pianista(True, ui, jogo)
+        else: 
+            falar_pianista(False, ui, jogo)
         jogo.estado_atual = "MINIGAME_JULGAMENTO_Q3"
         ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 3: Em que ano tudo isso começou?{RESET}")
 
     elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q3":
-        if comando == "1982": jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui, jogo)
-        else: falar_pianista(False, ui, jogo)
+        if comando == "1982": 
+            jogo.web_julgamento["pontos"] += 1
+            falar_pianista(True, ui, jogo)
+        else: 
+            falar_pianista(False, ui, jogo)
         jogo.estado_atual = "MINIGAME_JULGAMENTO_Q4"
         ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 4: Quem é você?{RESET}")
 
     elif jogo.estado_atual == "MINIGAME_JULGAMENTO_Q4":
-        if "rogerio" in comando: jogo.web_julgamento["pontos"] += 1; falar_pianista(True, ui, jogo)
-        else: falar_pianista(False, ui, jogo)
+        if "rogerio" in comando: 
+            jogo.web_julgamento["pontos"] += 1
+            falar_pianista(True, ui, jogo)
+        else: 
+            falar_pianista(False, ui, jogo)
         jogo.estado_atual = "MINIGAME_JULGAMENTO_V1"
         ui.exibir(f"\n{DOS_AMARELO}PERGUNTA 5: Quem são as três vítimas? Digite o 1º nome:{RESET}")
 
@@ -423,8 +480,10 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 jogo.web_julgamento["vitimas"].remove(v)
                 acertou = True
         
-        if acertou: falar_pianista(True, ui, jogo)
-        else: falar_pianista(False, ui, jogo)
+        if acertou: 
+            falar_pianista(True, ui, jogo)
+        else: 
+            falar_pianista(False, ui, jogo)
         
         if jogo.estado_atual == "MINIGAME_JULGAMENTO_V1":
             jogo.estado_atual = "MINIGAME_JULGAMENTO_V2"
@@ -433,7 +492,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "MINIGAME_JULGAMENTO_V3"
             ui.exibir("Digite o 3º nome: ")
         else:
-            if len(jogo.web_julgamento["vitimas"]) == 0: jogo.web_julgamento["pontos"] += 1
+            if len(jogo.web_julgamento["vitimas"]) == 0: 
+                jogo.web_julgamento["pontos"] += 1
             if jogo.web_julgamento["pontos"] == 5:
                 ui.animar("Obrigado por voltar pela gente, Rogério...", 0.08, DOS_VERDE, jogo)
                 sala = jogo.mapa[jogo.sala_atual]
@@ -457,9 +517,6 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     # BLOCO: MINIGAME DE SEGURANÇA
     # ==========================================
     elif jogo.estado_atual == "MINIGAME_SEGURANCA":
-        
-        
-        
         if type(jogo.minigame_atual) is dict:
             dados_salvos = jogo.minigame_atual
             jogo.minigame_atual = MinigameSeguranca(jogo)
@@ -468,14 +525,12 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         elif not isinstance(jogo.minigame_atual, MinigameSeguranca):
             jogo.minigame_atual = MinigameSeguranca(jogo)
             
-        
-        from utils import extrair_argumentos
         partes = extrair_argumentos(comando)
         verbo = partes[0] if partes else ""
         mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
-        if verbo in mapa_direcoes: comando = mapa_direcoes[verbo]
+        if verbo in mapa_direcoes: 
+            comando = mapa_direcoes[verbo]
 
-        
         resultado = jogo.minigame_atual.processar_turno(comando, jogo)
         
         if resultado == "continuar":
@@ -483,6 +538,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
         elif resultado == "vitoria_seguranca":
             jogo.estado_atual = "JOGO"
+            if jogo.sala_atual not in jogo.mapa:
+                jogo.sala_atual = "01"
             jogo.minigame_atual = None
             imprimir_contexto_sala(jogo)
 
@@ -493,19 +550,16 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             try: 
                 from app import registrar_telemetria
                 registrar_telemetria("MORTE", "SALA DE SEGURANCA", jogo.dificuldade_escolhida, "Jumpscare na cadeira")
-            except: pass
+            except Exception:
+                pass
             dar_tela_de_morte(jogo)
 
         return
-
 
     # ==========================================
     # BLOCO: MINIGAME DO MINOTAURO
     # ==========================================
     elif jogo.estado_atual == "MINIGAME_MINOTAURO":
-        from minigames import MinigameMinotauro
-        
-        
         if type(jogo.minigame_atual) is dict:
             dados_salvos = jogo.minigame_atual
             jogo.minigame_atual = MinigameMinotauro(jogo)
@@ -514,14 +568,12 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         elif not isinstance(jogo.minigame_atual, MinigameMinotauro):
             jogo.minigame_atual = MinigameMinotauro(jogo)
             
-        
-        from utils import extrair_argumentos
         partes = extrair_argumentos(comando)
         verbo = partes[0] if partes else ""
         mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
-        if verbo in mapa_direcoes: comando = mapa_direcoes[verbo]
+        if verbo in mapa_direcoes: 
+            comando = mapa_direcoes[verbo]
 
-        
         resultado = jogo.minigame_atual.processar_turno(comando, jogo)
         
         if resultado == "continuar":
@@ -531,7 +583,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "JOGO"
             jogo.sala_atual = "sala dos fundos"
             jogo.minigame_atual = None
-            jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
+            if "sala dos fundos" in jogo.mapa:
+                jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
             ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
             imprimir_contexto_sala(jogo)
 
@@ -542,7 +595,10 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             try: 
                 from app import registrar_telemetria
                 registrar_telemetria("MORTE", "LABIRINTO", jogo.dificuldade_escolhida, "Morto no Escuro")
-            except: pass
+            except Exception:
+                pass
             dar_tela_de_morte(jogo)
+
+        return
                 
             

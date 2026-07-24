@@ -16,6 +16,9 @@ def cmd_ir(comando, jogo, mapa):
     direcao = " ".join(palavras_limpas)
     
     if direcao in ["tras", "atras", "fundo"]: direcao = "atrás"
+
+    if jogo.sala_atual not in mapa:
+        return False
     
     sala = mapa[jogo.sala_atual]
 
