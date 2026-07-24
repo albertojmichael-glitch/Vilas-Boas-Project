@@ -172,7 +172,7 @@ class MinigameMinotauro:
                     jogo.inventario.remove("tesoura")
                     jogo.inventario.append("tesoura quebrada")
                     
-                    # ADICIONANDO OS FIOS AO INVENTÁRIO DO JOGADOR
+                    
                     jogo.inventario.append("fios cortados")
                     ui.exibir(f"{DOS_AMARELO}Você guarda os 'fios cortados' na mochila.{RESET}")
                     
@@ -188,7 +188,7 @@ class MinigameMinotauro:
                 
         elif acao == "sair":
             if self.px == 0 and self.py == 0:
-                # O JOGADOR SÓ VENCE SE TIVER CORTADO OS FIOS E ELES ESTIVEREM NO INVENTÁRIO
+                
                 if self.fios_cortados and "fios cortados" in jogo.inventario:
                     ui.exibir(f"\\n{DOS_VERDE}Você se joga contra a maçaneta, abre a porta e a tranca com toda a força! Você sobreviveu!{RESET}")
                     ui.pausar(2)
@@ -212,6 +212,7 @@ class MinigameMinotauro:
                 return "vitoria_minotauro"
             else:
                 ui.exibir("\n Você andou direto para as mãos do monstro no escuro...")
+                ui.exibir("@@JUMPSCARE@@")
                 ui.pausar(2)
                 ui.exibir("\n No vazio, você morre sozinho, sem poder salvar ninguém. ")
                 ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
@@ -252,6 +253,7 @@ class MinigameMinotauro:
                         return "vitoria_minotauro"
                     else:
                         ui.exibir("\n ☠ O Minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro ☠")
+                        ui.exibir("@@JUMPSCARE@@")
                         ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                         return "morte"
                 
@@ -573,6 +575,7 @@ class MinigameSeguranca:
                     self.rick_pos = 0; self.caroline_pos = 0; self.jon_pos = 0
                 else:
                     ui.exibir("\n Um animatronico conseguiu entrar.")
+                    ui.exibir("@@JUMPSCARE@@")
                     ui.pausar(2)
                     return "morte"
             

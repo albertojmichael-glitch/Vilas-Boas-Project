@@ -132,6 +132,13 @@ async function processarLinhas(linhas, estado) {
 
 function novaLinha(linha, terminal) {
     return new Promise((resolve) => {
+
+        if (typeof linha === 'string' && linha.includes("@@JUMPSCARE@@")) {
+            linha = linha.replace("@@JUMPSCARE@@", ""); 
+            triggerJumpscare(); 
+        }
+
+
         if (linha.startsWith("@@CLEAR@@")) {
             outputDiv.innerHTML = "";
             
@@ -220,6 +227,11 @@ async function fetchSeguro(url, options) {
         
         loadingSpinner.style.display = 'none';
         await processarLinhas(data.linhas, data.estado);
+
+        if (url === '/comando') { 
+            mostrarSalvando(); 
+        }
+
     } catch (erro) {
 
         console.error("O ERRO REAL É ESTE AQUI:", erro);
@@ -362,3 +374,67 @@ function playBip(tipo) {
     }
 }
 
+// ==========================================
+// NOVOS SISTEMAS DE IMERSÃO (V1.0 FINAL)
+// ==========================================
+
+
+function executarAtalho(cmd) {
+    const input = document.getElementById('comando');
+    input.value = cmd;
+    input.focus();
+    
+    if (typeof enviarComando === "function") enviarComando();
+}
+
+
+let ambientCtx, ambientOsc, ambientGain;
+function iniciarSomAmbiente() {
+    if (ambientCtx) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    
+    ambientCtx = new AudioContext();
+    ambientOsc = ambientCtx.createOscillator();
+    ambientGain = ambientCtx.createGain();
+    
+    ambientOsc.type = 'triangle';
+    ambientOsc.frequency.value = 55; 
+    ambientGain.gain.value = 0.03; 
+    
+    ambientOsc.connect(ambientGain);
+    ambientGain.connect(ambientCtx.destination);
+    ambientOsc.start();
+}
+
+document.body.addEventListener('click', iniciarSomAmbiente, {once: true});
+document.body.addEventListener('keydown', iniciarSomAmbiente, {once: true});
+
+
+function triggerJumpscare() {
+    const overlay = document.getElementById('jumpscare-overlay');
+    overlay.classList.remove('hidden');
+    
+    
+    if(ambientCtx) {
+        const scareOsc = ambientCtx.createOscillator();
+        const scareGain = ambientCtx.createGain();
+        scareOsc.type = 'sawtooth';
+        scareOsc.frequency.value = 130;
+        scareGain.gain.value = 0.6; 
+        scareOsc.connect(scareGain);
+        scareGain.connect(ambientCtx.destination);
+        scareOsc.start();
+        scareOsc.stop(ambientCtx.currentTime + 0.15); 
+    }
+    
+    
+    setTimeout(() => overlay.classList.add('hidden'), 150); 
+}
+
+
+function mostrarSalvando() {
+    const ind = document.getElementById('save-indicator');
+    ind.classList.remove('hidden');
+    setTimeout(() => ind.classList.add('hidden'), 1500);
+}

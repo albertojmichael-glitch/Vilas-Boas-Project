@@ -16,6 +16,18 @@
                 <input type="text" id="comando" autocomplete="off" spellcheck="false" autofocus
                        aria-label="Campo de entrada de comandos" aria-describedby="help-btn">
             </div>
+
+            <div class="mobile-controls">
+                <button onclick="executarAtalho('olhar')" aria-label="Olhar a sala">⏿ OLHAR</button>
+                <button onclick="executarAtalho('inventario')" aria-label="Ver inventário"> INV</button>
+                <button onclick="executarAtalho('ir frente')">▲</button>
+                <button onclick="executarAtalho('ir esquerda')">◀</button>
+                <button onclick="executarAtalho('ir trás')">▼</button>
+                <button onclick="executarAtalho('ir direita')">▶</button>
+            </div>
+
+
+
             
             <div id="loading" class="spinner-container hidden" role="status" aria-label="Processando comando...">
                 <div class="spinner" aria-hidden="true"></div>
@@ -47,6 +59,22 @@
         <p><strong>Abreviaturas:</strong> p=pegar | l=largar | u=usar | x=examinar</p>
         <button class="close-btn" onclick="closeHelp()">FECHAR (ESC)</button>
     </div>
+
+
+    <div id="save-indicator" class="hidden">[ SALVANDO NA BIOS... ]</div>
+    
+    <div id="jumpscare-overlay" class="hidden">
+        <pre id="jumpscare-ascii">
+    ▄██████████████▄▐█▄▄▄▄█▌
+   ██████▌▄▌▄▐▐▌███▌▀▀██▀▀
+   ████▄█▌▄▌▄▐▐▌▀███▄▄█▌
+   ▄▄▄▄▄██████████████▀
+        </pre>
+    </div>
+
+
+
+
 
     <script src="script.js?v=1.3.0"></script>
 </body>

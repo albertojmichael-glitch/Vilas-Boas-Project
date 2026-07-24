@@ -96,7 +96,8 @@ def cmd_pegar(comando, jogo, mapa):
         return False
         
     item = match_item
-    if len(jogo.inventario) >= MAX_INVENTARIO:
+    
+    if len(jogo.inventario) >= MAX_INVENTARIO and not getattr(jogo, 'god_mode', False):
         ui.exibir(f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}")
         return False
         
@@ -171,12 +172,28 @@ def cmd_usar(comando, jogo, mapa):
     
     if item == "lanterna":
         ui.exibir("Você já está usando a lanterna automaticamente (quando tem bateria).")
+        
+    elif item == "bateria nova":
+        ui.exibir(f"{DOS_VERDE}Você abre a parte inferior da lanterna e insere a bateria nova.{RESET}")
+        ui.exibir(f"{DOS_AMARELO}A luz da lanterna fica forte e ofuscante!{RESET}")
+        jogo.turnos_luz = 12 
+        jogo.inventario.remove("bateria nova")
+        return True
+        
     elif item == "disquete":
         if jogo.sala_atual == "01":
             ui.exibir(f"{DOS_VERDE}Você insere o disquete sujo no drive do terminal de segurança...{RESET}")
             ui.pausar(1.5)
             ui.exibir(f"{DOS_BRANCO}LENDO A:\\ ...{RESET}")
-            ui.pausar(2)
+            ui.pausar(1)
+
+            try:
+                from data import ARTE_DISQUETE
+                ui.animar(f"{DOS_BRANCO}{ARTE_DISQUETE}{RESET}", 0.015, jogo=jogo)
+                ui.pausar(1)
+            except:
+                pass
+
             ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: DIARIO_ANGELA.TXT{RESET}", 0.05, DOS_AMARELO, jogo=jogo)
             ui.animar(f"{DOS_BRANCO}'Ele não para de me olhar do palco. Aqueles olhos não são de plástico... tem alguém lá dentro.'{RESET}", 0.05, DOS_BRANCO, jogo=jogo)
             ui.pausar(2)

@@ -270,7 +270,7 @@ MAPA_ORIGINAL = {
         "inspecionaveis": {}
     },
     "01": {
-        "descrição": "voce entra na sala de segurança, tem um tubo de ventilação do canto esquerdo da sala, e tem uma mesa com ferramentas de segurança",
+        "descrição": "voce entra na sala de segurança, tem um tubo de ventilação do canto esquerdo da sala, e tem uma mesa com ferramentas de segurança. Tem um cofre do seu lado.",
         "frente": "cadeira", 
         "cadeira": "cadeira",
         "atrás": "corredor",
