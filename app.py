@@ -4,7 +4,12 @@ import logging
 import json
 import uuid
 import time
-import redis
+
+try:
+    import redis
+except ImportError:
+    redis = None
+
 from datetime import timedelta
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
@@ -64,22 +69,20 @@ limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 
 REDIS_URL = os.environ.get("REDIS_URL")
 
-if REDIS_URL:
+if REDIS_URL and redis is not None:
     try:
         redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
-        
         redis_client.ping()
         MEMORIA_SESSOES = redis_client
-        logger.info("Conectado ao Redis com sucesso. Cache distribuído ativado.")
-        USA_REDIS = True
+        logger.info("Conectado ao Redis com sucesso.")
     except Exception as e:
-        logger.error(f"Falha ao conectar no Redis: {e}. Caindo para cache local.")
+        logger.error(f"Falha ao conectar no Redis: {e}. Caindo para TTLCache.")
         MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
-        USA_REDIS = False
 else:
-    logger.info("REDIS_URL não configurada. Usando TTLCache na memória RAM local.")
+    logger.info("Usando TTLCache na memória RAM local.")
     MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
-    USA_REDIS = False
+
+    
 
 # --- SEGURANÇA E SCHEMAS ---
 class ComandoRequest(BaseModel):

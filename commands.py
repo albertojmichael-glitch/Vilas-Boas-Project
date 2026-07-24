@@ -160,7 +160,7 @@ def cmd_examinar(comando, jogo, mapa):
     elif match_inv or match_chao:
         item_real = match_inv if match_inv else match_chao
         desc = descricoes_itens.get(item_real, "Não há nada de especial nisso.")
-        ui.exibir(f"\n{DOS_AMARELO}🔎 {desc}{RESET}")
+        ui.exibir(f"\n{DOS_AMARELO} ☞ {desc}{RESET}")
         return True
     else:
         ui.exibir(f"Você não vê nenhum '{item}' aqui para examinar.")
