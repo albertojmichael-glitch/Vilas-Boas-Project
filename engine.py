@@ -1,11 +1,11 @@
 import random
 from commands import processar_comando, normalizar
-from minigames import MinigameMinotauro, MinigameSeguranca
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from utils import extrair_argumentos, atualizar_eventos_de_tempo
 from data import MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial, dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
-from minigames import MinigameSeguranca, MinigameMinotauro
+from minigames import MinigameSeguranca
+from minigames import MinigameMinotauro
 
 import logging
 logger = logging.getLogger(__name__)
@@ -456,7 +456,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     # BLOCO: MINIGAME DE SEGURANÇA
     # ==========================================
     elif jogo.estado_atual == "MINIGAME_SEGURANCA":
-        from minigames import MinigameSeguranca
+        
         
         
         if type(jogo.minigame_atual) is dict:

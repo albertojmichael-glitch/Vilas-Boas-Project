@@ -5,6 +5,7 @@ import json
 import uuid
 import time
 
+
 try:
     import redis
 except ImportError:
@@ -82,7 +83,7 @@ else:
     logger.info("Usando TTLCache na memória RAM local.")
     MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
 
-    
+
 
 # --- SEGURANÇA E SCHEMAS ---
 class ComandoRequest(BaseModel):
