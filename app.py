@@ -179,14 +179,17 @@ def gerar_resposta_json(jogo):
         inv = jogo.inventario
         sala = jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA"
         
-    return jsonify({
-        "linhas": linhas_tela,
-        "estado": {
-            "hp": jogo.hp,
-            "turnos_luz": getattr(jogo, 'turnos_luz', 0), 
-            "inventario": jogo.inventario
-        }
-    })
+    return jsonify({"linhas": linhas,
+     
+    "estado": {
+
+        "hp": hp,
+        "luz": luz,
+        "inventario": inv,
+        "sala": sala,
+        "saidas": saidas
+
+        }})
 
 @app.route("/")
 def raiz(): return send_from_directory(BASE_DIR, "index.html")

@@ -71,10 +71,11 @@ document.addEventListener('click', () => {
     inputField.focus();
 });
 
+
 function atualizarSidebar(estado) {
     if (!estado) return;
 
-    // --- HUD DE HP ---
+    
     const hpVal = document.getElementById("hp-val");
     if (hpVal) {
         if (estado.hp === "∞") {
@@ -91,21 +92,20 @@ function atualizarSidebar(estado) {
         }
     }
 
-    // --- HUD DE LUZ (Consertado) ---
+    
     const luzVal = document.getElementById("luz-val");
     if (luzVal) {
-        luzVal.textContent = estado.turnos_luz !== undefined ? estado.turnos_luz : "??";
-        luzVal.className = (estado.turnos_luz <= 3) ? "vermelho" : "verde";
+        
+        luzVal.textContent = estado.luz !== undefined ? estado.luz : "??";
+        luzVal.className = (estado.luz === "∞" || estado.luz > 3) ? "verde" : "vermelho";
     }
 
     
     const invList = document.getElementById("inv-list");
-    const invTitulo = document.querySelector("#hud-inv"); 
+    const invTitulo = document.querySelector("#hud-inv");
     
     if (invList) {
         invList.innerHTML = "";
-        
-        
         
         let qtdBolsas = 0;
         if (estado.inventario) {
@@ -114,7 +114,6 @@ function atualizarSidebar(estado) {
         
         const limiteMaximo = 3 + (qtdBolsas * 3);
         const qtdAtual = estado.inventario ? estado.inventario.length : 0;
-        
         
         if (invTitulo) {
             invTitulo.textContent = `INV (${qtdAtual}/${limiteMaximo}):`;
