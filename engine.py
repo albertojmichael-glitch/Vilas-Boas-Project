@@ -397,6 +397,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                         sala["itens"].append("bateria nova")
             else:
                 ui.animar("Quem é você? *A tela desliga* Você perdeu a absolvição.", 0.05, DOS_VERMELHO, jogo)
+                ui.exibir("@@JUMPSCARE@@")
                 
             jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
             jogo.estado_atual = "JOGO"
@@ -408,23 +409,23 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     elif jogo.estado_atual == "MINIGAME_SEGURANCA":
         from minigames import MinigameSeguranca
         
-        # 1. Proteção contra o Apagão do Banco de Dados
+        
         if type(jogo.minigame_atual) is dict:
             dados_salvos = jogo.minigame_atual
             jogo.minigame_atual = MinigameSeguranca(jogo)
-            jogo.minigame_atual.__dict__.update(dados_salvos) # Resgata a energia e os turnos!
+            jogo.minigame_atual.__dict__.update(dados_salvos) 
             jogo.minigame_atual.jogo = jogo
         elif not isinstance(jogo.minigame_atual, MinigameSeguranca):
             jogo.minigame_atual = MinigameSeguranca(jogo)
             
-        # 2. Transforma as setinhas (f, e, d, t) no nome completo
+        
         from utils import extrair_argumentos
         partes = extrair_argumentos(comando)
         verbo = partes[0] if partes else ""
         mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
         if verbo in mapa_direcoes: comando = mapa_direcoes[verbo]
 
-        # 3. Processa a ação
+        
         resultado = jogo.minigame_atual.processar_turno(comando, jogo)
         
         if resultado == "continuar":
@@ -447,23 +448,23 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     elif jogo.estado_atual == "MINIGAME_MINOTAURO":
         from minigames import MinigameMinotauro
         
-        # 1. Proteção contra o Apagão do Banco de Dados
+        
         if type(jogo.minigame_atual) is dict:
             dados_salvos = jogo.minigame_atual
             jogo.minigame_atual = MinigameMinotauro(jogo)
-            jogo.minigame_atual.__dict__.update(dados_salvos) # Resgata bateria e monstros!
+            jogo.minigame_atual.__dict__.update(dados_salvos) 
             jogo.minigame_atual.jogo = jogo
         elif not isinstance(jogo.minigame_atual, MinigameMinotauro):
             jogo.minigame_atual = MinigameMinotauro(jogo)
             
-        # 2. Transforma as setinhas (f, e, d, t) no nome completo
+        
         from utils import extrair_argumentos
         partes = extrair_argumentos(comando)
         verbo = partes[0] if partes else ""
         mapa_direcoes = {"f": "ir frente", "t": "ir atrás", "e": "ir esquerda", "d": "ir direita"}
         if verbo in mapa_direcoes: comando = mapa_direcoes[verbo]
 
-        # 3. Processa a ação
+        
         resultado = jogo.minigame_atual.processar_turno(comando, jogo)
         
         if resultado == "continuar":

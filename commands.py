@@ -96,8 +96,12 @@ def cmd_pegar(comando, jogo, mapa):
         return False
         
     item = match_item
+
     
-    if len(jogo.inventario) >= MAX_INVENTARIO and not getattr(jogo, 'god_mode', False):
+    qtd_bolsas = jogo.inventario.count("bolsa")
+    limite_atual = MAX_INVENTARIO + (qtd_bolsas * 3)
+    
+    if len(jogo.inventario) >= limite_atual and not getattr(jogo, 'god_mode', False):
         ui.exibir(f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}")
         return False
         
@@ -272,6 +276,8 @@ def processar_comando(comando, jogo, mapa):
             ui.exibir(f"{DOS_VERMELHO}Sua reação foi inútil... Ele esmaga o seu pescoço em um estalo seco.{RESET}")
             ui.pausar(2)
             jogo.sala_atual = "morte"
+            ui.exibir("@@JUMPSCARE@@")
+    
             jogo.estado_atual = "FIM"
             return True
 

@@ -74,7 +74,7 @@ document.addEventListener('click', () => {
 function atualizarSidebar(estado) {
     if (!estado) return;
 
-    
+    // --- HUD DE HP ---
     const hpVal = document.getElementById("hp-val");
     if (hpVal) {
         if (estado.hp === "∞") {
@@ -91,18 +91,36 @@ function atualizarSidebar(estado) {
         }
     }
 
-    
+    // --- HUD DE LUZ (Consertado) ---
     const luzVal = document.getElementById("luz-val");
     if (luzVal) {
-        luzVal.textContent = estado.turnos_luz;
+        luzVal.textContent = estado.turnos_luz !== undefined ? estado.turnos_luz : "??";
         luzVal.className = (estado.turnos_luz <= 3) ? "vermelho" : "verde";
     }
 
     
     const invList = document.getElementById("inv-list");
+    const invTitulo = document.querySelector("#hud-inv"); 
+    
     if (invList) {
         invList.innerHTML = "";
-        if (estado.inventario && estado.inventario.length > 0) {
+        
+        
+        
+        let qtdBolsas = 0;
+        if (estado.inventario) {
+            qtdBolsas = estado.inventario.filter(item => item === "bolsa").length;
+        }
+        
+        const limiteMaximo = 3 + (qtdBolsas * 3);
+        const qtdAtual = estado.inventario ? estado.inventario.length : 0;
+        
+        
+        if (invTitulo) {
+            invTitulo.textContent = `INV (${qtdAtual}/${limiteMaximo}):`;
+        }
+
+        if (qtdAtual > 0) {
             estado.inventario.forEach(item => {
                 let li = document.createElement("li");
                 li.textContent = `- ${item}`;
