@@ -3,6 +3,18 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+🚀 [1.6.0] - 2026-07-24
+
+🛡️ Segurança & ValidaçãoValidação de Entrada com Pydantic: Implementado schema ComandoRequest no app.py para validar requisições POST /comando, limitando cargas a 256 caracteres e retornando HTTP 400 para dados maliciosos ou inválidos.Proteção contra Injeção NoSQL (MongoDB): Criada a função obter_sid_seguro() para validar se os cookies de sessão sid correspondem estritamente a um formato UUID válido antes de realizar buscas no banco de dados.Rate Limiting em Camadas: Aplicados múltiplos limites por IP no Flask-Limiter (60/minuto e 500/hora) para mitigar ataques de força bruta/flooding.
+
+⚡ Performance & EscalabilidadeCache Distribuído com Redis: Adicionado suporte ao Redis para gerenciamento de sessões em ambientes multi-instância (Railway/Render), com fallback automático para TTLCache em ambientes locais.Paginação de Saves: Criada a rota GET /saves com paginação nativa MongoDB (skip/limit), otimizando a consulta de histórico de salvamentos.Dependências: Adicionada a biblioteca redis>=5.0.0 ao requirements.txt.
+
+🔊 Sound Design & ImersãoWeb Audio API: Sintetizadores em áudio gerados via software sem peso de arquivos externos:Som de Digitação (tocarSomDigito): Efeito de clique de teclado mecânico/terminal acionado a cada caractere exibido na tela.Bip de Entrada (tocarBipEntrada): Confirmação sonora retrô disparada ao pressionar Enter.Passos Metálicos (tocarPassoMetalico): Impacto abafado de metal acionável via tag @@PASSO@@.Zumbido CRT Aprimorado: Adicionada frequência de rede de $60\text{ Hz}$ sobre o drone grave de $55\text{ Hz}$ simulando monitores de tubo MS-DOS.
+
+📱 Frontend & Acessibilidade (a11y)Padrões WCAG AA: Ajustado o contraste e tom das cores no style.css (#4aff4a, #ff5555, #ffda33, #e0e0e0) reduzindo a fadiga visual.Leitores de Tela: Adicionados atributos aria-live="polite", role="log" no container #output e aria-label nos campos de entrada e HUD.Foco Inteligente: Atualizado o manipulador de clique no script.js para não roubar o foco durante a seleção de texto ou uso de controles de atalho mobile.Correção de Layout: Removido o placeholder duplicado que causava sobreposição de prompt C:\>.
+
+🐛 Correções de Bugs (Bugfixes)Engine / Minigames:Corrigido UnboundLocalError ao instanciar MinigameSeguranca no engine.py.Corrigido KeyError: 'cadeira' restaurando o ID de sala válido no mapa ("01") antes de renderizar o contexto da sala.Adicionada trava de segurança na função imprimir_contexto_sala em views.py para bloquear renderização durante minigames ativos.Corrigidas strings truncadas com [...] em arquivos narrativos (commands.py, minigames.py, views.py).Testes Automatizados (pytest):Corrigida divergência no teste test_alias_movimentacao ajustando o destino esperado para "sala de jantar".Corrigida ausência da função de pausa pausar() no minigames.py prevenindo falha no teste test_minotauro_derrota_escuro.
+
 ## [1.5.0] - 2026-07-22
 
 ### 🚀 Adicionado
