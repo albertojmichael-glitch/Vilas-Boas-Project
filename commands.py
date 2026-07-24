@@ -143,7 +143,7 @@ def cmd_examinar(comando, jogo, mapa):
     match_chao = encontrar_melhor_match(item, sala.get("itens", []))
     
     if match_cenario:
-        ui.exibir(f"\n{DOS_VERDE}C:\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
+        ui.exibir(f"\n{DOS_VERDE}C:\\> ACESSANDO ARQUIVO DE DADOS...{RESET}")
         ui.pausar(1)
         
         if match_cenario == "papeis" and jogo.sala_atual == "01":

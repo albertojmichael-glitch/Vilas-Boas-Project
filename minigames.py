@@ -1,11 +1,20 @@
 import random
 import logging
+import time
 
 
 logger = logging.getLogger(__name__)
 
 
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, default_ui
+
+import time
+
+def pausar(segundos=0):
+    try:
+        time.sleep(segundos)
+    except Exception:
+        pass
 
 
 CAVEIRA_ASCII = r'''
@@ -62,7 +71,7 @@ class MinigameMinotauro:
         pausar(2)
         print("Você escuta uma respiração pesada.")
         print("Ele está aqui.")
-        pausar(2)
+        jogo.ui_handler.pausar(2)
 
     def imprimir_status(self):
         print("\n" + "-"*30)

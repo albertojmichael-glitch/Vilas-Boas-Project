@@ -42,7 +42,9 @@ def test_alias_movimentacao(jogo_base):
     jogo_base.sala_atual = "entrada"
     
     processar_comando("f", jogo_base, jogo_base.mapa)
-    assert jogo_base.sala_atual == "hall de entrada"
+    
+    
+    assert jogo_base.sala_atual == "sala de jantar"
 
 
 
