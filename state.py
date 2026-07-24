@@ -62,6 +62,7 @@ class GameState(BaseModel):
     limite_inventario: int = 3  
     amanheceu: bool = False
     jon_passos_dados: int = 0
+    conquistas: List[str] = Field(default_factory=list)
     jon_caminho_certo: List[str] = Field(default_factory=list)
     web_consertos: Dict[str, Any] = Field(default_factory=dict)
     web_julgamento: Dict[str, Any] = Field(default_factory=dict)      

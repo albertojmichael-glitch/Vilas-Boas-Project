@@ -24,6 +24,19 @@ ARTE_COFRE = r'''
  \__________________________/
 '''
 
+
+def desbloquear_conquista(jogo, id_conquista, nome_exibicao):
+    if not hasattr(jogo, 'conquistas'):
+        jogo.conquistas = []
+        
+    if id_conquista not in jogo.conquistas:
+        jogo.conquistas.append(id_conquista)
+        ui = jogo.ui_handler
+        ui.buffer.append(f"@@TYPE@@amarelo@@0@@♔ CONQUISTA DESBLOQUEADA: {nome_exibicao} ♔")
+        
+
+
+
 def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save=None):
     comando = normalizar(comando_bruto)
     ui = jogo.ui_handler
@@ -51,6 +64,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.alberto_desativado = False
             jogo.god_mode = False
             jogo.turnos_luz = 0
+            jogo.fast_mode = False 
+            jogo.dificuldade_escolhida = "NORMAL"
             
             
             if comando == "dir":
@@ -233,19 +248,45 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             
             # --- GATILHO DO FINAL VERDADEIRO ---
             if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
+                try: 
+                    from app import registrar_telemetria
+                    registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
+                except: pass
                 rodar_final("verdadeiro", jogo)
                 return
             # -----------------------------------
             
             if jogo.sala_atual == "morte":
+                try: 
+                    from app import registrar_telemetria
+                    registrar_telemetria("MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa")
+                except: pass
                 dar_tela_de_morte(jogo)
             elif jogo.sala_atual == "saida":
+                try: 
+                    from app import registrar_telemetria
+                    registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Covarde")
+                except: pass
                 rodar_final("saida", jogo)
             elif jogo.sala_atual == "cama":
+                try: 
+                    from app import registrar_telemetria
+                    registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Dorminhoco")
+                except: pass
                 rodar_final("cama", jogo)
             elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
-                if getattr(jogo, 'incendio', False): rodar_final("verdadeiro", jogo)
-                else: rodar_final("final_bom", jogo)
+                if getattr(jogo, 'incendio', False): 
+                    try: 
+                        from app import registrar_telemetria
+                        registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
+                    except: pass
+                    rodar_final("verdadeiro", jogo)
+                else: 
+                    try: 
+                        from app import registrar_telemetria
+                        registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Bom")
+                    except: pass
+                    rodar_final("final_bom", jogo)
             elif jogo.estado_atual == "COMBATE_ANIMATRONICO":
                 pass 
             else:
@@ -297,7 +338,12 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 ui.exibir(f"\n{DOS_VERMELHO}Jon caiu num triturador ativo! leva um choque brutal!{RESET}")
                 jogo.hp -= 1
                 jogo.turnos_luz = max(0, jogo.turnos_luz - 1)
-                if jogo.hp <= 0: dar_tela_de_morte(jogo)
+                if jogo.hp <= 0: 
+                    try: 
+                        from app import registrar_telemetria
+                        registrar_telemetria("MORTE", "MINIGAME_JON", jogo.dificuldade_escolhida, "Morto pelo Porco")
+                    except: pass
+                    dar_tela_de_morte(jogo)
                 else:
                     jogo.estado_atual = "JOGO"
                     imprimir_contexto_sala(jogo)
@@ -430,15 +476,21 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         
         if resultado == "continuar":
             jogo.minigame_atual.imprimir_status()
+
         elif resultado == "vitoria_seguranca":
             jogo.estado_atual = "JOGO"
             jogo.minigame_atual = None
             jogo.sala_atual = "01" 
             imprimir_contexto_sala(jogo)
+
         elif resultado == "morte":
             jogo.estado_atual = "FIM"
             jogo.sala_atual = "morte"
             jogo.minigame_atual = None
+            try: 
+                from app import registrar_telemetria
+                registrar_telemetria("MORTE", "SALA DE SEGURANCA", jogo.dificuldade_escolhida, "Jumpscare na cadeira")
+            except: pass
             dar_tela_de_morte(jogo)
 
 
@@ -469,6 +521,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         
         if resultado == "continuar":
             jogo.minigame_atual.imprimir_status()
+            
         elif resultado == "vitoria_minotauro":
             jogo.estado_atual = "JOGO"
             jogo.sala_atual = "sala dos fundos"
@@ -476,10 +529,15 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
             ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
             imprimir_contexto_sala(jogo)
+
         elif resultado == "morte":
             jogo.estado_atual = "FIM"
             jogo.sala_atual = "morte"
             jogo.minigame_atual = None
+            try: 
+                from app import registrar_telemetria
+                registrar_telemetria("MORTE", "LABIRINTO", jogo.dificuldade_escolhida, "Morto no Escuro")
+            except: pass
             dar_tela_de_morte(jogo)
                 
             

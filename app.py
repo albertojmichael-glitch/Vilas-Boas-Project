@@ -45,6 +45,7 @@ if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
     db = mongo_client["villasboas_db"]
     saves_collection = db["saves"]
+    telemetry_collection = db["telemetry"]
     logging.info("Conectado ao MongoDB com sucesso...")
 else:
     mongo_client = None
@@ -110,6 +111,36 @@ def ansi_para_html(texto_ansi):
 
 def obter_caminho_autosave(sid):
     return Path(SAVES_DIR_ENV) / f"autosave_{sid}.json"
+
+
+
+
+def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
+    if not mongo_client: return
+    try:
+        telemetry_collection.insert_one({
+            "evento": evento,              
+            "sala": sala,                   
+            "dificuldade": dificuldade,     
+            "detalhes": detalhes,           
+            "timestamp": time.time()
+        })
+    except Exception as e:
+        logging.error(f"Erro na telemetria: {e}")
+
+@app.route('/admin/analytics', methods=['GET'])
+
+def ver_telemetria():
+
+    
+    if not mongo_client: return "Sem banco de dados."
+    mortes = telemetry_collection.count_documents({"evento": "MORTE"})
+    vitorias = telemetry_collection.count_documents({"evento": "VITORIA"})
+    return jsonify({"mortes_totais": mortes, "vitorias_totais": vitorias})
+
+
+
+
 
 def carregar_save_web(jogo):
     sid = session.get("sid")
@@ -180,7 +211,7 @@ def gerar_resposta_json(jogo):
         sala = jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA"
         
     return jsonify({"linhas": linhas,
-     
+
     "estado": {
 
         "hp": hp,
@@ -190,6 +221,40 @@ def gerar_resposta_json(jogo):
         "saidas": saidas
 
         }})
+
+
+
+@app.route('/share/generate', methods=['GET'])
+def gerar_link_compartilhamento():
+    sid = session.get("sid")
+    if not sid: return jsonify({"erro": "Sem save ativo"})
+    
+    
+    url_share = f"{request.host_url}share/{sid}"
+    return jsonify({"link": url_share})
+
+@app.route('/share/<save_id>', methods=['GET'])
+def carregar_save_compartilhado(save_id):
+    if not mongo_client:
+        return "Banco de dados desativado. Não é possível compartilhar.", 400
+        
+    doc = saves_collection.find_one({"sid": save_id})
+    if not doc:
+        return "Save corrompido ou não encontrado nas fitas magnéticas.", 404
+        
+    
+    novo_sid = str(uuid.uuid4())
+    session["sid"] = novo_sid
+    session.permanent = True
+    
+    
+    jogo_compartilhado = GameState.from_dict(doc["dados"])
+    MEMORIA_SESSOES[novo_sid] = jogo_compartilhado
+    
+    
+    saves_collection.insert_one({"sid": novo_sid, "dados": jogo_compartilhado.to_dict()})
+    
+    return redirect("/") 
 
 @app.route("/")
 def raiz(): return send_from_directory(BASE_DIR, "index.html")
@@ -237,6 +302,21 @@ def iniciar_jogo():
     resposta = gerar_resposta_json(jogo)
     resposta.headers["Cache-Control"] = "no-store"
     return resposta
+
+
+
+@app.route('/achievements', methods=['GET'])
+def listar_conquistas():
+    sid = session.get("sid")
+    if not sid or sid not in MEMORIA_SESSOES:
+        return jsonify({"erro": "Sessão não encontrada", "conquistas": []})
+    
+    jogo = MEMORIA_SESSOES[sid]
+    conquistas = getattr(jogo, 'conquistas', [])
+    return jsonify({"conquistas": conquistas, "total": len(conquistas)})
+
+
+
 
 @app.route('/comando', methods=['GET', 'POST'])
 @limiter.limit("60 per minute")
