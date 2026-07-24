@@ -16,15 +16,176 @@ const salaEl = document.getElementById('hud-sala');
 const saidasEl = document.getElementById('hud-saidas');
 
 // ==========================================
-// FOCO INTELIGENTE E ACESSIBILIDADE
+// GERENCIADOR DE ÁUDIO E ZUMBIDO CRT
 // ==========================================
-// Mantém o foco no input apenas se o usuário não estiver selecionando texto 
-// ou não estiver clicando nos botões de controle mobile
+let audioCtx = null;
+let ambientOsc = null;
+let crtOsc = null;
+
+function obterAudioContext() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+        }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+function iniciarSomAmbiente() {
+    const ctx = obterAudioContext();
+    if (!ctx || ambientOsc) return;
+
+    // 1. Drone Grave de Fundo (Ambiente abafado de $55\text{ Hz}$)
+    ambientOsc = ctx.createOscillator();
+    const ambientGain = ctx.createGain();
+    ambientOsc.type = 'triangle';
+    ambientOsc.frequency.value = 55; 
+    ambientGain.gain.value = 0.025; 
+
+    ambientOsc.connect(ambientGain);
+    ambientGain.connect(ctx.destination);
+    ambientOsc.start();
+
+    // 2. Zumbido de Monitor CRT (Chiado elétrico de $60\text{ Hz}$)
+    crtOsc = ctx.createOscillator();
+    const crtGain = ctx.createGain();
+    crtOsc.type = 'sawtooth';
+    crtOsc.frequency.value = 60; 
+    crtGain.gain.value = 0.005; 
+
+    crtOsc.connect(crtGain);
+    crtGain.connect(ctx.destination);
+    crtOsc.start();
+}
+
+document.body.addEventListener('click', iniciarSomAmbiente, { once: true });
+document.body.addEventListener('keydown', iniciarSomAmbiente, { once: true });
+
+// ==========================================
+// SINTETIZADORES DE EFEITOS SONOROS
+// ==========================================
+
+// 1. Som de caractere sendo impresso na tela
+function tocarSomDigito() {
+    const ctx = obterAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(320 + Math.random() * 90, ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.015, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.02);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.02);
+}
+
+// 2. Bip de Confirmação de Comando (Enter)
+function tocarBipEntrada() {
+    const ctx = obterAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'square'; 
+    osc.frequency.setValueAtTime(550, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1100, ctx.currentTime + 0.05);
+
+    gain.gain.setValueAtTime(0.035, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.06);
+}
+
+// 3. Passos Metálicos Pesados
+function tocarPassoMetalico() {
+    const ctx = obterAudioContext();
+    if (!ctx) return;
+
+    const t = ctx.currentTime;
+
+    // Impacto Sub-grave do peso
+    const subOsc = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(110, t);
+    subOsc.frequency.exponentialRampToValueAtTime(30, t + 0.25);
+
+    subGain.gain.setValueAtTime(0.12, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+
+    subOsc.connect(subGain);
+    subGain.connect(ctx.destination);
+    subOsc.start(t);
+    subOsc.stop(t + 0.25);
+
+    // Rangido e fricção do metal
+    const metalOsc = ctx.createOscillator();
+    const metalGain = ctx.createGain();
+    metalOsc.type = 'sawtooth';
+    metalOsc.frequency.setValueAtTime(420 + Math.random() * 80, t);
+    metalOsc.frequency.exponentialRampToValueAtTime(160, t + 0.18);
+
+    metalGain.gain.setValueAtTime(0.045, t);
+    metalGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+
+    metalOsc.connect(metalGain);
+    metalGain.connect(ctx.destination);
+    metalOsc.start(t);
+    metalOsc.stop(t + 0.18);
+}
+
+// Beep genérico de erro/sucesso
+function reproduzirBeep(tipo = 'sucesso') {
+    const ctx = obterAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (tipo === 'erro') {
+        osc.type = 'sawtooth'; 
+        osc.frequency.setValueAtTime(150, ctx.currentTime); 
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+    } else {
+        osc.type = 'square'; 
+        osc.frequency.setValueAtTime(800, ctx.currentTime); 
+        gain.gain.setValueAtTime(0.03, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+    }
+}
+
+function playBip(tipo) {
+    reproduzirBeep(tipo);
+}
+
+// ==========================================
+// FOCO INTELIGENTE E CONTROLES
+// ==========================================
 document.addEventListener('click', (event) => {
     const inputTerminal = document.getElementById('comando');
     const textoSelecionado = window.getSelection().toString();
-    
-    // Verifica se o clique foi dentro de um botão
     const clicouNoBotao = event.target.closest('button');
     
     if (!textoSelecionado && inputTerminal && !clicouNoBotao) {
@@ -41,6 +202,8 @@ inputField.addEventListener("keydown", async function(event) {
         const comando = comandoBruto.trim();
         
         if (comando !== "") {
+            tocarBipEntrada(); // Toca o Bip ao apertar Enter
+
             if (historicoComandos[historicoComandos.length - 1] !== comando) {
                 historicoComandos.push(comando);
             }
@@ -57,7 +220,6 @@ inputField.addEventListener("keydown", async function(event) {
             await enviarComando(comando);
         }
     } 
-    
     else if (event.key === "ArrowUp") {
         event.preventDefault(); 
         if (posicaoHistorico === historicoComandos.length) {
@@ -68,7 +230,6 @@ inputField.addEventListener("keydown", async function(event) {
             inputField.value = historicoComandos[posicaoHistorico];
         }
     } 
-    
     else if (event.key === "ArrowDown") {
         event.preventDefault();
         if (posicaoHistorico < historicoComandos.length - 1) {
@@ -147,25 +308,31 @@ function atualizarSidebar(estado) {
 // PROCESSAMENTO E ANIMAÇÃO DE TEXTO
 // ==========================================
 async function processarLinhas(linhas, estado) {
-    const terminal = document.querySelector('.terminal-section'); 
+    const terminalEl = document.querySelector('.terminal-section'); 
 
     for (let linha of linhas) {
-        await novaLinha(linha, terminal); 
-        if (terminal) terminal.scrollTop = terminal.scrollHeight;
+        await novaLinha(linha, terminalEl); 
+        if (terminalEl) terminalEl.scrollTop = terminalEl.scrollHeight;
     }
     atualizarSidebar(estado);
 }
 
-function novaLinha(linha, terminal) {
+function novaLinha(linha, terminalEl) {
     return new Promise((resolve) => {
-        if (typeof linha === 'string' && linha.includes("@@JUMPSCARE@@")) {
-            linha = linha.replace("@@JUMPSCARE@@", ""); 
-            triggerJumpscare(); 
+        if (typeof linha === 'string') {
+            if (linha.includes("@@JUMPSCARE@@")) {
+                linha = linha.replace("@@JUMPSCARE@@", ""); 
+                triggerJumpscare(); 
+            }
+            if (linha.includes("@@PASSO@@")) {
+                linha = linha.replace("@@PASSO@@", "");
+                tocarPassoMetalico();
+            }
         }
 
         if (linha.startsWith("@@CLEAR@@")) {
             outputDiv.innerHTML = "";
-            if (terminal) terminal.scrollTop = terminal.scrollHeight;
+            if (terminalEl) terminalEl.scrollTop = terminalEl.scrollHeight;
             resolve();
         } else if (linha.startsWith("@@TYPE@@")) {
             let parts = linha.split("@@");
@@ -215,6 +382,9 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
             if (isTag || (i < htmlString.length && htmlString.charAt(i) === '<')) {
                 digitar(); 
             } else {
+                if (char !== ' ' && char !== '\n') {
+                    tocarSomDigito(); // Som de digitação a cada letra exibida
+                }
                 setTimeout(digitar, velocidade);
             }
         } else {
@@ -239,10 +409,7 @@ async function fetchSeguro(url, options) {
         if (!res.ok) throw new Error("Servidor offline");
         const data = await res.json();
 
-        console.log("PYTHON:", data);
-        
         const tempoDecorrido = Date.now() - startTime;
-        
         if (tempoDecorrido < 300) {
             await new Promise(resolve => setTimeout(resolve, 300 - tempoDecorrido));
         }
@@ -255,7 +422,7 @@ async function fetchSeguro(url, options) {
         }
 
     } catch (erro) {
-        console.error("O ERRO REAL É ESTE AQUI:", erro);
+        console.error("Erro na comunicação:", erro);
         loadingSpinner.style.display = 'none';
         let p = document.createElement('p');
         p.className = 'vermelho';
@@ -284,36 +451,8 @@ async function enviarComando(comando) {
 window.onload = iniciarJogo;
 
 // ==========================================
-// UTILITÁRIOS E ATALHOS GERAIS
+// UTILITÁRIOS E ATALHOS
 // ==========================================
-function reproduzirBeep(tipo = 'sucesso') {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    if (tipo === 'erro') {
-        oscillator.type = 'sawtooth'; 
-        oscillator.frequency.setValueAtTime(150, audioCtx.currentTime); 
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.3);
-    } else {
-        oscillator.type = 'square'; 
-        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); 
-        gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.1);
-    }
-}
-
-// Aliases para playBip legados se houverem
-function playBip(tipo) {
-    reproduzirBeep(tipo);
-}
-
 function openHelp() {
     document.getElementById('help-modal').classList.remove('hidden');
 }
@@ -352,56 +491,31 @@ document.addEventListener('keydown', function (e) {
     }
 });
 
-// ==========================================
-// SISTEMAS DE IMERSÃO (MOBILE / ÁUDIO)
-// ==========================================
 function executarAtalho(cmd) {
     const input = document.getElementById('comando');
     input.value = cmd;
     input.focus();
-    
-    if (typeof enviarComando === "function") enviarComando(cmd); // Corrigido para enviar o comando diretamente!
+    if (typeof enviarComando === "function") enviarComando(cmd);
 }
-
-let ambientCtx, ambientOsc, ambientGain;
-function iniciarSomAmbiente() {
-    if (ambientCtx) return;
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    
-    ambientCtx = new AudioContext();
-    ambientOsc = ambientCtx.createOscillator();
-    ambientGain = ambientCtx.createGain();
-    
-    ambientOsc.type = 'triangle';
-    ambientOsc.frequency.value = 55; 
-    ambientGain.gain.value = 0.03; 
-    
-    ambientOsc.connect(ambientGain);
-    ambientGain.connect(ambientCtx.destination);
-    ambientOsc.start();
-}
-
-document.body.addEventListener('click', iniciarSomAmbiente, {once: true});
-document.body.addEventListener('keydown', iniciarSomAmbiente, {once: true});
 
 function triggerJumpscare() {
     const overlay = document.getElementById('jumpscare-overlay');
-    if(overlay) overlay.classList.remove('hidden');
+    if (overlay) overlay.classList.remove('hidden');
     
-    if(ambientCtx) {
-        const scareOsc = ambientCtx.createOscillator();
-        const scareGain = ambientCtx.createGain();
+    const ctx = obterAudioContext();
+    if (ctx) {
+        const scareOsc = ctx.createOscillator();
+        const scareGain = ctx.createGain();
         scareOsc.type = 'sawtooth';
         scareOsc.frequency.value = 130;
         scareGain.gain.value = 0.6; 
         scareOsc.connect(scareGain);
-        scareGain.connect(ambientCtx.destination);
+        scareGain.connect(ctx.destination);
         scareOsc.start();
-        scareOsc.stop(ambientCtx.currentTime + 0.15); 
+        scareOsc.stop(ctx.currentTime + 0.15); 
     }
     
-    if(overlay) setTimeout(() => overlay.classList.add('hidden'), 150); 
+    if (overlay) setTimeout(() => overlay.classList.add('hidden'), 150); 
 }
 
 function mostrarSalvando() {
