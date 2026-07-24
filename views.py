@@ -70,53 +70,55 @@ def falar_pianista(acertou, ui, jogo):
         ui.animar(f'"{random.choice(["Errado. As teclas pretas não perdoam mentiras.", "Você deveria lembrar melhor do que isso, Rogério.", "Uma nota fora do lugar... como você, aquela noite.", "Isso não é o que consta no registro do restaurante."])}"', 0.04, DOS_AMARELO, jogo)
 
 def imprimir_contexto_sala(jogo):
-    if jogo.estado_atual == "COMBATE_ANIMATRONICO": return
+    # 🛡️ TRAVA 1: Só desenha a sala se o jogador estiver no modo de exploração normal
+    if getattr(jogo, 'estado_atual', 'JOGO') != "JOGO":
+        return
+
+    # 🛡️ TRAVA 2: Se houver minigame ativo ou a sala não existir no mapa, aborta silenciosamente
+    if jogo.minigame_atual or jogo.sala_atual not in jogo.mapa:
+        return
+
     ui = jogo.ui_handler
+    sala = jogo.mapa[jogo.sala_atual]
     
-    if not jogo.minigame_atual and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
-        sala = jogo.mapa[jogo.sala_atual]
-        ui.exibir("\n" + "="*50)
+    ui.exibir("\n" + "="*50)
+    ui.animar(f"⚇ VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}", 0.01, DOS_VERDE, jogo)
+    
+    if getattr(jogo, 'amanheceu', False):
+        ui.animar(f"{DOS_BRANCO} ☀ A luz pálida da manhã ilumina a sala através das frestas.{RESET}", 0.01, DOS_BRANCO, jogo)
+
+    descricao_colorida = sala.get('descrição', '')
+
+    if jogo.hp <= 1 and not getattr(jogo, 'god_mode', False):
+        descricao_colorida = corromper_texto(descricao_colorida, intensidade=0.4)
+        ui.animar(f"{DOS_VERMELHO}[SISTEMA NEUROLÓGICO COMPROMETIDO]{RESET}", 0.01, DOS_VERMELHO, jogo)
+
+    # Colore as palavras-chave normalmente
+    for inspecionavel in sala.get("inspecionaveis", {}):
+        descricao_colorida = descricao_colorida.replace(inspecionavel, f"{DOS_AMARELO}{inspecionavel}{RESET}")
+    for item in sala.get("itens", []):
+        descricao_colorida = descricao_colorida.replace(item, f"{DOS_VERDE}{item}{RESET}")
         
-        ui.animar(f"⚇ VOCÊ ESTÁ EM: {jogo.sala_atual.upper()}", 0.01, DOS_VERDE, jogo)
-        
-        if getattr(jogo, 'amanheceu', False):
-            ui.animar(f"{DOS_BRANCO} ☀ A luz pálida da manhã ilumina a sala através das frestas.{RESET}", 0.01, DOS_BRANCO, jogo)
+    ui.animar(f"⏿ Visão: {descricao_colorida}", 0.01, DOS_BRANCO, jogo)
 
-        descricao_colorida = sala.get('descrição', '')
+    # --- RADAR DE INSPECIONÁVEIS ---
+    inspecionaveis = list(sala.get("inspecionaveis", {}).keys())
+    if inspecionaveis:
+        ui.animar(f"☞ Investigar: {DOS_AMARELO}{', '.join(inspecionaveis)}{RESET}", 0.01, DOS_BRANCO, jogo)
 
-        
-        if jogo.hp <= 1 and not getattr(jogo, 'god_mode', False):
-            descricao_colorida = corromper_texto(descricao_colorida, intensidade=0.4)
-            ui.animar(f"{DOS_VERMELHO}[SISTEMA NEUROLÓGICO COMPROMETIDO]{RESET}", 0.01, DOS_VERMELHO, jogo)
-
-        # Colore as palavras-chave normalmente
-        for inspecionavel in sala.get("inspecionaveis", {}):
-            descricao_colorida = descricao_colorida.replace(inspecionavel, f"{DOS_AMARELO}{inspecionavel}{RESET}")
-        for item in sala.get("itens", []):
-            descricao_colorida = descricao_colorida.replace(item, f"{DOS_VERDE}{item}{RESET}")
-            
-        ui.animar(f"⏿ Visão: {descricao_colorida}", 0.01, DOS_BRANCO, jogo)
-
-        
-
-        # --- RADAR DE INSPECIONÁVEIS ---
-        inspecionaveis = list(sala.get("inspecionaveis", {}).keys())
-        if inspecionaveis:
-            ui.animar(f"☞ Investigar: {DOS_AMARELO}{', '.join(inspecionaveis)}{RESET}", 0.01, DOS_BRANCO, jogo)
-
-        if len(sala.get("itens", [])) > 0:
-            if jogo.turnos_luz > 0 or getattr(jogo, 'amanheceu', False):
-                itens_formatados = [f"{DOS_VERDE}{item}{RESET}" for item in sala['itens']]
-                ui.animar(f"[i] Itens no chão: {', '.join(itens_formatados)}", 0.01, DOS_BRANCO, jogo)
-            else:
-                ui.animar(f" {DOS_BRANCO}Deve ter algo no chão, mas escuro demais para ver o quê.{RESET}", 0.01, DOS_BRANCO, jogo)
-
-        chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
-        saidas = [k for k in sala.keys() if k not in chaves_ignoradas and isinstance(sala[k], str)]
-        if saidas:
-            ui.animar(f"⏱ Saídas: {DOS_AMARELO}{', '.join(saidas).title()}{RESET}", 0.01, DOS_BRANCO, jogo)
+    if len(sala.get("itens", [])) > 0:
+        if jogo.turnos_luz > 0 or getattr(jogo, 'amanheceu', False):
+            itens_formatados = [f"{DOS_VERDE}{item}{RESET}" for item in sala['itens']]
+            ui.animar(f"[i] Itens no chão: {', '.join(itens_formatados)}", 0.01, DOS_BRANCO, jogo)
         else:
-            ui.animar(f"⏱ Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}", 0.01, DOS_BRANCO, jogo)
+            ui.animar(f" {DOS_BRANCO}Deve ter algo no chão, mas escuro demais para ver o quê.{RESET}", 0.01, DOS_BRANCO, jogo)
+
+    chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
+    saidas = [k for k in sala.keys() if k not in chaves_ignoradas and isinstance(sala[k], str)]
+    if saidas:
+        ui.animar(f"⏱ Saídas: {DOS_AMARELO}{', '.join(saidas).title()}{RESET}", 0.01, DOS_BRANCO, jogo)
+    else:
+        ui.animar(f"⏱ Saídas: {DOS_VERMELHO}Nenhuma saída aparente...{RESET}", 0.01, DOS_BRANCO, jogo)
 
 def dar_tela_de_morte(jogo):
     jogo.estado_atual = "FIM"

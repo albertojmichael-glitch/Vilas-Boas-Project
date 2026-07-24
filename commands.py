@@ -302,6 +302,19 @@ def processar_comando(comando, jogo, mapa):
     if comando.lower() in mapa_direcoes:
         comando = mapa_direcoes[comando.lower()]
 
+    if comando in ["cadeira", "sentar", "sentar na cadeira", "usar cadeira"]:
+    
+        if jogo.sala_atual == "01":  
+            if not getattr(jogo, 'noite_vencida', False):
+                
+                jogo.estado_atual = "MINIGAME_SEGURANCA"
+                jogo.minigame_atual = MinigameSeguranca(jogo)
+                jogo.minigame_atual.imprimir_status()
+            else:
+                jogo.ui_handler.exibir(f"{DOS_AMARELO}A mesa de controle está desligada. A noite já terminou.{RESET}")
+        else:
+            jogo.ui_handler.exibir(f"{DOS_BRANCO}Não há nenhuma cadeira de segurança aqui.{RESET}")
+
     if jogo.sala_atual in mapa:
         sala = mapa[jogo.sala_atual]
         

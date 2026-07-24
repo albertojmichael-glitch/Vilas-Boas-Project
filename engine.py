@@ -194,6 +194,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
             imprimir_contexto_sala(jogo)
+
         elif jogo.sala_atual == "sala de energia" and not getattr(jogo, 'fios_cortados_inventario', False):
             jogo.minigame_atual = MinigameMinotauro(jogo)
             jogo.estado_atual = "MINIGAME_MINOTAURO"
@@ -483,7 +484,6 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         elif resultado == "vitoria_seguranca":
             jogo.estado_atual = "JOGO"
             jogo.minigame_atual = None
-            jogo.sala_atual = "01" 
             imprimir_contexto_sala(jogo)
 
         elif resultado == "morte":
@@ -495,6 +495,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 registrar_telemetria("MORTE", "SALA DE SEGURANCA", jogo.dificuldade_escolhida, "Jumpscare na cadeira")
             except: pass
             dar_tela_de_morte(jogo)
+
+        return
 
 
     # ==========================================
