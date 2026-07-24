@@ -1,6 +1,12 @@
 import random
-from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, limpar_tela, pausar, digitar
-from data import ARTE_INDIO
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
+from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, default_ui
+
 
 CAVEIRA_ASCII = r'''
                      .ed"""" """$$$$be.
@@ -263,8 +269,7 @@ class MinigameMinotauro:
 
 # minigame sala de segurança
 
-import random
-from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
+
 
 
 
@@ -404,7 +409,7 @@ class MinigameSeguranca:
                 carol_na_porta = (self.caroline_caminho == "porta" and self.caroline_pos >= 5)
                 
                 if rick_na_porta and carol_na_porta:
-                    ui.exibir(" Seu corpo treme. Você vê a carcaça maciça de Rick, o mosqueteiro e a carcaça de coelho rosa retorcido de Caroline parados lado a lado no corredor, olhando diretamente para você através do vidro")
+                    ui.exibir("Seu corpo treme. Você vê a carcaça maciça de Rick, o mosqueteiro, e a carcaça de coelho rosa retorcido de Caroline parados lado a lado no corredor, olhando diretamente para a câmera. O vazio nos olhos deles é aterrorizante.")
                 elif rick_na_porta:
                     ui.exibir(" Você olha pelo vidro e vê a silhueta gigantesca do Rick, o mosqueteiro, parado nas sombras. Os olhos de plástico sem vida dele estão focados em você.")
                 elif carol_na_porta:

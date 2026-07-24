@@ -1,16 +1,12 @@
 const outputDiv = document.getElementById('output');
-
 const inputField = document.getElementById('comando');
 
 let historicoComandos = [];
 let posicaoHistorico = -1;
 let comandoDigitadoAtual = "";
 
-
 const terminal = document.getElementById('terminal');
 const loadingSpinner = document.getElementById('loading');
-
-
 const inputLineDiv = document.querySelector('.input-line'); 
 
 const hpEl = document.getElementById('hud-hp');
@@ -19,18 +15,36 @@ const invEl = document.getElementById('hud-inv');
 const salaEl = document.getElementById('hud-sala');
 const saidasEl = document.getElementById('hud-saidas');
 
+// ==========================================
+// FOCO INTELIGENTE E ACESSIBILIDADE
+// ==========================================
+// Mantém o foco no input apenas se o usuário não estiver selecionando texto 
+// ou não estiver clicando nos botões de controle mobile
+document.addEventListener('click', (event) => {
+    const inputTerminal = document.getElementById('comando');
+    const textoSelecionado = window.getSelection().toString();
+    
+    // Verifica se o clique foi dentro de um botão
+    const clicouNoBotao = event.target.closest('button');
+    
+    if (!textoSelecionado && inputTerminal && !clicouNoBotao) {
+        inputTerminal.focus();
+    }
+});
+
+// ==========================================
+// EVENTOS DE TECLADO (INPUT)
+// ==========================================
 inputField.addEventListener("keydown", async function(event) {
     if (event.key === "Enter") {
         const comandoBruto = inputField.value;
         const comando = comandoBruto.trim();
         
         if (comando !== "") {
-            
             if (historicoComandos[historicoComandos.length - 1] !== comando) {
                 historicoComandos.push(comando);
             }
             posicaoHistorico = historicoComandos.length; 
-            
             
             const p = document.createElement("p");
             p.className = "branco";
@@ -67,15 +81,12 @@ inputField.addEventListener("keydown", async function(event) {
     }
 });
 
-document.addEventListener('click', () => {
-    inputField.focus();
-});
-
-
+// ==========================================
+// ATUALIZAÇÃO DO HUD VISUAL
+// ==========================================
 function atualizarSidebar(estado) {
     if (!estado) return;
 
-    
     const hpVal = document.getElementById("hp-val");
     if (hpVal) {
         if (estado.hp === "∞") {
@@ -92,15 +103,12 @@ function atualizarSidebar(estado) {
         }
     }
 
-    
     const luzVal = document.getElementById("luz-val");
     if (luzVal) {
-        
         luzVal.textContent = estado.luz !== undefined ? estado.luz : "??";
         luzVal.className = (estado.luz === "∞" || estado.luz > 3) ? "verde" : "vermelho";
     }
 
-    
     const invList = document.getElementById("inv-list");
     const invTitulo = document.querySelector("#hud-inv");
     
@@ -135,13 +143,14 @@ function atualizarSidebar(estado) {
     }
 }
 
+// ==========================================
+// PROCESSAMENTO E ANIMAÇÃO DE TEXTO
+// ==========================================
 async function processarLinhas(linhas, estado) {
     const terminal = document.querySelector('.terminal-section'); 
 
     for (let linha of linhas) {
         await novaLinha(linha, terminal); 
-        
-        
         if (terminal) terminal.scrollTop = terminal.scrollHeight;
     }
     atualizarSidebar(estado);
@@ -149,16 +158,13 @@ async function processarLinhas(linhas, estado) {
 
 function novaLinha(linha, terminal) {
     return new Promise((resolve) => {
-
         if (typeof linha === 'string' && linha.includes("@@JUMPSCARE@@")) {
             linha = linha.replace("@@JUMPSCARE@@", ""); 
             triggerJumpscare(); 
         }
 
-
         if (linha.startsWith("@@CLEAR@@")) {
             outputDiv.innerHTML = "";
-            
             if (terminal) terminal.scrollTop = terminal.scrollHeight;
             resolve();
         } else if (linha.startsWith("@@TYPE@@")) {
@@ -172,7 +178,6 @@ function novaLinha(linha, terminal) {
         }
     });
 }
-
 
 function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) {
     const p = document.createElement('p');
@@ -219,11 +224,13 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     digitar();
 }
 
+// ==========================================
+// COMUNICAÇÃO COM O SERVIDOR (API)
+// ==========================================
 async function fetchSeguro(url, options) {
     inputField.disabled = true;
     inputLineDiv.style.display = 'none'; 
     loadingSpinner.style.display = 'flex';
-    
     
     const startTime = Date.now(); 
     
@@ -234,9 +241,7 @@ async function fetchSeguro(url, options) {
 
         console.log("PYTHON:", data);
         
-        
         const tempoDecorrido = Date.now() - startTime;
-        
         
         if (tempoDecorrido < 300) {
             await new Promise(resolve => setTimeout(resolve, 300 - tempoDecorrido));
@@ -250,9 +255,7 @@ async function fetchSeguro(url, options) {
         }
 
     } catch (erro) {
-
         console.error("O ERRO REAL É ESTE AQUI:", erro);
-
         loadingSpinner.style.display = 'none';
         let p = document.createElement('p');
         p.className = 'vermelho';
@@ -270,9 +273,20 @@ function iniciarJogo() {
     fetchSeguro('/iniciar', { method: 'GET' });
 }
 
+async function enviarComando(comando) {
+    fetchSeguro('/comando', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comando: comando })
+    });
+}
 
+window.onload = iniciarJogo;
+
+// ==========================================
+// UTILITÁRIOS E ATALHOS GERAIS
+// ==========================================
 function reproduzirBeep(tipo = 'sucesso') {
-    
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
@@ -295,17 +309,10 @@ function reproduzirBeep(tipo = 'sucesso') {
     }
 }
 
-async function enviarComando(comando) {
-    
-    fetchSeguro('/comando', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comando: comando })
-    });
+// Aliases para playBip legados se houverem
+function playBip(tipo) {
+    reproduzirBeep(tipo);
 }
-
-window.onload = iniciarJogo;
-
 
 function openHelp() {
     document.getElementById('help-modal').classList.remove('hidden');
@@ -313,10 +320,8 @@ function openHelp() {
 
 function closeHelp() {
     document.getElementById('help-modal').classList.add('hidden');
-    
     document.getElementById('comando').focus(); 
 }
-
 
 document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
@@ -324,15 +329,12 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-
 document.addEventListener('keydown', function (e) {
-    
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
         e.preventDefault();
         outputDiv.innerHTML = '';
         reproduzirBeep('sucesso');
     }
-    
     
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -344,66 +346,22 @@ document.addEventListener('keydown', function (e) {
         reproduzirBeep('sucesso');
     }
 
-    
     if (e.key === '?' && document.activeElement !== inputField) {
         e.preventDefault();
         openHelp(); 
     }
 });
 
-
-document.addEventListener('click', () => {
-    const inputTerminal = document.querySelector('input');
-    const textoSelecionado = window.getSelection().toString();
-    
-    
-    if (!textoSelecionado && inputTerminal) {
-        inputTerminal.focus();
-    }
-});
-
-
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-function playBip(tipo) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    if (tipo === 'erro') {
-        
-        oscillator.type = 'sawtooth';
-        oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.3);
-    } else {
-        
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.08);
-    }
-}
-
 // ==========================================
-// NOVOS SISTEMAS DE IMERSÃO (V1.0 FINAL)
+// SISTEMAS DE IMERSÃO (MOBILE / ÁUDIO)
 // ==========================================
-
-
 function executarAtalho(cmd) {
     const input = document.getElementById('comando');
     input.value = cmd;
     input.focus();
     
-    if (typeof enviarComando === "function") enviarComando();
+    if (typeof enviarComando === "function") enviarComando(cmd); // Corrigido para enviar o comando diretamente!
 }
-
 
 let ambientCtx, ambientOsc, ambientGain;
 function iniciarSomAmbiente() {
@@ -427,11 +385,9 @@ function iniciarSomAmbiente() {
 document.body.addEventListener('click', iniciarSomAmbiente, {once: true});
 document.body.addEventListener('keydown', iniciarSomAmbiente, {once: true});
 
-
 function triggerJumpscare() {
     const overlay = document.getElementById('jumpscare-overlay');
-    overlay.classList.remove('hidden');
-    
+    if(overlay) overlay.classList.remove('hidden');
     
     if(ambientCtx) {
         const scareOsc = ambientCtx.createOscillator();
@@ -445,13 +401,18 @@ function triggerJumpscare() {
         scareOsc.stop(ambientCtx.currentTime + 0.15); 
     }
     
-    
-    setTimeout(() => overlay.classList.add('hidden'), 150); 
+    if(overlay) setTimeout(() => overlay.classList.add('hidden'), 150); 
 }
-
 
 function mostrarSalvando() {
     const ind = document.getElementById('save-indicator');
-    ind.classList.remove('hidden');
-    setTimeout(() => ind.classList.add('hidden'), 1500);
+    if (ind) {
+        ind.classList.remove('hidden');
+        setTimeout(() => ind.classList.add('hidden'), 1500);
+    }
 }
+
+function fazerNada() {
+    
+}
+

@@ -52,10 +52,24 @@ body::before {
     text-shadow: 0 0 2px currentColor, 0 0 5px currentColor;
 }
 
-.amarelo { color: #ffdd00; }
-.vermelho { color: #ff4444; }
-.verde { color: #44ff44; }
-.branco { color: #ffffff; }
+.verde { 
+    color: #4aff4a; 
+    text-shadow: 0 0 5px rgba(74, 255, 74, 0.5); 
+}
+
+.vermelho { 
+    color: #ff5555; 
+    text-shadow: 0 0 5px rgba(255, 85, 85, 0.5); 
+}
+
+.amarelo { 
+    color: #ffda33; 
+    text-shadow: 0 0 5px rgba(255, 218, 51, 0.5); 
+}
+
+.branco { 
+    color: #e0e0e0; 
+}
 
 /* --- ESTRUTURA ORIGINAL REVERTIDA --- */
 

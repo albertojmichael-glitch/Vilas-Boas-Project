@@ -7,6 +7,9 @@ from data import MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO
 from views import (imprimir_tela_boot, imprimir_menu_dificuldade, imprimir_tutorial, dar_dica_jon, falar_pianista, imprimir_contexto_sala, dar_tela_de_morte, rodar_final)
 from minigames import MinigameSeguranca, MinigameMinotauro
 
+import logging
+logger = logging.getLogger(__name__)
+
 ARTE_COFRE = r'''
   __________________________
  /  ______________________  \
@@ -521,7 +524,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         
         if resultado == "continuar":
             jogo.minigame_atual.imprimir_status()
-            
+
         elif resultado == "vitoria_minotauro":
             jogo.estado_atual = "JOGO"
             jogo.sala_atual = "sala dos fundos"

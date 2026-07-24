@@ -203,7 +203,7 @@ def rodar_final(tipo_final, jogo):
         ui.animar("- Eu queria fazer eles pagarem pelo que 'eles' me fizeram passar nesse lugar...", 0.07, DOS_VERDE, jogo)
         ui.animar("- Mas quando você me abraçou... a escuridão simplesmente evaporou.", 0.07, DOS_VERDE, jogo)
 
-        ui.animar("\n- Eu não podia te deixar presa aqui, Caroline. Esse lugar precisa queimar, eu procurei por arquivos, e achei os horrores que aconteceu, vim para te salvar, e os outros também.", 0.05, DOS_AMARELO, jogo)
+        ui.animar("\n- Não podia te deixar presa aqui, Caroline. Esse lugar precisa queimar. Eu procurei por arquivos, descobri os horrores que aconteceram... vim para te salvar, e os outros também. Hoje acaba.", 0.06, DOS_BRANCO, jogo)
         ui.animar("- A gente ainda vai viver juntos... Pena que seja em outra vida.", 0.05, DOS_AMARELO, jogo)
 
         ui.animar("\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.", 0.04, DOS_BRANCO, jogo)

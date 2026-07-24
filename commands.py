@@ -3,6 +3,9 @@ from utils import normalizar, extrair_argumentos, encontrar_melhor_match
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, default_ui
 from data import MAX_INVENTARIO, COFRE_SENHA, descricoes_itens
 
+import logging
+logger = logging.getLogger(__name__)
+
 def cmd_ir(comando, jogo, mapa):
     ui = jogo.ui_handler or default_ui
     direcao_bruta = comando.replace("ir ", "").strip()
@@ -200,12 +203,12 @@ def cmd_usar(comando, jogo, mapa):
 
             ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: ANGELA.TXT{RESET}", 0.05, DOS_AMARELO, jogo)
             ui.animar(f"{DOS_BRANCO}'Hoje vim mostrar para meu esposo João, meu local de trabalho, o Vilas Boas. Talvez não tenha sido uma boa ideia.'{RESET}", 0.06, DOS_BRANCO, jogo)
-            ui.animar(f"{DOS_BRANCO}'A gente brigou feio no meio do salão, pois aparentemente ele achava que tinha alguém me observando atrás das cortinas, sendo que não... Não tinha nada lá.'{RESET}", 0.09, DOS_BRANCO, jogo)
+            ui.animar(f"{DOS_BRANCO}'A gente brigou feio no meio do salão, pois aparentemente ele achava que tinha alguém me observando atrás das cortinas, sendo que não... Não tinha nada lá além de poeira e peças enferrujadas. Ele está perdendo a cabeça.'{RESET}", 0.05, DOS_BRANCO, jogo=jogo)
             ui.animar(f"{DOS_BRANCO}'Ele foi falar com meu chefe, o Sr. Renato, lá na salas dos fundos, enquanto eu escrevo isso.'{RESET}", 0.08, DOS_BRANCO, jogo)
-            ui.animar(f"{DOS_BRANCO}'Talvez... Seja loucura minha, mas eu vi alguem me chamando para a cozinha privada pela janela do escritório, vou ir lá ver.'{RESET}", 0.05, DOS_VERMELHO, jogo)
-            ui.animar(f"{DOS_BRANCO}'Ela foi libertada.'{RESET}", 0.10, DOS_VERMELHO, jogo)
+            ui.animar(f"{DOS_VERMELHO}'Talvez... Seja loucura minha, mas eu vi alguem me chamando para a cozinha privada pela janela do escritório, vou ir lá ver.'{RESET}", 0.05, DOS_VERMELHO, jogo)
+            ui.animar(f"{DOS_VERMELHO}'Ela foi libertada.'{RESET}", 0.10, DOS_VERMELHO, jogo)
             ui.pausar(2)
-            
+
             ui.exibir(f"{DOS_VERMELHO}O drive faz um ruído horrível e ejeta o disquete arranhado. Ele está arruinado.{RESET}")
             jogo.inventario.remove("disquete")
             ui.pausar(2)
