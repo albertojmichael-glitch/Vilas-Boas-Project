@@ -189,6 +189,18 @@ def cmd_usar(comando, jogo, mapa):
         jogo.turnos_luz = 12 
         jogo.inventario.remove("bateria nova")
         return True
+
+    elif item == "isqueiro":
+        if getattr(jogo, 'noite_vencida', False):
+            if getattr(jogo, 'fios_cortados_inventario', False):
+                ui.exibir(f"{DOS_VERMELHO}Você aproxima a chama do isqueiro das cortinas e da madeira podre. Em segundos, o fogo se espalha.{RESET}")
+                ui.exibir(f"{DOS_AMARELO}O restaruante está em chamas, você sabe o que deve fazer. Vá para o Hall de entrada.{RESET}")
+                jogo.incendio = True
+            else:
+                ui.exibir(f"{DOS_BRANCO}Você pensa em incendiar o lugar agora mesmo, mas precisa de algo a mais para... ela...{RESET}")
+        else:
+            ui.exibir(f"{DOS_AMARELO}Você acende o isqueiro. Uma pequena chama ilumina as sombras, mas você logo a apaga para não chamar atenção.{RESET}")
+        return True
         
     elif item == "disquete":
         if jogo.sala_atual == "01":

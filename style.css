@@ -365,3 +365,41 @@ ul li { margin-bottom: 5px; }
         font-size: 1.2rem; 
     }
 }
+
+/* ==========================================
+   EFEITOS DE GLITCH VISUAL DINÂMICO
+   ========================================== */
+
+/* 1. Animação de Rasgo de Tela (Dano / Jumpscare) */
+@keyframes glitch-shake {
+    0% { transform: translate(0); }
+    20% { transform: translate(-5px, 5px); filter: hue-rotate(90deg) contrast(150%); }
+    40% { transform: translate(5px, -5px); filter: invert(100%); }
+    60% { transform: translate(-5px, -2px); filter: hue-rotate(270deg); }
+    80% { transform: translate(3px, 3px); }
+    100% { transform: translate(0); filter: none; }
+}
+
+.glitch-active {
+    animation: glitch-shake 0.25s cubic-bezier(.25, .46, .45, .94) both !important;
+}
+
+/* 2. Estado de HP Crítico (HP = 1) */
+@keyframes crt-critical {
+    0% { opacity: 0.95; }
+    10% { opacity: 0.4; }
+    15% { opacity: 0.98; }
+    50% { opacity: 0.85; filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.7)); }
+    55% { opacity: 0.2; }
+    60% { opacity: 0.99; }
+    100% { opacity: 0.9; }
+}
+
+body.hp-critico {
+    animation: crt-critical 0.12s infinite !important;
+}
+
+body.hp-critico::before {
+    background: linear-gradient(rgba(18, 16, 16, 0) 40%, rgba(255, 0, 0, 0.35) 60%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.2), rgba(0, 255, 0, 0.05), rgba(0, 0, 255, 0.2)) !important;
+}

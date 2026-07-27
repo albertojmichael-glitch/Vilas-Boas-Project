@@ -122,6 +122,48 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
             imprimir_tela_boot(ui)
+        
+        elif comando == "help":
+            ui.exibir(f"{DOS_BRANCO}Comandos internos suportados:{RESET}")
+            ui.exibir(f"{DOS_VERDE}DIR{RESET}      Exibe uma lista de arquivos e subdiretórios.")
+            ui.exibir(f"{DOS_VERDE}CLS{RESET}      Limpa a tela do terminal.")
+            ui.exibir(f"{DOS_VERDE}MEM{RESET}      Exibe a quantidade de memória usada e livre no sistema.")
+            ui.exibir(f"{DOS_VERDE}CHKDSK{RESET}   Verifica um disco e exibe um relatório de status.")
+            ui.exibir(f"{DOS_VERDE}EXIT{RESET}     Encerra o programa COMMAND.COM (Tela Preta).")
+            ui.exibir(f"{DOS_VERDE}SHUTDOWN{RESET} Desliga e reinicia a máquina.")
+            ui.pausar(1)
+            ui.exibir(f"\n{DOS_VERMELHO}[ERRO DO SISTEMA]: O arquivo AJUDA.COM foi corrompido. Você está por conta própria aqui.{RESET}")
+
+        
+        elif comando == "mem":
+            ui.exibir(f"{DOS_BRANCO}Microsoft Disk Operation System 2007{RESET}")
+            ui.exibir(f"{DOS_BRANCO}VILLAS-BOAS BIOS - RELEASE 05/11/1982{RESET}\n")
+            ui.exibir(f"{DOS_VERDE}    640K memória convencional total{RESET}")
+            ui.exibir(f"{DOS_VERDE}    981K disponíveis para o MS-DOS{RESET}")
+            ui.exibir(f"{DOS_VERDE}    598K maior programa executável{RESET}\n")
+            ui.pausar(1)
+            ui.exibir(f"{DOS_AMARELO}ALERTA: O módulo oculto 'CAROLINE.SYS' está consumindo memória em excesso.{RESET}")
+
+        #
+        elif comando == "chkdsk":
+            ui.exibir(f"{DOS_BRANCO}O tipo de sistema de arquivos é FAT16.{RESET}")
+            ui.exibir(f"{DOS_BRANCO}O número de série do volume é 1982-1994{RESET}")
+            ui.exibir(f"{DOS_VERDE}Verificando arquivos e pastas...{RESET}")
+            ui.pausar(1.5)
+            ui.exibir(f"{DOS_VERDE}Verificação de arquivo concluída.{RESET}")
+            ui.pausar(1)
+            ui.exibir(f"{DOS_VERMELHO}Setores defeituosos encontrados em A:\\VALID\\ROGERIO.DAT{RESET}")
+            ui.exibir(f"{DOS_VERMELHO}Erro ao ler registro 44: 'Eu não consigo dormir, ela assombra meus pensamentos.'{RESET}")
+            ui.exibir(f"{DOS_AMARELO}O MS-DOS não pôde reparar os dados corrompidos da sua mente.{RESET}")
+
+        
+        elif comando == "exit":
+            ui.buffer.append("@@EXIT@@")
+
+        elif comando == "shutdown":
+            ui.buffer.append("@@RELOAD@@")
+
+        
         elif comando == "dir":
             ui.limpar()
             ui.exibir(f"{DOS_BRANCO} Volume in drive A is VILLASBOAS{RESET}")

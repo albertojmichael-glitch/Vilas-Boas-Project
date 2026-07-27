@@ -259,9 +259,12 @@ function atualizarSidebar(estado) {
 
     const hpVal = document.getElementById("hp-val");
     if (hpVal) {
+
         if (estado.hp === "∞") {
             hpVal.textContent = "[ GOD MODE ]";
             hpVal.className = "amarelo";
+            document.body.classList.remove("hp-critico");
+
         } else {
             const hpAtual = parseInt(estado.hp) || 0;
             const maxHp = 3;
@@ -270,6 +273,13 @@ function atualizarSidebar(estado) {
             
             hpVal.textContent = `[${blocosCheios}${blocosVazios}]`;
             hpVal.className = (hpAtual <= 1) ? "vermelho" : "verde";
+
+
+            if (hpAtual <= 1 && hpAtual > 0) {
+                document.body.classList.add("hp-critico");
+            } else {
+                document.body.classList.remove("hp-critico");
+            }
         }
     }
 
@@ -344,6 +354,17 @@ function novaLinha(linha, terminalEl) {
             if (terminalEl) terminalEl.scrollTop = terminalEl.scrollHeight;
             resolve();
 
+        } else if (linha.startsWith("@@EXIT@@")) {
+            
+            document.body.innerHTML = ""; 
+            document.body.style.backgroundColor = "#000";
+            resolve();
+            
+        } else if (linha.startsWith("@@RELOAD@@")) {
+            // força o f5
+            window.location.reload();
+            resolve();
+
         } else if (linha.startsWith("@@PAUSE@@")) {
             
             let ms = parseInt(linha.split("@@")[2]) / 3;
@@ -365,7 +386,15 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
     const p = document.createElement('p');
     
     let a11yPrefix = "";
-    if (classeCor === 'vermelho') a11yPrefix = "<span style='opacity:0; position:absolute'>[PERIGO] </span>";
+
+    if (classeCor === 'vermelho') {
+        a11yPrefix = "<span style='opacity:0; position:absolute'>[PERIGO] </span>";
+        
+        
+        document.body.classList.add('glitch-active');
+        setTimeout(() => document.body.classList.remove('glitch-active'), 250);
+    }
+
     if (classeCor === 'amarelo') a11yPrefix = "<span style='opacity:0; position:absolute'>[ATENÇÃO] </span>";
     
     if (classeCor) p.className = classeCor;
@@ -516,6 +545,9 @@ function executarAtalho(cmd) {
 function triggerJumpscare() {
     const overlay = document.getElementById('jumpscare-overlay');
     if (overlay) overlay.classList.remove('hidden');
+
+    document.body.classList.add('glitch-active');
+    setTimeout(() => document.body.classList.remove('glitch-active'), 300);
     
     const ctx = obterAudioContext();
     if (ctx) {
