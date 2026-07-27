@@ -3,8 +3,62 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## [1.7.0 - VERSÃO FINAL / PROJETO CONCLUÍDO] - 2026-07-27
 
-## [1.6.0] - 2026-07-27
+### 🏆 Status do Projeto
+- **PROJETO 100% FINALIZADO:** O motor do jogo MS-DOS retro foi concluído com sucesso, com todos os minigames, múltiplos finais, segredos, acessibilidade e responsividade totalmente funcionais.
+
+---
+
+### 🥚 Easter Eggs MS-DOS (Menu de Boot)
+- **`HELP`:** Exibe a lista de comandos do sistema com resposta narrativa do arquivo de ajuda corrompido.
+- **`MEM`:** Exibe detalhamento técnico da memória RAM em 1982/2007 e acusa a presença do módulo fantasma `CAROLINE.SYS`.
+- **`CHKDSK`:** Executa verificação do disco FAT16 e aponta setores defeituosos no registro de memória de Rogério.
+- **`EXIT`:** Desliga visualmente o terminal, deixando a tela completamente preta (requer F5 para reiniciar).
+- **`SHUTDOWN`:** Executa o reinício completo da página/sistema no navegador via sinal `@@RELOAD@@`.
+
+---
+
+### 🔥 Narrativa & Finais
+- **Gatilho do Final Verdadeiro Corrigido:** Adicionada a mecânica do `isqueiro` em `commands.py`. Se utilizado após as 6:00 AM (`noite_vencida`) portando os `fios cortados`, o jogador incendeia o restaurante, permitindo alcançar o **Final Verdadeiro: Libertação**.
+
+---
+
+### 🎛️ Minigames & Engine (`engine.py`, `minigames.py`, `commands.py`)
+- **Correção da Cadeira / Sala de Segurança (`KeyError`):** Interagir com a cadeira mantém a `sala_atual` válida (`01`) enquanto alterna o `estado_atual` para `MINIGAME_SEGURANCA`, eliminando crashes de mapa.
+- **Sincronização de Interface Web:** Atualização dinâmica de `jogo.minigame_atual.ui = jogo.ui_handler` a cada requisição HTTP, garantindo que o relatório de câmeras e sensores seja exibido na tela ativa do usuário.
+- **Temporização e Leitura:** Implementação do manipulador `@@PAUSE@@` no servidor e cliente para dar tempo hábil de leitura nos relatórios de câmeras e eventos de suspense.
+- **Proteção Visual:** `imprimir_contexto_sala()` agora aborta automaticamente durante minigames ativos para evitar sobreposição de textos.
+
+---
+
+### 📺 Visual, Glitches Dinâmicos & Responsividade (`style.css`, `index.html`)
+- **Glitches de Dano e Jumpscare:** Adicionada a animação CSS `@keyframes glitch-shake` com distorção de cores RGB acionada em sustos, mensagens de perigo (texto vermelho) e tomadas de dano.
+- **Efeito HP Crítico:** Quando o jogador atinge 1 de HP, o monitor CRT entra em estado de instabilidade visual (`.hp-critico`), piscando e intensificando o efeito de scanlines.
+- **Redesign Mobile (Port Celular):**
+  - O HUD (Status/HP/Luz/Inventário) se reorganiza como uma barra superior fixa e compacta.
+  - O terminal ocupa a parte central flexível sem cortar textos.
+  - A barra de atalhos e direcionais foi transformada num controle virtual estilo *gamepad* na parte inferior.
+  - Prevenção do teclado virtual subir indesejadamente em cliques fora da caixa de entrada.
+
+---
+
+### 🎧 Sound Design Sintético (Web Audio API - `script.js`)
+- **Feedback de Digitação (`tocarSomDigito`):** Sons de clique sintético retrô em cada caractere impresso na tela.
+- **Bip de Entrada (`tocarBipEntrada`):** Confirmação sonora de envio de comando ao pressionar `Enter`.
+- **Passos Metálicos Pesados (`tocarPassoMetalico`):** Som de impacto sub-grave e fricção de metal disparado pelas tags `@@PASSO@@` enviadas do backend.
+- **Zumbido Elétrico CRT (`iniciarSomAmbiente`):** Drone abafado de 55 Hz combinado com uma frequência de rede de 60 Hz simulando o monitor de tubo aquecido.
+
+---
+
+### 🛡️ Segurança & Backend (`app.py`, `state.py`)
+- **Validação de Entrada:** Pydantic (`ComandoRequest`) limitando comandos em até 256 caracteres.
+- **Sanitização de Cookies:** Leitura segura de UUID em `obter_sid_seguro()` prevenindo injeções NoSQL.
+- **Gerenciamento de Sessão:** Integração com Redis e *fallback* local `TTLCache`.
+- **Rate Limiting:** Limite de 60 requisições/min e 500/hora via `Flask-Limiter`.
+
+
+## [1.6.0] - 2026-07-24
 
 ### ⚡ Segurança & Arquitetura
 - **Validação com Pydantic:** Adicionado o schema `ComandoRequest` na rota `/comando` para barrar payloads maliciosos ou maiores que 256 caracteres na porta de entrada.
