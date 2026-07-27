@@ -183,13 +183,22 @@ function playBip(tipo) {
 // ==========================================
 // FOCO INTELIGENTE E CONTROLES
 // ==========================================
-document.addEventListener('click', (event) => {
+const terminalSection = document.querySelector('.terminal-section');
+
+
+terminalSection.addEventListener('click', (event) => {
     const inputTerminal = document.getElementById('comando');
     const textoSelecionado = window.getSelection().toString();
     const clicouNoBotao = event.target.closest('button');
+    const clicouNoInput = event.target.closest('.input-line');
+    
     
     if (!textoSelecionado && inputTerminal && !clicouNoBotao) {
-        inputTerminal.focus();
+        
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+        if (!isMobile || clicouNoInput) {
+            inputTerminal.focus();
+        }
     }
 });
 
@@ -389,7 +398,7 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
                 digitar(); 
             } else {
                 if (char !== ' ' && char !== '\n') {
-                    tocarSomDigito(); // Som de digitação a cada letra exibida
+                    tocarSomDigito(); 
                 }
                 setTimeout(digitar, velocidade);
             }

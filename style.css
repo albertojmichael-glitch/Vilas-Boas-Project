@@ -237,12 +237,6 @@ ul li { margin-bottom: 5px; }
     }
 }
 
-@media (max-width: 600px) {
-    body { font-size: 1rem; }
-    input { font-size: 1.1rem; }
-    .sidebar { padding: 15px; gap: 10px; }
-    .help-float { bottom: 10px; right: 10px; width: 40px; height: 40px; font-size: 1.2rem; }
-}
 
 /* --- ELEMENTOS DE IMERSÃO 1.0 --- */
 #save-indicator {
@@ -284,8 +278,90 @@ ul li { margin-bottom: 5px; }
     cursor: pointer; border-radius: 4px; flex: 1; min-width: 50px;
     text-align: center;
 }
-.mobile-controls button:active { background: #33ff00; color: #000; }
+.mobile-controls button:active { background: #33ff00; color: #000; 
 
-@media (max-width: 600px) {
-    .mobile-controls { display: flex; }
+}
+
+
+
+@media (max-width: 768px) {
+    body {
+        font-size: 1.1rem;
+        overflow: hidden; 
+    }
+    
+    .container { 
+        flex-direction: column; 
+        height: 100vh;
+        height: 100dvh; 
+    }
+
+    
+    .sidebar { 
+        order: -1; 
+        flex: none; 
+        max-width: 100%;
+        border-left: none; 
+        border-bottom: 2px solid #33ff00; 
+        padding: 10px 15px; 
+        gap: 5px;
+        max-height: 25vh;
+    }
+    
+    .panel { display: flex; flex-direction: column; gap: 5px; }
+    .panel h2 { display: none; } 
+    
+    .status-grid { 
+        display: flex; 
+        gap: 20px; 
+        border-bottom: 1px dashed #33ff00; 
+        padding-bottom: 5px; 
+    }
+    
+    .inventory-box h3 { display: inline-block; margin-right: 5px; font-size: 1.1rem; }
+    #inv-list { display: inline; }
+    #inv-list li { 
+        display: inline-block; 
+        margin-right: 8px; 
+        background: #111;
+        padding: 0 4px;
+        border: 1px solid #33ff0055;
+    }
+
+    
+    .terminal-section { 
+        flex: 1; 
+        height: auto; 
+        padding: 10px 15px;
+    }
+
+    input { font-size: 1.1rem; }
+
+    
+    .mobile-controls { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr 1fr 1fr; 
+        gap: 5px;
+        padding-top: 10px;
+        margin-top: auto; 
+    }
+    
+    
+    .mobile-controls button:nth-child(1),
+    .mobile-controls button:nth-child(2) {
+        grid-column: span 2;
+    }
+    
+    .mobile-controls button { 
+        padding: 12px 5px; 
+        font-size: 1.1rem; 
+    }
+
+    .help-float { 
+        bottom: 70px; 
+        right: 15px; 
+        width: 40px; 
+        height: 40px; 
+        font-size: 1.2rem; 
+    }
 }
