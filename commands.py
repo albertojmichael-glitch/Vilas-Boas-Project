@@ -309,14 +309,24 @@ def processar_comando(comando, jogo, mapa):
     
         if jogo.sala_atual == "01":  
             if not getattr(jogo, 'noite_vencida', False):
-                
+            
+                from minigames import MinigameSeguranca
+
                 jogo.estado_atual = "MINIGAME_SEGURANCA"
+
                 jogo.minigame_atual = MinigameSeguranca(jogo)
+
                 jogo.minigame_atual.imprimir_status()
+                return True
+
+
             else:
                 jogo.ui_handler.exibir(f"{DOS_AMARELO}A mesa de controle está desligada. A noite já terminou.{RESET}")
+                return True
+
         else:
             jogo.ui_handler.exibir(f"{DOS_BRANCO}Não há nenhuma cadeira de segurança aqui.{RESET}")
+            return True
 
     if jogo.sala_atual in mapa:
         sala = mapa[jogo.sala_atual]

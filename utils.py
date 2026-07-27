@@ -112,12 +112,12 @@ def corromper_texto(texto, intensidade=0.5):
     """Adiciona caracteres Zalgo (ruído visual) simulando perda de sanidade."""
     if intensidade <= 0: return texto
         
-    zalgo_chars = [chr(i) for i in range(0x0300, 0x036F)] # Marcas diacríticas
+    zalgo_chars = [chr(i) for i in range(0x0300, 0x036F)] 
     resultado = []
     
     for char in texto:
         resultado.append(char)
-        # Só corrompe letras, ignora espaços e pontuações para não quebrar tudo
+        
         if char.isalpha() and random.random() < intensidade:
             num_zalgos = random.randint(1, 3)
             for _ in range(num_zalgos):

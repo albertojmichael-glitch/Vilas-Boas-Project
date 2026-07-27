@@ -524,6 +524,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.minigame_atual.jogo = jogo
         elif not isinstance(jogo.minigame_atual, MinigameSeguranca):
             jogo.minigame_atual = MinigameSeguranca(jogo)
+
+        if hasattr(jogo.minigame_atual, 'ui'):
+            jogo.minigame_atual.ui = jogo.ui_handler
             
         partes = extrair_argumentos(comando)
         verbo = partes[0] if partes else ""
@@ -556,9 +559,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
         return
 
-    # ==========================================
-    # BLOCO: MINIGAME DO MINOTAURO
-    # ==========================================
+   
+    #MINIGAME DO MINOTAURO
+    
     elif jogo.estado_atual == "MINIGAME_MINOTAURO":
         if type(jogo.minigame_atual) is dict:
             dados_salvos = jogo.minigame_atual
