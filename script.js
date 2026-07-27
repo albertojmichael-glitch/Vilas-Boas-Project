@@ -337,7 +337,7 @@ function novaLinha(linha, terminalEl) {
 
         } else if (linha.startsWith("@@PAUSE@@")) {
             
-            let ms = parseInt(linha.split("@@")[2]);
+            let ms = parseInt(linha.split("@@")[2]) / 3;
             setTimeout(resolve, ms);
 
         } else if (linha.startsWith("@@TYPE@@")) {

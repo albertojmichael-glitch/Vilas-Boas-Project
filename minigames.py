@@ -136,7 +136,7 @@ class MinigameMinotauro:
         if acao in ["atacar", "bater", "chutar", "lutar"] and getattr(jogo, 'god_mode', False):
             ui.exibir(f"{DOS_AMARELO}[GOD MODE] Você corre na direção do Minotauro e dá uma voadora com os dois pés no peito dele!{RESET}")
             ui.exibir(f"{DOS_AMARELO}A fera despenca para trás, choraminga em som de estática e foge rompendo as paredes.{RESET}")
-            ui.pausar(2)
+            ui.pausar(1.5)
             return "vitoria_minotauro"
 
         turno_gasto = False
@@ -206,7 +206,7 @@ class MinigameMinotauro:
                 
                 if self.fios_cortados and "fios cortados" in jogo.inventario:
                     ui.exibir(f"\\n{DOS_VERDE}Você se joga contra a maçaneta, abre a porta e a tranca com toda a força! Você sobreviveu!{RESET}")
-                    ui.pausar(2)
+                    ui.pausar(1.5)
                     return "vitoria_minotauro"
                 else:
                     ui.exibir("Você está na porta de saída, Você precisa cortar e pegar os fios eletricos.")
@@ -223,12 +223,12 @@ class MinigameMinotauro:
         if self.px == self.mx and self.py == self.my:
             if getattr(jogo, 'god_mode', False):
                 ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Você esbarra no Minotauro. Ele tenta te arranhar, mas suas garras quebram na sua pele divina! Ele foge chorando.{RESET}")
-                ui.pausar(2)
+                ui.pausar(1.5)
                 return "vitoria_minotauro"
             else:
                 ui.exibir("\n Você andou direto para as mãos do monstro no escuro...")
                 ui.exibir("@@JUMPSCARE@@")
-                ui.pausar(2)
+                ui.pausar(1.5)
                 ui.exibir("\n No vazio, você morre sozinho, sem poder salvar ninguém. ")
                 ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                 return "morte"
@@ -536,7 +536,7 @@ class MinigameSeguranca:
                     self.caroline_caminho = random.choice(["porta", "tubulacao"])
                     ui.exibir(f"\n{DOS_AMARELO} Um estrondo na porta. Ela recuou...{RESET}")
         
-        ui.pausar(4)
+        ui.pausar(2)
 
         if acao_valida:
             chance_evento = random.randint(1,100)
@@ -551,7 +551,7 @@ class MinigameSeguranca:
             elif chance_evento <= 12:
                 ui.exibir(f"\n{DOS_VERMELHO} Você jura ter visto algo na ventilação... Será que é coisa da sua cabeça?{RESET}")
         
-        ui.pausar(4)
+        ui.pausar(3)
 
         if turno_passou:
             self.usos_sistema_turno = 0
@@ -621,7 +621,7 @@ class MinigameSeguranca:
                 self.alberto_troll = True
 
             ui.exibir("\n[A atualizar sistema...]")
-            ui.pausar(3.5)
+            ui.pausar(1.2)
 
         if self.turno >= 24:
             ui.limpar()
