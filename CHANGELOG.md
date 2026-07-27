@@ -4,6 +4,36 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 
+## [1.6.0] - 2026-07-27
+
+### ⚡ Segurança & Arquitetura
+- **Validação com Pydantic:** Adicionado o schema `ComandoRequest` na rota `/comando` para barrar payloads maliciosos ou maiores que 256 caracteres na porta de entrada.
+- **Proteção contra Injeção NoSQL:** Criada a função `obter_sid_seguro()` para validar e converter os cookies de sessão `sid` em UUIDs válidos antes de realizar consultas no MongoDB.
+- **Rate Limiting em Camadas:** Configurados múltiplos limites no `@limiter` para travar requisições automatizadas (60 por minuto / 500 por hora).
+- **Suporte ao Redis:** Implementada integração distribuída via `REDIS_URL` com *fallback* automático para `TTLCache` na memória local.
+- **Paginação de Saves:** Adicionada a rota `/saves` com suporte a paginação (`page` e `limit`) para evitar estouro de memória na listagem do banco de dados.
+- **Clean Code & Imports:** Todos os imports de módulos (`redis`, `minigames`, etc.) foram movidos para o topo do código (PEP 8), eliminando problemas de *Circular Import* e `UnboundLocalError`.
+
+### 🐛 Correções de Bugs (Bug Fixes)
+- **Minigame de Segurança (`KeyError`):** Corrigido o bug onde interagir com a cadeira alterava `sala_atual` para `"cadeira"`. O ID da sala permanece válido enquanto o estado muda para `MINIGAME_SEGURANCA`.
+- **Prevenção de Invocação de Salas em Minigames:** A função `imprimir_contexto_sala()` agora possui travas para cancelar a renderização visual do mapa enquanto minigames estiverem em execução.
+- **Restauração de Textos Decepados:** Reconstruídos os finais de diálogos e narrações narrativas cortadas em `commands.py`, `minigames.py` e `views.py`.
+- **Ajuste de Testes Pytest:** Corrigidos os testes unitários de alias de movimentação (`test_alias_movimentacao`) e de ausência do manipulador de pausa no minigame.
+- **Dependências no Deploy:** Adicionada a biblioteca `redis>=5.0.0` ao `requirements.txt` para resolver falhas de boot no Railway/Gunicorn.
+
+### 📱 Frontend & Acessibilidade (a11y)
+- **Foco Inteligente:** Refatorado o ouvinte de cliques no `script.js` para não roubar o foco da tela caso o usuário esteja selecionando texto ou clicando em botões mobile.
+- **Remoção de Duplicidade Visual:** Removido o atributo `placeholder="C:\>"` da tag `<input>` no `index.html` para eliminar o duplo prompt cinza na tela.
+- **Suporte WCAG (Contraste de Cores):** Atualizadas as paletas do terminal no `style.css` (verde `#4aff4a`, vermelho `#ff5555`, amarelo `#ffda33`) para reduzir a fadiga visual sem perder o brilho CRT.
+- **Screen Readers (Leitores de Tela):** Adicionados os atributos `role="log"`, `aria-live="polite"` e `aria-label` nos elementos principais.
+
+### 🎧 Efeitos Sonoros (Web Audio API)
+- **Feedback de Digitação (`tocarSomDigito`):** Efeito sintético leve acionado a cada caractere exibido na tela durante a animação de texto.
+- **Bip de Entrada (`tocarBipEntrada`):** Som retrô disparado imediatamente ao pressionar a tecla `Enter`.
+- **Passos Metálicos Pesados (`tocarPassoMetalico`):** Sintetizador de impacto e fricção metálica acionado dinamicamente pela engine através da tag `@@PASSO@@`.
+- **Zumbido Elétrico CRT (`iniciarSomAmbiente`):** Adicionada frequência de rede de 60 Hz sobre o som abafado de fundo para simular a presença de um monitor de tubo antigo.
+
+
 
 ## [1.5.0] - 2026-07-22
 
