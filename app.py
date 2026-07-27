@@ -30,7 +30,7 @@ from views import imprimir_tela_boot
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# --- LOGGING ---
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 log_file = os.path.join(BASE_DIR, "villas_boas.log")
 file_handler = RotatingFileHandler(log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8")
@@ -38,7 +38,7 @@ file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(messa
 logging.getLogger().addHandler(file_handler)
 logger = logging.getLogger(__name__)
 
-# --- CONFIGURAÇÃO ---
+
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982")
 if os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
     assert SECRET_KEY != "DEV_SECRET_DO_NOT_USE_IN_PROD_1982", "CRÍTICO: FLASK_SECRET_KEY não configurada em produção! Abortando boot."
@@ -46,7 +46,7 @@ if os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 
-# --- MONGODB ---
+
 MONGO_URI = os.environ.get("MONGO_URI")
 if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
@@ -58,7 +58,7 @@ else:
     mongo_client = None
     logger.warning("⚠ Rodando sem Banco de Dados. Usando arquivos locais.")
 
-# --- INICIALIZAÇÃO FLASK ---
+
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 app.secret_key = SECRET_KEY
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
@@ -85,7 +85,7 @@ else:
 
 
 
-# --- SEGURANÇA E SCHEMAS ---
+
 class ComandoRequest(BaseModel):
     comando: str = Field(default="", max_length=256)
 
@@ -100,7 +100,7 @@ def obter_sid_seguro():
         logger.warning(f"Alerta de Segurança: SID inválido/adulterado: {sid_bruto}")
         return None
 
-# --- CLASSES AUXILIARES ---
+
 class WebUIHandler(UIHandler):
     def __init__(self):
         self.buffer = [] 
@@ -108,7 +108,9 @@ class WebUIHandler(UIHandler):
     def limpar(self): 
         self.buffer.append("@@CLEAR@@")
         
-    def pausar(self, segs): 
+    def pausar(self, segs):
+        ms = int(segs * 1000)
+        self.buffer.append(f"@@PAUSE@@{ms}")
         pass
         
     def exibir(self, texto): 

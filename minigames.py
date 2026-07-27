@@ -463,10 +463,14 @@ class MinigameSeguranca:
                 ui.exibir(f"(-{CUSTO_INFO_LEVE}% Energia)")
                 ouviu = False
                 if self.rick_pos >= 3 or (self.caroline_caminho == "porta" and self.caroline_pos >= 5):
-                    ui.exibir(" Passos metálicos pesados são ouvidos do corredor"); ouviu = True
+
+                    ui.exibir("@@PASSO@@ Passos metálicos pesados são ouvidos do corredor"); ouviu = True
+
                 if self.jon_pos >= 4 or (self.caroline_caminho == "tubulacao" and self.caroline_pos >= 5):
-                    ui.exibir(" Você escuta arranhões e batidas vindo da tubulação"); ouviu = True
+
+                    ui.exibir("@@PASSO@@ Você escuta arranhões e batidas vindo da tubulação"); ouviu = True
                 if not ouviu: 
+
                     ui.exibir("Apenas o zumbido dos fios elétricos e da lâmpada quase apagada.")
 
         elif acao == "cameras":
@@ -521,7 +525,7 @@ class MinigameSeguranca:
                 if quem == "rick": self.rick_pos += 1
                 elif quem == "jon": self.jon_pos += 1
                 elif quem == "caroline": self.caroline_pos += 1
-                ui.exibir(f"\n{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}")
+                ui.exibir(f"\n@@PASSO@@{DOS_VERMELHO}Você ouve um ruído metálico se aproximando enquanto mexe no sistema.{RESET}")
 
             if self.porta_fechada:
                 if self.rick_pos >= 4:

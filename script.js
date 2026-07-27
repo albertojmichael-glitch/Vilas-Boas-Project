@@ -77,17 +77,17 @@ function tocarSomDigito() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(320 + Math.random() * 90, ctx.currentTime);
+    osc.type = 'square'; 
+    osc.frequency.setValueAtTime(400 + Math.random() * 150, ctx.currentTime);
 
     gain.gain.setValueAtTime(0.015, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start();
-    osc.stop(ctx.currentTime + 0.02);
+    osc.stop(ctx.currentTime + 0.05);
 }
 
 // 2. Bip de Confirmação de Comando (Enter)
@@ -334,6 +334,12 @@ function novaLinha(linha, terminalEl) {
             outputDiv.innerHTML = "";
             if (terminalEl) terminalEl.scrollTop = terminalEl.scrollHeight;
             resolve();
+
+        } else if (linha.startsWith("@@PAUSE@@")) {
+            
+            let ms = parseInt(linha.split("@@")[2]);
+            setTimeout(resolve, ms);
+
         } else if (linha.startsWith("@@TYPE@@")) {
             let parts = linha.split("@@");
             let cor = parts[2];
