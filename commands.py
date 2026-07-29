@@ -182,6 +182,20 @@ def cmd_usar(comando, jogo, mapa):
     
     if item == "lanterna":
         ui.exibir("Você já está usando a lanterna automaticamente (quando tem bateria).")
+
+    elif item == "chave dos fundos":
+        if jogo.sala_atual == "porta dos fundos":
+            ui.exibir(f"{DOS_VERDE}Você insere a chave suja de graxa na fechadura e força. Ela gira com um estalo alto.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}A pesada porta de metal se escancara, revelando um corredor denso e escuro.{RESET}")
+            
+            
+            mapa["porta dos fundos"]["descrição"] = "A pesada porta de metal está aberta, levando para a área de serviço."
+            mapa["porta dos fundos"]["frente"] = "sala dos fundos"
+            
+            jogo.inventario.remove("chave dos fundos")
+        else:
+            ui.exibir("Não há nenhuma fechadura por aqui que se encaixe nessa chave.")
+        return True
         
     elif item == "bateria nova":
         ui.exibir(f"{DOS_VERDE}Você abre a parte inferior da lanterna e insere a bateria nova.{RESET}")
@@ -229,6 +243,8 @@ def cmd_usar(comando, jogo, mapa):
             ui.pausar(2)
         else:
             ui.exibir(f"{DOS_BRANCO}Você segura o velho disquete, mas não há nenhum computador neste cômodo para lê-lo. Talvez na sala de segurança?{RESET}")
+
+
     elif item == "tábua pequena de madeira" or item == "tabua pequena de madeira":
         if jogo.sala_atual == "03":
             ui.exibir(f"{DOS_AMARELO}Você usa a tábua como alavanca e força a porta emperrada...{RESET}")
