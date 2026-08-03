@@ -80,39 +80,40 @@ class MinigameMinotauro:
             jogo.ui_handler.pausar(2)
 
     def imprimir_status(self):
-        self.ui.exibir("\n" + "-"*30)
-        texto_bat = "∞" if self.bateria > 100 else str(self.bateria)
-        self.ui.exibir(f" Bateria da Lanterna: {texto_bat} turnos restantes")
-        
-        distancia = abs(self.px - self.mx) + abs(self.py - self.my)
-        
-        if distancia > 1: 
-            self.ui.animar("[v] Você sente uma presença distante, talvez não haja perigo por enquanto.")
-        elif distancia == 1:
-            if random.random() < 0.2:
-                self.ui.exibir("[!] Os ecos, faiscas que caem do teto, e o barulho infernal de correntes eletricas te confundem... não dá pra saber de onde o som vem")
-            else:
-                if self.mx < self.px: self.ui.animar("⚠ Você sente um ar pesado em sua esquerda.")
-                elif self.mx > self.px: self.ui.animar("⚠ Você enxerga um vulto a sua direita.")
-                elif self.my > self.py: self.ui.animar("⚠ Você não enxerga nada a sua frente, uma mancha negra cobre o fundo.")
-                elif self.my < self.py: self.ui.animar("⚠ Passos pesados são ouvidos atrás de você.")
-
-        opcoes = "ir frente | ir trás | ir esquerda | ir direita | esperar"
-        
-        if self.px == 0 and self.py == 3 and not self.fios_cortados:
-            self.ui.exibir(" ↯ Você encontrou a caixa de fusíveis na parede central!")
-            if self.tesoura_chao:
-                self.ui.animar("✂ Há uma tesoura caída no chão.")
-                opcoes += " | pegar tesoura"
-            opcoes += " | cortar fios"
+        if self.ui and hasattr(self.ui, 'exibir'):
+            self.ui.exibir("\n" + "-"*30)
+            texto_bat = "∞" if self.bateria > 100 else str(self.bateria)
+            self.ui.exibir(f" Bateria da Lanterna: {texto_bat} turnos restantes")
             
-        if self.fios_cortados:
-            self.ui.exibir(f"{DOS_VERMELHO} ↯ OS FIOS ESTÃO CORTADOS! A SALA ESTÁ DESMORONANDO! FUJA PARA A SAÍDA!{RESET}")
-            if self.px == 0 and self.py == 0:
-                self.ui.exibir(f"{DOS_VERDE}⍍ A porta de entrada está logo aqui! Você pode sair!{RESET}")
-                opcoes += " | sair"
+            distancia = abs(self.px - self.mx) + abs(self.py - self.my)
+            
+            if distancia > 1: 
+                self.ui.animar("[v] Você sente uma presença distante, talvez não haja perigo por enquanto.")
+            elif distancia == 1:
+                if random.random() < 0.2:
+                    self.ui.exibir("[!] Os ecos, faiscas que caem do teto, e o barulho infernal de correntes eletricas te confundem... não dá pra saber de onde o som vem")
+                else:
+                    if self.mx < self.px: self.ui.animar("⚠ Você sente um ar pesado em sua esquerda.")
+                    elif self.mx > self.px: self.ui.animar("⚠ Você enxerga um vulto a sua direita.")
+                    elif self.my > self.py: self.ui.animar("⚠ Você não enxerga nada a sua frente, uma mancha negra cobre o fundo.")
+                    elif self.my < self.py: self.ui.animar("⚠ Passos pesados são ouvidos atrás de você.")
+
+            opcoes = "ir frente | ir trás | ir esquerda | ir direita | esperar"
+            
+            if self.px == 0 and self.py == 3 and not self.fios_cortados:
+                self.ui.exibir(" ↯ Você encontrou a caixa de fusíveis na parede central!")
+                if self.tesoura_chao:
+                    self.ui.animar("✂ Há uma tesoura caída no chão.")
+                    opcoes += " | pegar tesoura"
+                opcoes += " | cortar fios"
                 
-        self.ui.exibir(f"\n[{opcoes}]")
+            if self.fios_cortados:
+                self.ui.exibir(f"{DOS_VERMELHO} ↯ OS FIOS ESTÃO CORTADOS! A SALA ESTÁ DESMORONANDO! FUJA PARA A SAÍDA!{RESET}")
+                if self.px == 0 and self.py == 0:
+                    self.ui.exibir(f"{DOS_VERDE}⍍ A porta de entrada está logo aqui! Você pode sair!{RESET}")
+                    opcoes += " | sair"
+                    
+            self.ui.exibir(f"\n[{opcoes}]")
 
     def mover_minotauro(self):
         if random.random() < 0.60:
