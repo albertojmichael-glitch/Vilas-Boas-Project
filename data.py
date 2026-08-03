@@ -386,6 +386,19 @@ MAPA_ORIGINAL = {
         "itens": [],
         "inspecionaveis": {}
     },
+
+    "sala de energia": {
+        "descrição": "Uma sala abafada dominada por painéis elétricos, cabos e um ar quente e metálico. A pesada porta de metal bate atrás de você quando a entrada fecha.",
+        "atrás": "sala dos fundos",
+        "frente": "morte",
+        "esquerda": "nada",
+        "direita": "nada",
+        "itens": ["celular quebrado"],
+        "inspecionaveis": {
+            "celular quebrado": "Um celular rachado com uma mensagem não lida."
+        }
+    },
+    
     "sala de equipamento": {
         "descrição": "Apenas ferramentas velhas e graxa seca pelo chão.",
         "atrás": "sala dos fundos",

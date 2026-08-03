@@ -370,6 +370,18 @@ def processar_comando(comando, jogo, mapa):
         jogo.sala_atual = destino
         ui.exibir(f"{DOS_AMARELO}[GOD MODE] Teleportado para: {destino}{RESET}")
         return True
+
+    if jogo.sala_atual == "sala de energia":
+            
+            from minigames import MinigameMinotauro
+            jogo.estado_atual = "MINIGAME_MINOTAURO"
+            jogo.minigame_atual = MinigameMinotauro(jogo)
+            
+            try:
+                jogo.minigame_atual.imprimir_status()
+            except Exception:
+                pass
+            return True
         
     elif comando.startswith("gerar ") and getattr(jogo, 'god_mode', False):
         item_desejado = comando.replace("gerar ", "").strip()

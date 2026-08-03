@@ -66,47 +66,47 @@ class MinigameMinotauro:
         self.chance_sprint = getattr(jogo, 'chance_sprint_minotauro', 15)
         self.bateria = 9999 if getattr(jogo, 'god_mode', False) else 15
         
-        print("\n" + "="*50)
-        print("Você entra na Sala de Energia... e a pesada porta de metal bate atrás de você.")
+        self.ui.exibir("\n" + "="*50)
+        self.ui.exibir("Você entra na Sala de Energia... e a pesada porta de metal bate atrás de você.")
         pausar(2)
-        print("Você escuta uma respiração pesada.")
-        print("Ele está aqui.")
+        self.ui.exibir("Você escuta uma respiração pesada.")
+        self.ui.exibir("Ele está aqui.")
         jogo.ui_handler.pausar(2)
 
     def imprimir_status(self):
-        print("\n" + "-"*30)
+        self.ui.exibir("\n" + "-"*30)
         texto_bat = "∞" if self.bateria > 100 else str(self.bateria)
-        print(f" Bateria da Lanterna: {texto_bat} turnos restantes")
+        self.ui.exibir(f" Bateria da Lanterna: {texto_bat} turnos restantes")
         
         distancia = abs(self.px - self.mx) + abs(self.py - self.my)
         
         if distancia > 1: 
-            print("[v] Você sente uma presença distante, talvez não haja perigo por enquanto.")
+            self.ui.animar("[v] Você sente uma presença distante, talvez não haja perigo por enquanto.")
         elif distancia == 1:
             if random.random() < 0.2:
-                print("[!] Os ecos do labirinto te confundem... não dá pra saber de onde o som vem!")
+                self.ui.exibir("[!] Os ecos, faiscas que caem do teto, e o barulho infernal de correntes eletricas te confundem... não dá pra saber de onde o som vem")
             else:
-                if self.mx < self.px: print("⚠ Você sente um ar pesado em sua esquerda.")
-                elif self.mx > self.px: print("⚠ Você enxerga um vulto a sua direita.")
-                elif self.my > self.py: print("⚠ Você não enxerga nada a sua frente, uma mancha negra cobre o fundo.")
-                elif self.my < self.py: print("⚠ Passos pesados são ouvidos atrás de você.")
+                if self.mx < self.px: self.ui.animar("⚠ Você sente um ar pesado em sua esquerda.")
+                elif self.mx > self.px: self.ui.animar("⚠ Você enxerga um vulto a sua direita.")
+                elif self.my > self.py: self.ui.animar("⚠ Você não enxerga nada a sua frente, uma mancha negra cobre o fundo.")
+                elif self.my < self.py: self.ui.animar("⚠ Passos pesados são ouvidos atrás de você.")
 
         opcoes = "ir frente | ir trás | ir esquerda | ir direita | esperar"
         
         if self.px == 0 and self.py == 3 and not self.fios_cortados:
-            print(" ↯ Você encontrou a caixa de fusíveis na parede central!")
+            self.ui.exibir(" ↯ Você encontrou a caixa de fusíveis na parede central!")
             if self.tesoura_chao:
-                print("	✂ Há uma tesoura caída no chão.")
+                self.ui.animar("✂ Há uma tesoura caída no chão.")
                 opcoes += " | pegar tesoura"
             opcoes += " | cortar fios"
             
         if self.fios_cortados:
-            print(f"{DOS_VERMELHO} ↯ OS FIOS ESTÃO CORTADOS! A SALA ESTÁ DESMORONANDO! FUJA PARA A SAÍDA!{RESET}")
+            self.ui.exibir(f"{DOS_VERMELHO} ↯ OS FIOS ESTÃO CORTADOS! A SALA ESTÁ DESMORONANDO! FUJA PARA A SAÍDA!{RESET}")
             if self.px == 0 and self.py == 0:
-                print(f"{DOS_VERDE}⍍ A porta de entrada está logo aqui! Você pode sair!{RESET}")
+                self.ui.exibir(f"{DOS_VERDE}⍍ A porta de entrada está logo aqui! Você pode sair!{RESET}")
                 opcoes += " | sair"
                 
-        print(f"\n[{opcoes}]")
+        self.ui.exibir(f"\n[{opcoes}]")
 
     def mover_minotauro(self):
         if random.random() < 0.60:
