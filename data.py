@@ -404,13 +404,7 @@ MAPA_ORIGINAL = {
         "itens": ["bolsa"],
         "inspecionaveis": {}
     },
-    "sala de energia": {
-        "descrição": "Que quarto deprimente...",
-        "itens": [],
-        "inspecionaveis": {
-            "celular quebrado": "Parece ser dela..."
-        }
-    },
+    
     "morte": {
         "descrição": "Você está morto. O escuro engoliu sua alma.",
         "itens": [], 
