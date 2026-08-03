@@ -65,7 +65,11 @@ class MinigameMinotauro:
         self.fios_cortados = False
         self.chance_sprint = getattr(jogo, 'chance_sprint_minotauro', 15)
         self.bateria = 9999 if getattr(jogo, 'god_mode', False) else 15
-        
+
+        self.ui = getattr(jogo, 'ui', None)
+        if self.ui and hasattr(self.ui, 'exibir'):
+            self.ui.exibir("\n" + "="*50)
+            
         self.ui.exibir("\n" + "="*50)
         self.ui.exibir("Você entra na Sala de Energia... e a pesada porta de metal bate atrás de você.")
         pausar(2)
