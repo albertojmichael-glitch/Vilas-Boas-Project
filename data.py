@@ -413,19 +413,24 @@ MAPA_ORIGINAL = {
     },
     "morte": {
         "descrição": "Você está morto. O escuro engoliu sua alma.",
-        "itens": [], "inspecionaveis": {}
+        "itens": [], 
+        "inspecionaveis": {}
     },
     "saida": {
         "descrição": "Você escapou pela porta da frente.",
-        "itens": [], "inspecionaveis": {}
+        "itens": [], 
+        "inspecionaveis": {}
     },
     "cama": {
         "descrição": "O cheiro dela...",
-        "itens": [], "inspecionaveis": {}
+        "itens": [], 
+        "inspecionaveis": {}
     },
     "final_bom": {
-        "descrição": "O silêncio absoluto.",
-        "itens": [], "inspecionaveis": {}
+        "descrição": 
+        "O silêncio absoluto.",
+        "itens": [], 
+        "inspecionaveis": {}
     }
 }
 

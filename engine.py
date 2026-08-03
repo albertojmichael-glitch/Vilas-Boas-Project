@@ -52,13 +52,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
     comando = normalizar(comando_bruto)
     ui = jogo.ui_handler
 
-    # Safeguard: Restaura ID de sala válido se estiver corrompido
+    
     if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
         jogo.sala_atual = "01"
 
-    # ==========================================
-    # ESTADO: FIM DE JOGO
-    # ==========================================
+    #estado fim de jogo
     if jogo.estado_atual == "FIM":
         if comando in ["f5", "reiniciar", "restart", "reset", "dir"]:
             try:
@@ -66,7 +64,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             except Exception as e:
                 logger.error(f"Erro ao restaurar MAPA_ORIGINAL: {e}")
 
-            # Reseta TODAS as variáveis da partida
+            #reset das variaveis
             jogo.estado_atual = "AGUARDANDO_DIR"
             jogo.inventario = []
             jogo.hp = 3
@@ -115,9 +113,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         ui.exibir(f"{DOS_VERMELHO}[SISTEMA BLOQUEADO] - Aperte a tecla F5 no teclado para jogar novamente.{RESET}")
         return
 
-    # ==========================================
-    # ESTADO: AGUARDANDO_DIR
-    # ==========================================
+    #estado aguardando dir
     if jogo.estado_atual == "AGUARDANDO_DIR":
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
@@ -144,7 +140,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.pausar(1)
             ui.exibir(f"{DOS_AMARELO}ALERTA: O módulo oculto 'CAROLINE.SYS' está consumindo memória em excesso.{RESET}")
 
-        #
+        
         elif comando == "chkdsk":
             ui.exibir(f"{DOS_BRANCO}O tipo de sistema de arquivos é FAT16.{RESET}")
             ui.exibir(f"{DOS_BRANCO}O número de série do volume é 1982-1994{RESET}")
@@ -154,7 +150,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.pausar(1)
             ui.exibir(f"{DOS_VERMELHO}Setores defeituosos encontrados em A:\\VALID\\ROGERIO.DAT{RESET}")
             ui.exibir(f"{DOS_VERMELHO}Erro ao ler registro 44: 'Eu não consigo dormir, ela assombra meus pensamentos.'{RESET}")
-            ui.exibir(f"{DOS_AMARELO}O MS-DOS não pôde reparar os dados corrompidos da sua mente.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}O Sistema não pôde reparar os dados corrompidos da sua mente.{RESET}")
 
         
         elif comando == "exit":
@@ -192,9 +188,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             ui.exibir(f"{DOS_VERMELHO}Bad command or file name{RESET}")
             ui.exibir(f"{DOS_VERDE}Digite {DOS_BRANCO}dir{DOS_VERDE} para acessar os diretórios:{RESET}")
 
-    # ==========================================
-    # ESTADO: MENU
-    # ==========================================
+    #estado menu
+
     elif jogo.estado_atual == "MENU":
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
@@ -249,9 +244,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         else:
             ui.animar(f"{DOS_VERMELHO}OPÇÃO INVÁLIDA. DIGITE UMA OPÇÃO DO MENU.{RESET}", 0.04, jogo=jogo)
 
-    # ==========================================
-    # ESTADO: JOGO / COMBATE
-    # ==========================================
+    #estado jogo/combate
     elif jogo.estado_atual in ["JOGO", "COMBATE_ANIMATRONICO"]:
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()
@@ -314,11 +307,11 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             if gastou_turno:
                 atualizar_eventos_de_tempo(jogo)
             
-            # Restaura sala se ficou invalida
+            
             if jogo.sala_atual not in jogo.mapa and jogo.sala_atual not in ["morte", "saida", "cama", "final_bom"]:
                 jogo.sala_atual = "01"
 
-            # --- GATILHO DO FINAL VERDADEIRO ---
+            # gatilho do final verddeiro
             if jogo.estado_atual == "FIM" and getattr(jogo, 'incendio', False):
                 try: 
                     from app import registrar_telemetria
@@ -370,9 +363,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 if jogo.estado_atual == "JOGO":
                     imprimir_contexto_sala(jogo)
 
-    # ==========================================
-    # BLOCO: MINIGAME DO COFRE
-    # ==========================================
+    #minigame do cofre
     elif jogo.estado_atual == "MINIGAME_COFRE":
         if comando in ["cls", "limpar", "clear", "clean"]:
             ui.limpar()

@@ -7,7 +7,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 def minify_assets():
     print("[BUILD] Iniciando minificação de assets...")
     
-    # CSS
+    # css
     css_path = os.path.join(BASE_DIR, "style.css")
     css_min_path = os.path.join(BASE_DIR, "style.min.css")
     if os.path.exists(css_path):
@@ -17,7 +17,7 @@ def minify_assets():
             f.write(minified_css)
         print(f"  -> style.css minificado ({len(minified_css)} bytes).")
 
-    # JS
+    # js
     js_path = os.path.join(BASE_DIR, "script.js")
     js_min_path = os.path.join(BASE_DIR, "script.min.js")
     if os.path.exists(js_path):

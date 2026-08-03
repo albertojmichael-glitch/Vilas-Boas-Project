@@ -70,11 +70,12 @@ def falar_pianista(acertou, ui, jogo):
         ui.animar(f'"{random.choice(["Errado. As teclas pretas não perdoam mentiras.", "Você deveria lembrar melhor do que isso, Rogério.", "Uma nota fora do lugar... como você, aquela noite.", "Isso não é o que consta no registro do restaurante."])}"', 0.04, DOS_AMARELO, jogo)
 
 def imprimir_contexto_sala(jogo):
-    # 🛡️ TRAVA 1: Só desenha a sala se o jogador estiver no modo de exploração normal
+
+    # trava 1
     if getattr(jogo, 'estado_atual', 'JOGO') != "JOGO":
         return
 
-    # 🛡️ TRAVA 2: Se houver minigame ativo ou a sala não existir no mapa, aborta silenciosamente
+    # trava 2
     if jogo.minigame_atual or jogo.sala_atual not in jogo.mapa:
         return
 
@@ -93,7 +94,7 @@ def imprimir_contexto_sala(jogo):
         descricao_colorida = corromper_texto(descricao_colorida, intensidade=0.4)
         ui.animar(f"{DOS_VERMELHO}[SISTEMA NEUROLÓGICO COMPROMETIDO]{RESET}", 0.01, DOS_VERMELHO, jogo)
 
-    # Colore as palavras-chave normalmente
+    
     for inspecionavel in sala.get("inspecionaveis", {}):
         descricao_colorida = descricao_colorida.replace(inspecionavel, f"{DOS_AMARELO}{inspecionavel}{RESET}")
     for item in sala.get("itens", []):
@@ -101,7 +102,7 @@ def imprimir_contexto_sala(jogo):
         
     ui.animar(f"⏿ Visão: {descricao_colorida}", 0.01, DOS_BRANCO, jogo)
 
-    # --- RADAR DE INSPECIONÁVEIS ---
+    
     inspecionaveis = list(sala.get("inspecionaveis", {}).keys())
     if inspecionaveis:
         ui.animar(f"☞ Investigar: {DOS_AMARELO}{', '.join(inspecionaveis)}{RESET}", 0.01, DOS_BRANCO, jogo)
@@ -150,6 +151,11 @@ def rodar_final(tipo_final, jogo):
         liberou_deus = registrar_final("bons_sonhos")
         
     elif tipo_final == "final_bom":
+        ui.limpar()
+
+        ui.animar(f"{DOS_VERDE} ======================================================================{RESET}", 0.03, jogo=jogo)
+        ui.animar(f"{DOS_VERDE}                             [FINAL BOM]                               {RESET}", 0.04, jogo=jogo)
+        ui.animar(f"{DOS_VERDE} ======================================================================{RESET}", 0.03, jogo=jogo)
         ui.animar("Você acende o isqueiro e ilumina o local. A luz do fogo traz calma...", 0.04, DOS_VERDE, jogo)
         ui.animar("- Por que não deu certo? O que eu fiz de errado?", 0.05, DOS_AMARELO, jogo)
         ui.animar("- 'Ainda estou aqui...'", 0.09, DOS_VERMELHO, jogo)

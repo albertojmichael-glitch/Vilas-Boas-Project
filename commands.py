@@ -72,8 +72,8 @@ def cmd_ir(comando, jogo, mapa):
             ui.limpar()
             ui.exibir("\n" + "="*50)
             ui.exibir(f"{DOS_VERMELHO}Quando voce entra na sala, passos pesados e cheiro de fuligem invadem o ar.{RESET}")
-            ui.exibir(f"{DOS_VERMELHO}Uma mão robótica gigante segura o seu pescoço e te levanta do chão!{RESET}")
-            ui.exibir(f"{DOS_AMARELO}Você tem UMA AÇÃO para reagir antes que ele quebre o seu pescoço!{RESET}")
+            ui.exibir(f"{DOS_VERMELHO}Uma mão robótica gigante segura o seu pescoço e te levanta do chão.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}Você tem UMA ação para reagir antes que ele quebre o seu pescoço.{RESET}")
             jogo.estado_atual = "COMBATE_ANIMATRONICO" 
             ui.pausar(2)
             return True
@@ -82,7 +82,7 @@ def cmd_ir(comando, jogo, mapa):
             if getattr(jogo, 'noite_vencida', False) and getattr(jogo, 'fios_cortados_inventario', False) and not getattr(jogo, 'incendio', False):
                 ui.exibir(f"\n{DOS_VERDE}[DISPOSITIVO]: NÍVEL 2 - PRESENÇA PRÓXIMA.{RESET}")
                 ui.exibir(f"{DOS_AMARELO}'Eu preciso terminar isso antes...', você murmura para si mesmo.{RESET}")
-                ui.exibir(f"{DOS_AMARELO}Você vira as costas para a saída. A Sala de Energia espera.{RESET}")
+                ui.exibir(f"{DOS_AMARELO}Você vira as costas para a saída.{RESET}")
                 jogo.sala_atual = "entrada"
                 ui.pausar(3)
     else:
@@ -294,9 +294,7 @@ def cmd_inventario(jogo):
     return True
 
 
-# ==========================================
-# CÉREBRO PRINCIPAL DO PARSER
-# ==========================================
+#cerebro parser
 
 def processar_comando(comando, jogo, mapa):
     ui = jogo.ui_handler
