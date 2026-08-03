@@ -67,10 +67,12 @@ class MinigameMinotauro:
         self.bateria = 9999 if getattr(jogo, 'god_mode', False) else 15
 
         self.ui = getattr(jogo, 'ui', None)
+        
+        # Só exibe se a UI existir, e NÃO repete a linha fora do if!
         if self.ui and hasattr(self.ui, 'exibir'):
             self.ui.exibir("\n" + "="*50)
-            
-        self.ui.exibir("\n" + "="*50)
+
+        
         self.ui.exibir("Você entra na Sala de Energia... e a pesada porta de metal bate atrás de você.")
         pausar(2)
         self.ui.exibir("Você escuta uma respiração pesada.")
