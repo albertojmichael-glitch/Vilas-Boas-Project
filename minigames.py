@@ -234,11 +234,12 @@ class MinigameMinotauro:
             turno_gasto = True 
 
         
+        
         if self.px == self.mx and self.py == self.my:
             if getattr(jogo, 'god_mode', False):
-                ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Você esbarra no Minotauro. Ele tenta te arranhar, mas suas garras quebram na sua pele divina! Ele foge chorando.{RESET}")
+                ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Você destrói o animatrônico quando ele tenta te atacar, e sai da sala de energia!{RESET}")
                 ui.pausar(1.5)
-                return "vitoria_minotauro"
+                return "vitoria_minotauro" 
             else:
                 ui.exibir("\n Você andou direto para as mãos do monstro no escuro...")
                 ui.exibir("@@JUMPSCARE@@")
@@ -263,21 +264,20 @@ class MinigameMinotauro:
 
             self.mover_minotauro()
                 
+            
             if self.px == self.mx and self.py == self.my:
-                
                 if dist_antes > 1:
                     self.mx, self.my = mx_old, my_old
                     ui.exibir(f"\n{DOS_VERMELHO}⚠Você sente um calor insuportavel, e depois, um cheiro forte de putrefação, ele está bem na sua frente. Você tem UMA chance.⚠{RESET}")
                     ui.pausar(2)
                     return "continuar"
                 else:
-                    
-                    if getattr(jogo, 'god_mode', False) and not getattr(jogo, 'fios_cortados_inventario', False):
-                        jogo.inventario.append("fios cortados")
-                        jogo.fios_cortados_inventario = True
-                        ui.exibir(f"{DOS_AMARELO}[GOD MODE] Voce Destroi o animatronico quando ele tenta te atacar, e sai da sala de energia, você arrancou os 'fios cortados' da parede antes de sair.{RESET}")
+                    if getattr(jogo, 'god_mode', False):
+                        ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] O Minotauro pula em cima de você, mas é repelido por um escudo de energia! Ele desiste e foge.{RESET}")
+                        ui.pausar(2)
+                        return "vitoria_minotauro" 
                     else:
-                        ui.exibir("\n ☠ O Minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro ☠")
+                        ui.exibir(f"\n{DOS_VERMELHO} ☠ O Minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro ☠{RESET}")
                         ui.exibir("@@JUMPSCARE@@")
                         ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                         return "morte"
