@@ -603,6 +603,9 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.minigame_atual.jogo = jogo
         elif not isinstance(jogo.minigame_atual, MinigameMinotauro):
             jogo.minigame_atual = MinigameMinotauro(jogo)
+
+        if hasattr(jogo.minigame_atual, 'ui'):
+            jogo.minigame_atual.ui = jogo.ui_handler
             
         partes = extrair_argumentos(comando)
         verbo = partes[0] if partes else ""
