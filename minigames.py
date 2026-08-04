@@ -66,7 +66,7 @@ class MinigameMinotauro:
         self.chance_sprint = getattr(jogo, 'chance_sprint_minotauro', 15)
         self.bateria = 9999 if getattr(jogo, 'god_mode', False) else 15
 
-        self.ui = getattr(jogo, 'ui', None)
+        self.ui = getattr(jogo, 'ui_handler', getattr(jogo, 'ui', None))
         
         
         if self.ui and hasattr(self.ui, 'exibir'):
@@ -129,7 +129,14 @@ class MinigameMinotauro:
         self.my = max(0, min(3, self.my))
 
     def processar_turno(self, acao, jogo):
-        ui = jogo.ui_handler 
+        ui = jogo.ui_handler
+
+        if not ui:
+            class DummyUI:
+                def exibir(self, *args, **kwargs): pass
+                def animar(self, *args, **kwargs): pass
+                def pausar(self, *args, **kwargs): pass
+            ui = DummyUI() 
 
         if acao in ["celular quebrado", "ver celular quebrado", "olhar celular quebrado", "examinar celular quebrado", "investigar celular quebrado", "celular"]:
             if self.px == 0 and self.py == 3: 
