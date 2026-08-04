@@ -212,6 +212,17 @@ MAPA_ORIGINAL = {
         "itens": ["papel", "recorte 1"],
         "inspecionaveis": {}
     },
+
+    "mesas de jantar": {
+        "descrição": "São mesas circulares de jantar, ainda tem pratos com restos largados, e está cheio de baratas. Nojento.",
+        "atrás": "hall de entrada",
+        "direita": "quarto de refrigeração",
+        "esquerda": "entrada",
+        "itens": ["remedio"],
+        "inspecionaveis": {}
+    },
+
+
     "balcão": {
         "descrição": "tem presentes, confetes, doces de áçucar e pelucias",
         "frente": "balcão",
@@ -221,6 +232,7 @@ MAPA_ORIGINAL = {
         "itens": ["tesoura quebrada", "pelucias", "doce", "moeda velha", "disquete", "bolsa"],
         "inspecionaveis": {}
     },
+
     "quarto de refrigeração": {
         "descrição": "voce entra no quarto, está muito frio e os ventiladores fazem um barulho alto, tem um tubo de ventilação no centro da sala",
         "frente": "tubo de ventilação",
@@ -230,6 +242,7 @@ MAPA_ORIGINAL = {
         "itens": ["bateria nova"],
         "inspecionaveis": {}
     },
+
     "tubo de ventilação": {
         "descrição": "você rasteja pelo aluminio gelado, você sente muito frio",
         "frente": "morte", 
@@ -239,6 +252,7 @@ MAPA_ORIGINAL = {
         "itens": [],
         "inspecionaveis": {}
     },
+
     "sala de jantar": {
         "descrição": "tem varias mesas de jantar com confetes, é um lugar bem grande, está bem sujo",
         "inspecionaveis": {
@@ -251,6 +265,7 @@ MAPA_ORIGINAL = {
         "esquerda": "porta dos fundos", 
         "itens": ["confete", "isqueiro"]
     },
+
     "porta dos fundos": {
         "descrição": "Uma pesada porta de metal. Está trancada a chave.",
         "atrás": "sala de jantar",
@@ -258,6 +273,7 @@ MAPA_ORIGINAL = {
         "itens": [],
         "inspecionaveis": {}
     },
+
     "corredor": {
         "descrição": "tem quatro portas, 01-sala de segurança | 02-porta trancada | 03-porta emperrada | 04-sala de intervalo",
         "01": "01",
