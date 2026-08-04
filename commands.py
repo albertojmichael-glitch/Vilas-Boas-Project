@@ -390,6 +390,11 @@ def processar_comando(comando, jogo, mapa):
         if match_item:
             jogo.inventario.append(match_item)
             ui.exibir(f"{DOS_AMARELO}[GOD MODE] O item '{match_item}' materializou-se na sua mochila.{RESET}")
+
+            if match_item == "fios cortados":
+                jogo.fios_cortados_inventario = True
+
+
         else:
             ui.exibir(f"{DOS_VERMELHO}[GOD MODE ERRO] Matéria não catalogada. O sistema não sabe como fabricar '{item_desejado}'.{RESET}")
         return True
