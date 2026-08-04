@@ -257,25 +257,21 @@ class MinigameMinotauro:
                     ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                     return "morte"
                 
-            passos = 2 if random.randint(1, 100) <= self.chance_sprint else 1 
             
-            if passos == 2:
-                ui.exibir(f"\n{DOS_VERMELHO}⚠VOCÊ ESCUTA PASSOS PESADOS CORRENDO NA SUA DIREÇÃO!⚠{RESET}")
-                ui.pausar(1.5)
-
             dist_antes = abs(self.px - self.mx) + abs(self.py - self.my)
             mx_old, my_old = self.mx, self.my
 
-            for _ in range(passos):
-                self.mover_minotauro()
+            self.mover_minotauro()
                 
             if self.px == self.mx and self.py == self.my:
-                if dist_antes > 1 and passos == 1:
+                
+                if dist_antes > 1:
                     self.mx, self.my = mx_old, my_old
-                    ui.exibir(f"\n{DOS_VERMELHO}⚠VOCÊ TROMBA COM ALGO GIGANTE E METÁLICO NO ESCURO! ELE ESTÁ BEM NA SUA FRENTE!⚠{RESET}")
+                    ui.exibir(f"\n{DOS_VERMELHO}⚠Você sente um calor insuportavel, e depois, um cheiro forte de putrefação, ele está bem na sua frente. Você tem UMA chance.{RESET}")
                     ui.pausar(2)
                     return "continuar"
                 else:
+                    
                     if getattr(jogo, 'god_mode', False):
                         ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] O Minotauro pula em cima de você, mas é repelido por um escudo de energia! Ele desiste e foge.{RESET}")
                         ui.pausar(2)
