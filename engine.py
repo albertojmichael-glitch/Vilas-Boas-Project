@@ -622,6 +622,14 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             jogo.estado_atual = "JOGO"
             jogo.sala_atual = "sala dos fundos"
             jogo.minigame_atual = None
+            
+            
+            if getattr(jogo, 'god_mode', False) and not getattr(jogo, 'fios_cortados_inventario', False):
+                jogo.inventario.append("fios cortados")
+                jogo.fios_cortados_inventario = True
+                ui.exibir(f"{DOS_AMARELO}[GOD MODE] Com sua força divina, você arrancou os 'fios cortados' da parede antes de sair!{RESET}")
+            
+
             if "sala dos fundos" in jogo.mapa:
                 jogo.mapa["sala dos fundos"]["energia"] = "A pesada porta da sala de energia está totalmente destruída."
             ui.exibir(f"{DOS_VERDE}A porta cedeu atrás de você. Você sobreviveu.{RESET}")
