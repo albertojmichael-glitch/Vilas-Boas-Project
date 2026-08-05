@@ -154,6 +154,9 @@ class MinigameMinotauro:
             return "vitoria_minotauro"
 
         turno_gasto = False
+
+        dist_ui = abs(self.px - self.mx) + abs(self.py - self.my)
+        px_old, py_old = self.px, self.py
         
         if acao == "ir esquerda":
             if self.px > -1: self.px -= 1
@@ -235,18 +238,24 @@ class MinigameMinotauro:
 
         
         
+        
         if self.px == self.mx and self.py == self.my:
-            if getattr(jogo, 'god_mode', False):
-                ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Você destrói o animatrônico quando ele tenta te atacar, e sai da sala de energia!{RESET}")
-                ui.pausar(1.5)
-                return "vitoria_minotauro" 
+            
+            if dist_ui > 1:
+                ui.exibir(f"\n{DOS_VERMELHO}⚠ Você dá um passo e bate o rosto em uma carcaça de metal fria! Você recua pelo susto.⚠{RESET}")
+                self.px, self.py = px_old, py_old
             else:
-                ui.exibir("\n Você andou direto para as mãos do monstro no escuro...")
-                ui.exibir("@@JUMPSCARE@@")
-                ui.pausar(1.5)
-                ui.exibir("\n No vazio, você morre sozinho, sem poder salvar ninguém. ")
-                ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
-                return "morte"
+                if getattr(jogo, 'god_mode', False):
+                    ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] Você destrói o animatrônico quando ele tenta te atacar, e sai da sala de energia!{RESET}")
+                    ui.pausar(1.5)
+                    return "vitoria_minotauro"
+                else:
+                    ui.exibir("\n Você andou direto para as mãos do monstro no escuro...")
+                    ui.exibir("@@JUMPSCARE@@")
+                    ui.pausar(1.5)
+                    ui.exibir("\n No vazio, você morre sozinho, sem poder salvar ninguém. ")
+                    ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
+                    return "morte"
 
         if turno_gasto:
             if not getattr(jogo, 'god_mode', False):
@@ -258,24 +267,21 @@ class MinigameMinotauro:
                     ui.animar(CAVEIRA_ASCII, 0.005, cor="vermelho", jogo=jogo)
                     return "morte"
                 
-            
-            dist_antes = abs(self.px - self.mx) + abs(self.py - self.my)
             mx_old, my_old = self.mx, self.my
-
             self.mover_minotauro()
                 
             
             if self.px == self.mx and self.py == self.my:
-                if dist_antes > 1:
+                if dist_ui > 1: 
                     self.mx, self.my = mx_old, my_old
-                    ui.exibir(f"\n{DOS_VERMELHO}⚠Você sente um calor insuportavel, e depois, um cheiro forte de putrefação, ele está bem na sua frente. Você tem UMA chance.⚠{RESET}")
+                    ui.exibir(f"\n{DOS_VERMELHO}⚠VOCÊ TROMBA COM ALGO GIGANTE E METÁLICO NO ESCURO! ELE ESTÁ BEM NA SUA FRENTE!⚠{RESET}")
                     ui.pausar(2)
                     return "continuar"
                 else:
                     if getattr(jogo, 'god_mode', False):
                         ui.exibir(f"\n{DOS_AMARELO}[GOD MODE] O Minotauro pula em cima de você, mas é repelido por um escudo de energia! Ele desiste e foge.{RESET}")
                         ui.pausar(2)
-                        return "vitoria_minotauro" 
+                        return "vitoria_minotauro"
                     else:
                         ui.exibir(f"\n{DOS_VERMELHO} ☠ O Minotauro te encontrou no escuro. Mãos frias de metal te rasgam por inteiro ☠{RESET}")
                         ui.exibir("@@JUMPSCARE@@")
