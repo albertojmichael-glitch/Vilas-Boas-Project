@@ -3,6 +3,21 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
+## (Patch de Estabilidade e Balanceamento)
+
+##  Engine e Testes Automatizados (Pytest)
+* **FIX:** O `MinigameMinotauro` agora sobrevive aos testes do Pytest. Implementada blindagem de interface (`if self.ui and hasattr(self.ui, 'exibir'):`) no `__init__` e no `imprimir_status` para evitar `AttributeError` quando o ambiente gráfico for `None`.
+* **FIX:** Criada uma classe `DummyUI` (Mock) nativa na função `processar_turno` do Minotauro. O Pytest agora simula as ações visuais silenciosamente, alcançando 100% de aprovação sem travar o código.
+* **FIX:** A instância do Minotauro no jogo web agora recupera o contexto gráfico correto (`ui_handler`) em vez de cair no fallback de testes.
+* **FIX:** O loop de eventos no `engine.py` agora atualiza a referência gráfica do Minotauro (`jogo.minigame_atual.ui = jogo.ui_handler`) a cada turno, resolvendo o bug do "console fantasma" (comandos que funcionavam, mas não imprimiam na tela).
+
+##  Gameplay e Balanceamento (Minotauro)
+* **REMOVED:** Mecânica de "Sprint" do Minotauro. O RNG de 15% para o inimigo andar 2 casas e causar um jumpscare inevitável foi removido para evitar punições injustas em uma grade tão pequena (3x4).
+* **FEAT:** Nova mecânica de "Trombada" (Bump). O jogador e o Minotauro agora se movem 1 casa por turno. Se ambos entrarem na mesma coordenada partindo de uma distância segura (`dist_ui > 1`), o monstro é empurrado um bloco para trás e o jogador recebe um aviso visual vermelho, tendo 1 turno extra para reagir.
+* **FIX:** Corrigido loop infinito de morte no God Mode. Adicionado o `return "vitoria_minotauro"` faltante após a colisão bem-sucedida, prevenindo que o Minotauro continuasse andando e gerasse duas telas de Game Over simultâneas.
+* **FIX (Soft-lock):** Atropelar o Minotauro no God Mode ou gerar o item `fios cortados` via console de comandos agora ativa corretamente a flag `jogo.fios_cortados_inventario = True`, garantindo que jogadores onipotentes não sejam bloqueados de realizar o Final Verdadeiro.
+* **UX:** O feedback visual das paredes do mapa (ex: bater as costas na porta sem estar no centro) foi mantido fiel, ensinando o jogador a se alinhar às coordenadas corretas (X=0, Y=0) para a opção de fuga aparecer.
+
 ## [1.7.0 - VERSÃO FINAL / PROJETO CONCLUÍDO] - 2026-07-27
 
 ### 🏆 Status do Projeto

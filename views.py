@@ -135,9 +135,13 @@ def rodar_final(tipo_final, jogo):
     liberou_deus = False
     
     if tipo_final == "saida":
-        ui.animar("Você sai pela porta da pizzaria...", 0.08, DOS_AMARELO, jogo)
+        ui.animar("Você sai pela porta do restaurante...", 0.08, DOS_AMARELO, jogo)
         ui.animar("Você acredita que vai conseguir superar tudo isso, e continuar uma nova vida...", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("Você olha para o céu, ve as estrelas, e uma estrela cadente passa...", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("Você deseja esquecer ela, esquecer tudo isso...", 0.09, DOS_VERMELHO, jogo)
         ui.animar("Você quer esquecer dela... Mesmo ela suplicando por ajuda...", 0.10, DOS_VERMELHO, jogo)
+        ui.animar("Entra no seu carro, e parte de volta para casa.", 0.09, DOS_VERMELHO, jogo)
+        ui.animar("Alguma coisa te seguiu...", 0.08, DOS_AMARELO, jogo)
         ui.animar("[ FINAL MEDÍOCRE ]", 0.05, DOS_VERDE, jogo)
         liberou_deus = registrar_final("mediocre")
         
@@ -211,7 +215,7 @@ def rodar_final(tipo_final, jogo):
         ui.animar("- Eu queria fazer eles pagarem pelo que 'eles' me fizeram passar nesse lugar...", 0.07, DOS_VERDE, jogo)
         ui.animar("- Mas quando você me abraçou... a escuridão simplesmente evaporou.", 0.07, DOS_VERDE, jogo)
 
-        ui.animar("\n- Não podia te deixar presa aqui, Caroline. Esse lugar precisa queimar. Eu procurei por arquivos, descobri os horrores que aconteceram... vim para te salvar, e os outros também. Hoje acaba.", 0.06, DOS_BRANCO, jogo)
+        ui.animar("\n- Não podia te deixar presa aqui, Caroline. Esse lugar precisa queimar. Eu procurei por arquivos, descobri os horrores que aconteceram... vim para te salvar, e os outros também. Hoje acaba.", 0.06, DOS_AMARELO, jogo)
         ui.animar("- A gente ainda vai viver juntos... Pena que seja em outra vida.", 0.05, DOS_AMARELO, jogo)
 
         ui.animar("\nUma brisa suave e fresca corta o ar quente do incêndio, envolvendo seu pescoço.", 0.04, DOS_BRANCO, jogo)
