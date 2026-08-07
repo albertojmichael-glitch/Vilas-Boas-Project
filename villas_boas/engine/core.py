@@ -326,7 +326,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
-                except Exception:
+                except (ImportError, AttributeError) as e:
                     pass
                 rodar_final("verdadeiro", jogo)
                 return
@@ -455,7 +455,6 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
 
     elif jogo.estado_atual == "MINIGAME_CONSERTOS_PERNAS":
         cabeca = jogo.web_consertos.get("cabeca", "1")
-        tronco = jogo.web_consertos.get("tronco", "1")
         pernas = comando
         item_secreto = "remedio" if (cabeca == "2" and pernas == "2") else None
         

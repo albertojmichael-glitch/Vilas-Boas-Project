@@ -36,7 +36,7 @@ if __name__ == "__main__":
         except QuitGameException:
             ui.exibir(f"\n{DOS_AMARELO}Encerrando o Sistema Villas Boas. Até logo.{RESET}")
             break
-        except Exception as e:
+        except Exception:
             logging.exception("Erro inesperado no loop principal da CLI")
             ui.exibir(f"\n{DOS_VERMELHO}[ FALHA GERAL DE SISTEMA - TELA AZUL ]{RESET}")
             ui.exibir(f"{DOS_BRANCO}Ocorreu um problema inesperado. O sistema tentará prosseguir.{RESET}")
