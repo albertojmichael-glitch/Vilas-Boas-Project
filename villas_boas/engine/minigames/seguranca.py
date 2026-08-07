@@ -119,7 +119,7 @@ class MinigameSeguranca:
 
         elif acao == "olhar vidro":
             if self.indio_janela:
-                
+
                 ui.exibir(f"{DOS_BRANCO}{ARTE_INDIO}{RESET}")
                 ui.pausar(2)
                 ui.exibir("Você não enxerga nada, até que 2 olhos te encaram pela janela, a figura do indio jones faz você perder a cabeça")
@@ -347,7 +347,7 @@ class MinigameSeguranca:
                 ui.pausar(2)
                 digitar("O sol começa a nascer. A energia retorna aos poucos.", 0.03, DOS_BRANCO)
                 digitar("A porta da sala destranca.", 0.03, DOS_BRANCO)
-            except:
+            except (ImportError, AttributeError) as e:
                 ui.exibir("Você se sente aliviado quando a luz do sol começa a invadir a janela do restaurante, e o relogio marca pontualmente '06:00' ")
                 ui.pausar(2)
                 ui.exibir("O sol começa a nascer. A energia retorna aos poucos.")
@@ -364,7 +364,7 @@ class MinigameSeguranca:
                 try:
                     from data import ARTE_RADAR
                     radar = ARTE_RADAR
-                except:
+                except (ImportError, AttributeError) as e:
                     radar = "   .---.\n /   |   \\\n|----O----|\n \\   |   /\n   '---'"
                 
                 try:
@@ -373,7 +373,7 @@ class MinigameSeguranca:
                     ui.pausar(1)
                     digitar("[DISPOSITIVO]: PRESENÇA ULTERIOR DETECTADA.", 0.03, DOS_VERDE)
                     digitar("Ela ainda está aqui...\n", 0.04, DOS_AMARELO)
-                except:
+                except (ImportError, AttributeError) as e:
                     ui.exibir("\nVocê saca o dispositivo.")
                     ui.exibir(f"{DOS_VERDE}{radar}{RESET}")
                     ui.pausar(1)
