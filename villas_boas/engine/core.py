@@ -8,7 +8,12 @@ from actions.parser import normalizar
 
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from utils import extrair_argumentos, atualizar_eventos_de_tempo
-from data import MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, MAPA_ORIGINAL
+
+from data import (
+    MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, MAPA_ORIGINAL,
+    ARTE_PASTA, ARTE_DISQUETE, ARTE_RADAR
+)
+
 from views import (
     imprimir_tela_boot,
     imprimir_menu_dificuldade,

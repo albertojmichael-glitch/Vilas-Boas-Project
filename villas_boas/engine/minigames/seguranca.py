@@ -1,6 +1,7 @@
 import random
 import logging
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
+from data import ARTE_MESA_SEGURANCA, ARTE_INDIO
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +26,7 @@ class MinigameSeguranca:
         self.turnos_gerador_ativo = 0
         self.usos_sistema_turno = 0
         
-        try:
-            from data import ARTE_MESA_SEGURANCA
-            self.ui.exibir(f"{DOS_BRANCO}{ARTE_MESA_SEGURANCA}{RESET}")
-        except ImportError as e:
-            logger.debug(f"ARTE_MESA_SEGURANCA não encontrada na inicialização: {e}")
+        self.ui.exibir(f"{DOS_BRANCO}{ARTE_MESA_SEGURANCA}{RESET}")
         
         self.ui.exibir("\n" + "="*50)
         self.ui.exibir("Você senta na cadeira da sala de segurança.")
@@ -122,13 +119,8 @@ class MinigameSeguranca:
 
         elif acao == "olhar vidro":
             if self.indio_janela:
-                ui.limpar()
-                try:
-                    from data import ARTE_INDIO
-                    ui.exibir(f"{DOS_BRANCO}{ARTE_INDIO}{RESET}")
-                except ImportError as e:
-                    logger.debug(f"ARTE_INDIO não encontrada ao olhar janela: {e}")
                 
+                ui.exibir(f"{DOS_BRANCO}{ARTE_INDIO}{RESET}")
                 ui.pausar(2)
                 ui.exibir("Você não enxerga nada, até que 2 olhos te encaram pela janela, a figura do indio jones faz você perder a cabeça")
                 falha = random.choice(["camera", "relogio", "deteccao"])
@@ -136,7 +128,7 @@ class MinigameSeguranca:
                 elif falha == "relogio": self.erro_relogio = True
                 elif falha == "deteccao": self.erro_deteccao = True
                 if self.turno < 20: self.indio_janela = False
-                
+
             else:
                 rick_na_porta = self.rick_pos >= 3
                 carol_na_porta = (self.caroline_caminho == "porta" and self.caroline_pos >= 5)
