@@ -181,6 +181,76 @@ function playBip(tipo) {
 }
 
 // ==========================================
+// PREFERÊNCIAS DO JOGADOR
+// ==========================================
+let pref_multiplicadorVelocidade = 1.0;
+
+function carregarPreferencias() {
+    const savedSpeed = localStorage.getItem('vilasBoasSpeed');
+    const savedCRT = localStorage.getItem('vilasBoasCRT');
+    
+    if (savedSpeed !== null) {
+        pref_multiplicadorVelocidade = parseFloat(savedSpeed);
+        document.getElementById('speed-slider').value = pref_multiplicadorVelocidade;
+        atualizarLabelVelocidade(pref_multiplicadorVelocidade);
+    }
+    
+    const slider = document.getElementById('speed-slider');
+    slider.addEventListener('input', (e) => {
+        pref_multiplicadorVelocidade = parseFloat(e.target.value);
+        localStorage.setItem('vilasBoasSpeed', pref_multiplicadorVelocidade);
+        atualizarLabelVelocidade(pref_multiplicadorVelocidade);
+    });
+
+    const crtCheckbox = document.getElementById('crt-checkbox');
+    if (savedCRT !== null) {
+        crtCheckbox.checked = (savedCRT === 'true');
+    }
+    aplicarEfeitoCRT(crtCheckbox.checked);
+    
+    crtCheckbox.addEventListener('change', (e) => {
+        const ativado = e.target.checked;
+        localStorage.setItem('vilasBoasCRT', ativado);
+        aplicarEfeitoCRT(ativado);
+    });
+}
+
+function atualizarLabelVelocidade(val) {
+    const label = document.getElementById('speed-val-display');
+    if(val === 0) label.innerText = "Instantâneo (0x)";
+    else label.innerText = `Atual (${val}x)`;
+}
+
+function aplicarEfeitoCRT(ativado) {
+    if (ativado) document.body.classList.add('crt-enabled');
+    else document.body.classList.remove('crt-enabled');
+}
+
+function openSettings() {
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').classList.add('hidden');
+    document.getElementById('comando').focus();
+}
+
+// Escutar "Escape" para fechar também as configurações
+document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+        closeHelp();
+        closeSettings();
+    }
+});
+
+// Inicializar as preferências ao carregar a janela
+const onloadOriginal = window.onload;
+window.onload = function() {
+    carregarPreferencias();
+    if(onloadOriginal) onloadOriginal();
+};
+
+// ==========================================
 // FOCO INTELIGENTE E CONTROLES
 // ==========================================
 const terminalSection = document.querySelector('.terminal-section');
@@ -355,7 +425,6 @@ function novaLinha(linha, terminalEl) {
             resolve();
 
         } else if (linha.startsWith("@@EXIT@@")) {
-            
             document.body.innerHTML = ""; 
             document.body.style.backgroundColor = "#000";
             resolve();
@@ -366,7 +435,6 @@ function novaLinha(linha, terminalEl) {
             resolve();
 
         } else if (linha.startsWith("@@PAUSE@@")) {
-            
             let ms = parseInt(linha.split("@@")[2]) / 3;
             setTimeout(resolve, ms);
 
@@ -375,9 +443,19 @@ function novaLinha(linha, terminalEl) {
             let cor = parts[2];
             let ms = parseInt(parts[3]);
             let texto = parts.slice(4).join("@@"); 
-            digitarTextoAnimadoHTML(texto, cor, ms, resolve);
+            
+            // APLICA O MULTIPLICADOR DO USUÁRIO
+            let velocidadeFinal = ms * pref_multiplicadorVelocidade;
+            if (pref_multiplicadorVelocidade === 0) velocidadeFinal = 0;
+
+            digitarTextoAnimadoHTML(texto, cor, velocidadeFinal, resolve);
+
         } else {
-            digitarTextoAnimadoHTML(linha, "", 15, resolve);
+            // FALLBACK: APLICA MULTIPLICADOR NO TEXTO PADRÃO
+            let velocidadeFinal = 15 * pref_multiplicadorVelocidade;
+            if (pref_multiplicadorVelocidade === 0) velocidadeFinal = 0;
+            
+            digitarTextoAnimadoHTML(linha, "", velocidadeFinal, resolve);
         }
     });
 }

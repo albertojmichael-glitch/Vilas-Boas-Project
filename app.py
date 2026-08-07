@@ -76,7 +76,25 @@ def requer_admin(f):
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
 app.secret_key = SECRET_KEY
+
+
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+
+
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+
+is_production = bool(os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL") or os.environ.get("PROD"))
+if is_production:
+    app.config["SESSION_COOKIE_SECURE"] = True
+    logger.info("🔒 Segurança de Cookies: Modo Produção ativado (Secure=True).")
+else:
+    app.config["SESSION_COOKIE_SECURE"] = False
+    logger.warning("🔓 Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
+
 CORS(app, supports_credentials=True)
 
 limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")

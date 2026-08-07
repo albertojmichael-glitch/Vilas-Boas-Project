@@ -50,13 +50,33 @@
     </div>
 
         <button id="help-btn" class="help-float" onclick="openHelp()" aria-label="Abrir menu de ajuda">?</button>
-    <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true">
-        <h2>[ COMANDOS BÁSICOS ]</h2>
-        <p><strong>Movimento:</strong> ir [sala/direção]</p>
-        <p><strong>Objetos:</strong> pegar [item] | largar [item] | usar [item]</p>
-        <p><strong>Inspeção:</strong> examinar [alvo] | inventario</p>
-        <p><strong>Abreviaturas:</strong> p=pegar | l=largar | u=usar | x=examinar</p>
-        <button class="close-btn" onclick="closeHelp()">FECHAR (ESC)</button>
+        
+        <!-- NOVO: Botão de Configurações -->
+        <button id="settings-btn" class="help-float" style="right: 70px;" onclick="openSettings()" aria-label="Abrir configurações">⚙</button>
+        
+    <!-- Modal da Ajuda (Já Existente) -->
+    <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true"> ... </div>
+
+    <!-- NOVO: Modal de Configurações -->
+    <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true">
+        <h2>[ CONFIGURAÇÕES DE VÍDEO ]</h2>
+        
+        <div style="margin: 20px 0;">
+            <label for="speed-slider" style="display:block; margin-bottom:10px; color: #fff;">Velocidade do Texto (Multiplicador):</label>
+            <input type="range" id="speed-slider" min="0" max="2" step="0.25" value="1" style="width: 100%;">
+            <div style="display:flex; justify-content:space-between; color:#aaa; font-size:0.8rem;">
+                <span>Instantâneo (0x)</span>
+                <span id="speed-val-display" style="color: #4aff4a;">Normal (1.0x)</span>
+                <span>Lento (2.0x)</span>
+            </div>
+        </div>
+
+        <div style="margin: 20px 0; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="crt-checkbox" checked style="width: 20px; height: 20px;">
+            <label for="crt-checkbox" style="color: #fff;">Filtro de Monitor CRT (Scanlines)</label>
+        </div>
+
+        <button class="close-btn" onclick="closeSettings()">FECHAR (ESC)</button>
     </div>
 
 
