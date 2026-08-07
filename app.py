@@ -130,8 +130,9 @@ if REDIS_URL and redis is not None:
         # Substitui a chamada direta pelo nosso Wrapper
         MEMORIA_SESSOES = RedisSessionStore(redis_client) 
         logger.info("Conectado ao Redis com sucesso.")
-    except Exception as e:
-        logger.error(f"Falha ao conectar no Redis: {e}. Caindo para TTLCache.")
+
+    except Exception:
+        logger.exception("Falha inesperada ao conectar no Redis — caindo para TTLCache.")
         MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
 else:
     logger.info("Usando TTLCache na memória RAM local.")
@@ -234,8 +235,8 @@ def carregar_save_web(jogo):
                     if k != 'ui_handler':
                         setattr(jogo, k, v)
                 return True
-        except Exception as e:
-            logger.exception(f"Erro ao buscar save no MongoDB: {e}")
+        except Exception:
+            logger.exception("Erro ao buscar save no MongoDB")
     else:
         caminho = obter_caminho_autosave(sid)
         if caminho.exists():

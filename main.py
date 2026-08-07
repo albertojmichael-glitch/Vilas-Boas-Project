@@ -1,4 +1,7 @@
 import logging
+logger = logging.getLogger(__name__)
+
+
 from pathlib import Path
 from state import GameState, QuitGameException, AUTOSAVE_FILE, carregar_autosave, salvar_autosave
 from ui import default_ui, DOS_VERDE, DOS_AMARELO, DOS_VERMELHO, DOS_BRANCO, RESET
@@ -36,8 +39,9 @@ if __name__ == "__main__":
         except QuitGameException:
             ui.exibir(f"\n{DOS_AMARELO}Encerrando o Sistema Villas Boas. Até logo.{RESET}")
             break
+
         except Exception:
-            logging.exception("Erro inesperado no loop principal da CLI")
+            logger.exception("Erro inesperado no loop principal da CLI")
             ui.exibir(f"\n{DOS_VERMELHO}[ FALHA GERAL DE SISTEMA - TELA AZUL ]{RESET}")
             ui.exibir(f"{DOS_BRANCO}Ocorreu um problema inesperado. O sistema tentará prosseguir.{RESET}")
             ui.pausar(3)

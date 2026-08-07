@@ -103,7 +103,9 @@ def carregar_conquistas() -> List[str]:
     if ARQUIVO_CONQUISTAS.exists():
         try:
             return json.loads(ARQUIVO_CONQUISTAS.read_text(encoding="utf-8"))
-        except: pass
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            
+            print(f"Aviso: Falha ao ler conquistas - {e}") 
     return []
 
 def registrar_final(nome_final: str) -> bool:

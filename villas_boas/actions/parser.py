@@ -90,7 +90,7 @@ def processar_comando(comando, jogo, mapa):
             
             try:
                 jogo.minigame_atual.imprimir_status()
-            except Exception:
+            except AttributeError:
                 pass
             return True
         
