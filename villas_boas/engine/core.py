@@ -330,36 +330,40 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("MORTE", jogo.sala_atual, jogo.dificuldade_escolhida, "Morte no Mapa")
-                except Exception:
-                    pass
+                except (ImportError, AttributeError) as e:
+                    logger.warning(f"Falha ao registrar telemetria de morte: {e}")
                 dar_tela_de_morte(jogo)
+
+
             elif jogo.sala_atual == "saida":
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Covarde")
-                except Exception:
+                except (ImportError, AttributeError) as e:
                     pass
                 rodar_final("saida", jogo)
+
             elif jogo.sala_atual == "cama":
                 try: 
                     from app import registrar_telemetria
                     registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Dorminhoco")
-                except Exception:
+                except (ImportError, AttributeError) as e:
                     pass
                 rodar_final("cama", jogo)
+
             elif jogo.sala_atual == "hall de entrada" and getattr(jogo, 'noite_vencida', False):
                 if getattr(jogo, 'incendio', False): 
                     try: 
                         from app import registrar_telemetria
                         registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Verdadeiro")
-                    except Exception:
+                    except (ImportError, AttributeError) as e:
                         pass
                     rodar_final("verdadeiro", jogo)
                 else: 
                     try: 
                         from app import registrar_telemetria
                         registrar_telemetria("VITORIA", jogo.sala_atual, jogo.dificuldade_escolhida, "Final Bom")
-                    except Exception:
+                    except (ImportError, AttributeError) as e:
                         pass
                     rodar_final("final_bom", jogo)
             elif jogo.estado_atual == "COMBATE_ANIMATRONICO":

@@ -104,7 +104,9 @@ def cmd_usar(comando, jogo, mapa):
                 from data import ARTE_DISQUETE
                 ui.animar(f"{DOS_BRANCO}{ARTE_DISQUETE}{RESET}", 0.015, jogo=jogo)
                 ui.pausar(1)
-            except:
+            except ImportError as e:
+                logger.debug(f"ARTE_DISQUETE indisponível no arquivo de dados: {e}")
+
                 pass
 
             ui.animar(f"{DOS_AMARELO}ARQUIVO RECUPERADO: ANGELA.TXT{RESET}", 0.05, DOS_AMARELO, jogo)

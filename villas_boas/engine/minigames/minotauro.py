@@ -1,10 +1,15 @@
 import random
+import time
+import logging
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 
+logger = logging.getLogger(__name__)
+
 def pausar(segundos=0):
-    import time
-    try: time.sleep(segundos)
-    except Exception: pass
+    try:
+        time.sleep(segundos)
+    except (OSError, ValueError) as e:
+        logger.debug(f"Função de pausa interrompida: {e}")
 
 CAVEIRA_ASCII = r'''
                      .ed"""" """$$$$be.

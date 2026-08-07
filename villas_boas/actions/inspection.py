@@ -21,8 +21,8 @@ def cmd_examinar(comando, jogo, mapa):
             try:
                 from data import ARTE_PASTA
                 ui.animar(f"{DOS_BRANCO}{ARTE_PASTA}{RESET}", 0.015, jogo=jogo)
-            except:
-                pass
+            except ImportError as e:
+                logger.debug(f"ARTE_PASTA indisponível no arquivo de dados: {e}")
             
         ui.animar(coisas_para_olhar[match_cenario], 0.03, DOS_AMARELO, jogo=jogo)
         ui.pausar(2)
