@@ -26,7 +26,7 @@ from cachetools import TTLCache
 
 from state import GameState
 from ui import UIHandler, DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
-from engine import processar_fluxo_jogo
+from engine.core import processar_fluxo_jogo
 from views import imprimir_tela_boot
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -208,7 +208,7 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
 
     if not session.get('permite_telemetria', True):
         return
-        
+
     try:
         telemetry_collection.insert_one({
             "evento": evento,              
