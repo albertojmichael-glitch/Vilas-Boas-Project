@@ -181,6 +181,110 @@ function playBip(tipo) {
 }
 
 // ==========================================
+// GERENCIAMENTO DE SAVES (UI)
+// ==========================================
+function openSaves() {
+    document.getElementById('saves-modal').classList.remove('hidden');
+}
+
+function closeSaves() {
+    document.getElementById('saves-modal').classList.add('hidden');
+    document.getElementById('comando').focus();
+}
+
+async function exportarSave() {
+    try {
+        const res = await fetch('/save/export');
+        if (!res.ok) throw new Error("Nenhum progresso encontrado no servidor.");
+        const data = await res.json();
+        
+        // Cria um Blob JSON e força o Download no navegador do usuário
+        const blob = new Blob([JSON.stringify(data, null, 4)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `vilas_boas_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        reproduzirBeep('sucesso');
+    } catch (erro) {
+        console.error(erro);
+        alert("[ERRO] " + erro.message);
+    }
+}
+
+async function importarSave(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const dados = JSON.parse(e.target.result);
+            
+            // Envia o JSON do usuário para o endpoint que acabamos de criar
+            const res = await fetch('/save/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            
+            const result = await res.json();
+            if (res.ok) {
+                alert("Save corrompido... Digo, importado com sucesso! Reiniciando terminal...");
+                window.location.reload();
+            } else {
+                alert("[ERRO DE BIOS] " + result.erro);
+            }
+        } catch (erro) {
+            alert("[ERRO FATAL] O arquivo fornecido não é um JSON válido do sistema Vilas Boas.");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // Limpa o input para permitir re-upload do mesmo arquivo se necessário
+}
+
+async function gerarLinkCompartilhamentoUI() {
+    try {
+        const res = await fetch('/share/generate');
+        const data = await res.json();
+        
+        if (res.ok) {
+            const container = document.getElementById('share-link-container');
+            const input = document.getElementById('share-link-input');
+            const msg = document.getElementById('share-link-msg');
+            
+            container.classList.remove('hidden');
+            input.value = data.link;
+            msg.innerText = data.mensagem;
+            
+            // Copia automaticamente para a área de transferência
+            input.select();
+            document.execCommand('copy');
+            reproduzirBeep('sucesso');
+            alert("Link copiado para a área de transferência!");
+        } else {
+            alert("[ERRO] " + (data.erro || "Falha ao gerar link."));
+        }
+    } catch (erro) {
+        console.error(erro);
+        alert("Falha de conexão com os servidores centrais.");
+    }
+}
+
+// Lembre-se de adicionar closeSaves() na sua escuta da tecla "Escape" já existente:
+document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+        closeHelp();
+        if(typeof closeSettings === 'function') closeSettings();
+        closeSaves();
+    }
+});
+
+// ==========================================
 // PREFERÊNCIAS DO JOGADOR
 // ==========================================
 let pref_multiplicadorVelocidade = 1.0;

@@ -388,6 +388,46 @@ def receber_comando():
 
     return gerar_resposta_json(jogo)
 
+# ==========================================
+# GERENCIAMENTO DE SAVES (EXPORT / IMPORT)
+# ==========================================
+@app.route('/save/export', methods=['GET'])
+def exportar_save():
+    sid = obter_sid_seguro()
+    if not sid or sid not in MEMORIA_SESSOES:
+        return jsonify({"erro": "Nenhuma sessão ativa."}), 404
+    
+    jogo = MEMORIA_SESSOES[sid]
+    # Retorna o dicionário serializado do GameState
+    return jsonify(jogo.to_dict())
+
+@app.route('/save/import', methods=['POST'])
+@limiter.limit("10 per minute")
+def importar_save():
+    sid = obter_sid_seguro()
+    if not sid:
+        # Se não há sessão, cria uma nova
+        sid = str(uuid.uuid4())
+        session["sid"] = sid
+        session.permanent = True
+    
+    dados = request.json
+    if not dados:
+        return jsonify({"erro": "Nenhum dado recebido."}), 400
+        
+    try:
+        # Valida e recria o objeto usando o Pydantic
+        novo_jogo = GameState.from_dict(dados)
+        novo_jogo.ui_handler = WebUIHandler() # Reconecta a UI Web
+        
+        MEMORIA_SESSOES[sid] = novo_jogo
+        salvar_save_web(novo_jogo)
+        
+        return jsonify({"sucesso": True, "mensagem": "Save importado com sucesso."})
+    except Exception as e:
+        logger.error(f"Erro ao importar save via UI: {e}")
+        return jsonify({"erro": "Arquivo de save inválido, corrompido ou de uma versão incompatível."}), 400
+
 # --- ROTAS EXTRAS (Achievements, Telemetry, Share) ---
 @app.route('/achievements', methods=['GET'])
 def listar_conquistas():
