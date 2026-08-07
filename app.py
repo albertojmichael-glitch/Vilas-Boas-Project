@@ -141,6 +141,7 @@ else:
 
 class ComandoRequest(BaseModel):
     comando: str = Field(default="", max_length=256)
+    telemetria: bool = Field(default=True)
 
 def obter_sid_seguro():
     """Garante que o SID lido do cookie é um UUID válido e não um script de injeção"""
@@ -204,6 +205,10 @@ def obter_caminho_autosave(sid):
 
 def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
     if not mongo_client: return
+
+    if not session.get('permite_telemetria', True):
+        return
+        
     try:
         telemetry_collection.insert_one({
             "evento": evento,              
@@ -364,6 +369,9 @@ def receber_comando():
     try:
         requisicao = ComandoRequest(**dados)
         comando = requisicao.comando
+        
+        session['permite_telemetria'] = requisicao.telemetria
+
     except ValidationError:
         return jsonify({
             "linhas": ["@@TYPE@@vermelho@@15@@[ ERRO DE SEGURANÇA ] O formato do comando enviado é inválido ou excede 256 caracteres."],

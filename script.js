@@ -4,6 +4,7 @@ const inputField = document.getElementById('comando');
 let historicoComandos = [];
 let posicaoHistorico = -1;
 let comandoDigitadoAtual = "";
+let pref_telemetria = true;
 
 const terminal = document.getElementById('terminal');
 const loadingSpinner = document.getElementById('loading');
@@ -290,8 +291,21 @@ document.addEventListener('keydown', function(event) {
 let pref_multiplicadorVelocidade = 1.0;
 
 function carregarPreferencias() {
+
+    const teleCheckbox = document.getElementById('telemetry-checkbox');
+    const savedTele = localStorage.getItem('vilasBoasTelemetry');
     const savedSpeed = localStorage.getItem('vilasBoasSpeed');
     const savedCRT = localStorage.getItem('vilasBoasCRT');
+
+    if (savedTele !== null) {
+    pref_telemetria = (savedTele === 'true');
+    teleCheckbox.checked = pref_telemetria;
+    }
+
+    teleCheckbox.addEventListener('change', (e) => {
+        pref_telemetria = e.target.checked;
+        localStorage.setItem('vilasBoasTelemetry', pref_telemetria);
+    });
     
     if (savedSpeed !== null) {
         pref_multiplicadorVelocidade = parseFloat(savedSpeed);
@@ -686,7 +700,11 @@ async function enviarComando(comando) {
     fetchSeguro('/comando', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comando: comando })
+        // NOVO: Adicionamos o campo telemetria no payload
+        body: JSON.stringify({ 
+            comando: comando, 
+            telemetria: pref_telemetria 
+        })
     });
 }
 
