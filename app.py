@@ -70,11 +70,32 @@ limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 
 REDIS_URL = os.environ.get("REDIS_URL")
 
+# --- NOVO: Wrapper para serializar o GameState ---
+class RedisSessionStore:
+    def __init__(self, client):
+        self.client = client
+        
+    def __contains__(self, key):
+        return self.client.exists(key) > 0
+        
+    def __getitem__(self, key):
+        data = self.client.get(key)
+        if data:
+            return GameState.from_dict(json.loads(data))
+        raise KeyError(key)
+        
+    def __setitem__(self, key, value):
+        # Converte o GameState para dict e salva como JSON com expiração de 1 hora
+        self.client.setex(key, 3600, json.dumps(value.to_dict()))
+
+
 if REDIS_URL and redis is not None:
     try:
         redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
         redis_client.ping()
-        MEMORIA_SESSOES = redis_client
+        
+        # Substitui a chamada direta pelo nosso Wrapper
+        MEMORIA_SESSOES = RedisSessionStore(redis_client) 
         logger.info("Conectado ao Redis com sucesso.")
     except Exception as e:
         logger.error(f"Falha ao conectar no Redis: {e}. Caindo para TTLCache.")
@@ -82,7 +103,6 @@ if REDIS_URL and redis is not None:
 else:
     logger.info("Usando TTLCache na memória RAM local.")
     MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
-
 
 
 
@@ -324,6 +344,8 @@ def receber_comando():
 
         if getattr(jogo, 'estado_atual', "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
             salvar_save_web(jogo)
+
+        MEMORIA_SESSOES[sid] = jogo
 
     except Exception as e:
         logger.exception(f"Erro critico na Engine: {e}")
