@@ -462,29 +462,43 @@ function novaLinha(linha, terminalEl) {
 
 function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) {
     const p = document.createElement('p');
+    if (classeCor) p.className = classeCor;
+    
+    // --- LÓGICA DE ACESSIBILIDADE (Leitor de Tela) ---
+    // 1. Cria um span invisível onde o texto entra de uma vez só
+    const srSpan = document.createElement('span');
+    srSpan.className = 'sr-only';
     
     let a11yPrefix = "";
-
     if (classeCor === 'vermelho') {
-        a11yPrefix = "<span style='opacity:0; position:absolute'>[PERIGO] </span>";
-        
-        
+        a11yPrefix = "Perigo: ";
         document.body.classList.add('glitch-active');
         setTimeout(() => document.body.classList.remove('glitch-active'), 250);
     }
-
-    if (classeCor === 'amarelo') a11yPrefix = "<span style='opacity:0; position:absolute'>[ATENÇÃO] </span>";
+    if (classeCor === 'amarelo') a11yPrefix = "Atenção: ";
     
-    if (classeCor) p.className = classeCor;
+    // Removemos tags HTML para o leitor ler apenas texto puro
+    const textoLimpo = htmlString.replace(/<[^>]*>?/gm, '');
+    srSpan.innerText = a11yPrefix + textoLimpo;
+
+    // 2. Cria o span visual onde a animação vai acontecer (invisível pro Leitor de Tela)
+    const visualSpan = document.createElement('span');
+    visualSpan.setAttribute('aria-hidden', 'true');
+
+    // Injeta os dois spans no parágrafo
+    p.appendChild(srSpan);
+    p.appendChild(visualSpan);
     outputDiv.appendChild(p);
     
+    // Se a velocidade for 0 (Fast Mode), preenche e sai
     if (velocidade === 0) {
-        p.innerHTML = a11yPrefix + htmlString;
+        visualSpan.innerHTML = htmlString;
         terminal.scrollTop = terminal.scrollHeight;
         aoTerminar();
         return;
     }
     
+    // --- LÓGICA DE ANIMAÇÃO VISUAL ---
     let i = 0;
     let isTag = false;
     let currentHTML = "";
@@ -493,7 +507,9 @@ function digitarTextoAnimadoHTML(htmlString, classeCor, velocidade, aoTerminar) 
         if (i < htmlString.length) {
             let char = htmlString.charAt(i);
             currentHTML += char;
-            p.innerHTML = a11yPrefix + currentHTML;
+            
+            // Injeta a animação APENAS no span visual
+            visualSpan.innerHTML = currentHTML;
             i++;
             
             terminal.scrollTop = terminal.scrollHeight;
