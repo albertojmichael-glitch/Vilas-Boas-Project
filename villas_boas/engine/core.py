@@ -71,7 +71,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
         if comando in ["f5", "reiniciar", "restart", "reset", "dir"]:
             try:
                 jogo.mapa = copy.deepcopy(MAPA_ORIGINAL)
-            except Exception as e:
+            except (ImportError, AttributeError) as e:
                 logger.error(f"Erro ao restaurar MAPA_ORIGINAL: {e}")
 
             #reset das variaveis
@@ -431,7 +431,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
                     try: 
                         from app import registrar_telemetria
                         registrar_telemetria("MORTE", "MINIGAME_JON", jogo.dificuldade_escolhida, "Morto pelo Porco")
-                    except Exception:
+                    except (ImportError, AttributeError) as e:
                         pass
                     dar_tela_de_morte(jogo)
                 else:
@@ -599,7 +599,7 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             try: 
                 from app import registrar_telemetria
                 registrar_telemetria("MORTE", "SALA DE SEGURANCA", jogo.dificuldade_escolhida, "Jumpscare na cadeira")
-            except Exception:
+            except (ImportError, AttributeError) as e:
                 pass
             dar_tela_de_morte(jogo)
 
@@ -655,7 +655,8 @@ def processar_fluxo_jogo(comando_bruto, jogo, tem_save=False, callback_load_save
             try: 
                 from app import registrar_telemetria
                 registrar_telemetria("MORTE", "LABIRINTO", jogo.dificuldade_escolhida, "Morto no Escuro")
-            except Exception:
+            except (ImportError, AttributeError) as e:
+            
                 pass
             dar_tela_de_morte(jogo)
 
