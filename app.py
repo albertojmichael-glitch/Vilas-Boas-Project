@@ -1,3 +1,4 @@
+import functools
 import os
 import sys
 import logging
@@ -47,16 +48,30 @@ SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 
 
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "senha-super-secreta-mudar-em-prod")
+
 MONGO_URI = os.environ.get("MONGO_URI")
 if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
     db = mongo_client["villasboas_db"]
     saves_collection = db["saves"]
     telemetry_collection = db["telemetry"]
+    shares_collection = db["shares"] 
     logger.info("Conectado ao MongoDB com sucesso...")
 else:
     mongo_client = None
     logger.warning("⚠ Rodando sem Banco de Dados. Usando arquivos locais.")
+
+
+def requer_admin(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        
+        token = request.headers.get("X-Admin-Token") or request.args.get("token")
+        if not token or token != ADMIN_TOKEN:
+            return jsonify({"erro": "Acesso negado. Credenciais inválidas."}), 403
+        return f(*args, **kwargs)
+    return decorated
 
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
@@ -367,6 +382,7 @@ def listar_conquistas():
     return jsonify({"conquistas": conquistas, "total": len(conquistas)})
 
 @app.route('/admin/analytics', methods=['GET'])
+@requer_admin
 def ver_telemetria():
     if not mongo_client: return "Sem banco de dados."
     mortes = telemetry_collection.count_documents({"evento": "MORTE"})
@@ -376,19 +392,48 @@ def ver_telemetria():
 @app.route('/share/generate', methods=['GET'])
 def gerar_link_compartilhamento():
     sid = obter_sid_seguro()
-    if not sid: return jsonify({"erro": "Sem save ativo"})
-    url_share = f"{request.host_url}share/{sid}"
-    return jsonify({"link": url_share})
+    if not sid: return jsonify({"erro": "Sem save ativo"}), 401
+    if not mongo_client: return jsonify({"erro": "Banco de dados desativado"}), 400
 
-@app.route('/share/<save_id>', methods=['GET'])
-def carregar_save_compartilhado(save_id):
+    # 1. Gera um Token descartável e calcula a expiração (24 horas)
+    share_token = str(uuid.uuid4())
+    expires_at = time.time() + (24 * 3600) 
+
+    # 2. Salva na coleção isolada de shares
+    shares_collection.insert_one({
+        "share_token": share_token,
+        "original_sid": sid,
+        "expires_at": expires_at
+    })
+
+    url_share = f"{request.host_url}share/{share_token}"
+    return jsonify({
+        "link": url_share, 
+        "mensagem": "Link válido por 24 horas."
+    })
+
+@app.route('/share/<share_token>', methods=['GET'])
+def carregar_save_compartilhado(share_token):
     if not mongo_client:
         return "Banco de dados desativado. Não é possível compartilhar.", 400
         
-    doc = saves_collection.find_one({"sid": save_id})
-    if not doc:
-        return "Save corrompido ou não encontrado nas fitas magnéticas.", 404
+    
+    share_doc = shares_collection.find_one({"share_token": share_token})
+    if not share_doc:
+        return "Link inválido ou não encontrado.", 404
         
+    
+    if time.time() > share_doc.get("expires_at", 0):
+        
+        shares_collection.delete_one({"share_token": share_token})
+        return "Este link de compartilhamento expirou.", 410
+        
+    
+    doc = saves_collection.find_one({"sid": share_doc["original_sid"]})
+    if not doc:
+        return "O save original foi deletado ou corrompido.", 404
+        
+    
     novo_sid = str(uuid.uuid4())
     session["sid"] = novo_sid
     session.permanent = True
@@ -403,6 +448,7 @@ def carregar_save_compartilhado(save_id):
 
 @app.route('/saves', methods=['GET'])
 @limiter.limit("10 per minute")
+@requer_admin
 def listar_saves_paginados():
     if not mongo_client:
         return jsonify({"erro": "Banco de dados desativado."}), 400
