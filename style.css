@@ -458,3 +458,32 @@ input, textarea {
 input:focus, textarea:focus {
     outline: none;
 }
+
+/* =========================================
+   CURSOR RETRÔ PISCANDO
+   ========================================= */
+
+
+@keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* 2. O bloco verde em si */
+.blinking-cursor {
+    display: inline-block;
+    width: 12px;          
+    height: 1.1rem;        
+    background-color: #4aff4a; 
+    vertical-align: middle;
+    animation: blink-cursor 1s step-end infinite;
+    box-shadow: 0 0 8px rgba(74, 255, 74, 0.6); 
+    margin-left: 2px;
+}
+
+
+input, textarea {
+    background: transparent;
+    color: #4aff4a;
+    caret-color: #4aff4a; 
+}
