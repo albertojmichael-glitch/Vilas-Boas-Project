@@ -103,23 +103,6 @@ body::before {
     align-items: center;
 }
 
-.prompt {
-    margin-right: 10px;
-    color: #33ff00;
-}
-
-input {
-    background: transparent;
-    border: none;
-    color: #33ff00;
-    font-family: inherit;
-    font-size: 1.3rem;
-    flex: 1;
-    outline: none;
-    caret-color: #33ff00;
-    caret-shape: block;
-    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor;
-}
 
 /* --- SIDEBAR NA POSIÇÃO ORIGINAL (TOPO DIREITO) --- */
 
