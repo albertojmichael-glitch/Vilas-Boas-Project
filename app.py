@@ -218,7 +218,7 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
             "detalhes": detalhes,          
             "timestamp": time.time()
         })
-    except Exception as e:
+    except (KeyError, ValueError, TypeError) as e:
         logger.error(f"Erro na telemetria: {e}")
 
 # --- BANCO DE DADOS: CARREGAR E SALVAR ---
@@ -235,7 +235,7 @@ def carregar_save_web(jogo):
                     if k != 'ui_handler':
                         setattr(jogo, k, v)
                 return True
-        except Exception:
+        except Exception as e:
             logger.exception("Erro ao buscar save no MongoDB")
     else:
         caminho = obter_caminho_autosave(sid)
@@ -248,7 +248,7 @@ def carregar_save_web(jogo):
                         setattr(jogo, k, v)
                 return True
             except Exception as e:
-                logger.exception(f"Erro ao carregar save local: {e}")
+                logger.exception(f"Erro ao carregar save local")
                 
     return False
 
@@ -283,7 +283,7 @@ def gerar_resposta_json(jogo):
             
         if getattr(jogo, 'estado_atual', "") not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
             chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
-            saidas = [k.title() for k in jogo.mapa[jogo.sala_atual].keys() if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
+            saidas = [k.title() for k in jogo.mapa[jogo.sala_atual] if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
             
         hp = jogo.hp if not getattr(jogo, 'god_mode', False) else "∞"
         luz = jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞"
@@ -390,8 +390,8 @@ def receber_comando():
         MEMORIA_SESSOES[sid] = jogo
 
     except Exception as e:
-        logger.exception(f"Erro critico na Engine: {e}")
-        jogo.ui_handler.buffer.append(f"@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação.")
+        logger.exception("Erro critico na Engine")
+        jogo.ui_handler.buffer.append("@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação.")
         if app.debug:
             jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {str(e)}")
 

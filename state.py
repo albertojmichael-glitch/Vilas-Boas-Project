@@ -2,9 +2,12 @@ import json
 import copy
 from pathlib import Path
 from enum import Enum
+import logging
 from pydantic import BaseModel, Field, PrivateAttr
 from typing import List, Dict, Any
 from data import MAPA_ORIGINAL
+
+logger = logging.getLogger(__name__)
 
 
 class GameException(Exception): pass
@@ -114,7 +117,8 @@ def registrar_final(nome_final: str) -> bool:
         conquistas.append(nome_final)
         try:
             ARQUIVO_CONQUISTAS.write_text(json.dumps(conquistas, ensure_ascii=False), encoding="utf-8")
-        except: pass
+        except Exception as e:
+            logger.warning(f"Falha ao salvar conquistas: {e}")
     return all(f in conquistas for f in ["mediocre", "bons_sonhos", "bom", "verdadeiro"])
 
 def salvar_autosave(estado: GameState):
@@ -123,7 +127,9 @@ def salvar_autosave(estado: GameState):
         dados = estado.to_dict()
         AUTOSAVE_FILE.write_text(json.dumps(dados, ensure_ascii=False, indent=4), encoding="utf-8")
         return True
-    except: return False
+    except Exception as e:
+        logger.warning(f"Falha ao salvar autosave: {e}")
+        return False
 
 def carregar_autosave(estado: GameState) -> bool:
     if AUTOSAVE_FILE.exists():
