@@ -29,7 +29,7 @@ jobs:
         pip install ruff pytest mypy
         # Instala as dependências do seu jogo (Flask, Pydantic, pymongo, redis, etc)
         # Se você tiver um requirements.txt, descomente a linha abaixo:
-        # pip install -r requirements.txt
+        pip install -r requirements.txt
 
     - name: Verificar lint e formatação com Ruff
       run: |
