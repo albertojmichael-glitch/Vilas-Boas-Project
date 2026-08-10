@@ -26,7 +26,7 @@ from views import (
 )
 
 
-from engine.minigames import MinigameSeguranca, MinigameMinotauro
+from villas_boas.engine.minigames import MinigameSeguranca, MinigameMinotauro
 
 logger = logging.getLogger(__name__)
 
