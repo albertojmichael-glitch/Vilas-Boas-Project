@@ -1,10 +1,12 @@
-import json
 import copy
-from pathlib import Path
-from enum import Enum
+import json
 import logging
+from enum import Enum
+from pathlib import Path
+from typing import Any
+
 from pydantic import BaseModel, Field, PrivateAttr
-from typing import List, Dict, Any
+
 from data import MAPA_ORIGINAL
 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ class GameStateEnum(str, Enum):
 
 class GameState(BaseModel):
     hp: int = 3
-    inventario: List[str] = Field(default_factory=lambda: ["lanterna"])
+    inventario: list[str] = Field(default_factory=lambda: ["lanterna"])
     turnos_luz: int = 3
     turnos_no_escuro: int = 0
     turnos_enjoado: int = 0
@@ -65,11 +67,11 @@ class GameState(BaseModel):
     limite_inventario: int = 3  
     amanheceu: bool = False
     jon_passos_dados: int = 0
-    conquistas: List[str] = Field(default_factory=list)
-    jon_caminho_certo: List[str] = Field(default_factory=list)
-    web_consertos: Dict[str, Any] = Field(default_factory=dict)
-    web_julgamento: Dict[str, Any] = Field(default_factory=dict)      
-    mapa: Dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
+    conquistas: list[str] = Field(default_factory=list)
+    jon_caminho_certo: list[str] = Field(default_factory=list)
+    web_consertos: dict[str, Any] = Field(default_factory=dict)
+    web_julgamento: dict[str, Any] = Field(default_factory=dict)      
+    mapa: dict[str, Any] = Field(default_factory=lambda: copy.deepcopy(MAPA_ORIGINAL))
     
     
     _ui_handler: Any = PrivateAttr(default=None)
@@ -102,7 +104,7 @@ class GameState(BaseModel):
 ARQUIVO_CONQUISTAS = Path("conquistas.json")
 AUTOSAVE_FILE = Path("autosave.json")
 
-def carregar_conquistas() -> List[str]:
+def carregar_conquistas() -> list[str]:
     if ARQUIVO_CONQUISTAS.exists():
         try:
             return json.loads(ARQUIVO_CONQUISTAS.read_text(encoding="utf-8"))
@@ -118,7 +120,7 @@ def registrar_final(nome_final: str) -> bool:
         try:
             ARQUIVO_CONQUISTAS.write_text(json.dumps(conquistas, ensure_ascii=False), encoding="utf-8")
         except Exception:
-            logger.warning(f"Falha ao salvar conquistas")
+            logger.warning("Falha ao salvar conquistas")
     return all(f in conquistas for f in ["mediocre", "bons_sonhos", "bom", "verdadeiro"])
 
 def salvar_autosave(estado: GameState):

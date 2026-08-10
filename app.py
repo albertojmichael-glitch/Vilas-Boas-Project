@@ -1,11 +1,9 @@
 import functools
-import os
-import sys
-import logging
 import json
-import uuid
+import logging
+import os
 import time
-
+import uuid
 
 try:
     import redis
@@ -13,20 +11,20 @@ except ImportError:
     redis = None
 
 from datetime import timedelta
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
-from pymongo import MongoClient
-from flask import Flask, request, jsonify, session, send_from_directory, redirect
-from pydantic import BaseModel, Field, ValidationError
+from cachetools import TTLCache
+from engine.core import processar_fluxo_jogo
+from flask import Flask, jsonify, redirect, request, send_from_directory, session
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from cachetools import TTLCache
+from pydantic import BaseModel, Field, ValidationError
+from pymongo import MongoClient
 
 from state import GameState
-from ui import UIHandler, DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
-from engine.core import processar_fluxo_jogo
+from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandler
 from views import imprimir_tela_boot
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -166,7 +164,6 @@ class WebUIHandler(UIHandler):
     def pausar(self, segs):
         ms = int(segs * 1000)
         self.buffer.append(f"@@PAUSE@@{ms}")
-        pass
         
     def exibir(self, texto): 
         self.animar(texto, 0.015)
@@ -263,14 +260,14 @@ def salvar_save_web(jogo):
                 {"$set": {"sid": sid, "dados": jogo.to_dict()}},
                 upsert=True
             )
-        except Exception as e:
-            logger.exception(f"Erro ao salvar progresso no MongoDB")
+        except Exception:
+            logger.exception("Erro ao salvar progresso no MongoDB")
     else:
         try:
             caminho = obter_caminho_autosave(sid)
             caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
-        except Exception as e:
-            logger.exception(f"Erro ao gerar autosave local")
+        except Exception:
+            logger.exception("Erro ao gerar autosave local")
 
 def gerar_resposta_json(jogo):
     linhas = []
@@ -393,7 +390,7 @@ def receber_comando():
         logger.exception("Erro critico na Engine")
         jogo.ui_handler.buffer.append("@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação.")
         if app.debug:
-            jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {str(e)}")
+            jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {e!s}")
 
     return gerar_resposta_json(jogo)
 
