@@ -449,12 +449,26 @@ a:focus-visible {
 }
 
 input, textarea {
+    /* 1. Consertando a Fonte e o Brilho */
+    font-family: 'VT323', 'Courier New', monospace;
+    font-size: 1.3rem; 
+    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor;
+    
+    /* 2. Cores e Fundo */
+    background: transparent;
+    color: #4aff4a;
+    
+    /* 3. O Cursor Nativo */
+    caret-color: #4aff4a;
+    caret-shape: block; /* Força o bloco (funciona em alguns navegadores modernos) */
+    
+    /* 4. Removendo bordas feias */
     outline: none;
     border: none; 
     box-shadow: none; 
 }
 
-
+/* Garante que nada mude quando você clica para digitar */
 input:focus, textarea:focus {
     outline: none;
 }
