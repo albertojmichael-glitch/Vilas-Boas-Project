@@ -97,11 +97,6 @@ body::before {
     min-height: 1.1em;     
 }
 
-.input-line {
-    display: flex;
-    margin-top: 10px;
-    align-items: center;
-}
 
 
 /* --- SIDEBAR NA POSIÇÃO ORIGINAL (TOPO DIREITO) --- */
@@ -447,7 +442,6 @@ body.crt-enabled {
 
 /* Feedback claro de FOCO de Teclado (não afeta o mouse) */
 button:focus-visible, 
-input:focus-visible, 
 a:focus-visible {
     outline: 3px dashed #4aff4a !important;
     outline-offset: 4px;
