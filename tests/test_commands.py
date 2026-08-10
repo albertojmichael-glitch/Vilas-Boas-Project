@@ -2,8 +2,8 @@ import pytest
 import copy
 from state import GameState
 from data import MAPA_ORIGINAL
-from actions.movement import cmd_ir
-from actions.inventory import cmd_pegar, cmd_usar
+from villas_boas.actions.movement import cmd_ir
+from villas_boas.actions.inventory import cmd_pegar, cmd_usar
 
 # Mock da interface do usuário para não poluir o terminal durante os testes
 class DummyUI:
