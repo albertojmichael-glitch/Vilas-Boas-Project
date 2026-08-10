@@ -2,7 +2,8 @@ import pytest
 import copy
 from state import GameState
 from data import MAPA_ORIGINAL
-from engine import processar_comando
+
+from actions import processar_comando
 
 class DummyUI:
     def exibir(self, texto): pass

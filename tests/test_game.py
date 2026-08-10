@@ -3,7 +3,7 @@ import os
 import json
 from unittest.mock import patch
 from state import GameState
-from commands import processar_comando
+from actions import processar_comando
 from utils import encontrar_melhor_match
 from minigames import MinigameMinotauro, MinigameSeguranca
 
