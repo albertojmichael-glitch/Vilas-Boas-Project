@@ -2,10 +2,10 @@ from utils import normalizar, encontrar_melhor_match
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from data import descricoes_itens
 
-# Novos imports apontando para os arquivos fatiados
-from actions.movement import cmd_ir
-from actions.inventory import cmd_pegar, cmd_largar, cmd_usar, cmd_combinar, cmd_inventario
-from actions.inspection import cmd_examinar
+
+from villas_boas.actions.inspection import cmd_examinar
+from villas_boas.actions.movement import cmd_ir
+from villas_boas.actions.inventory import cmd_pegar, cmd_largar, cmd_usar, cmd_combinar, cmd_inventario
 
 def processar_comando(comando, jogo, mapa):
     ui = jogo.ui_handler
