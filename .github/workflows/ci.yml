@@ -47,7 +47,7 @@ jobs:
     - name: Executar testes automatizados com Pytest
       run: |
         # Roda a suíte de testes que criamos na pasta tests/
-        pytest -m pytest -v
+        PYTHONPATH=. pytest -v
 
     - name: Verificar lint e formatação com Ruff
       run: |
