@@ -31,6 +31,11 @@ body {
     overflow: hidden;
     animation: crt-flicker 0.15s infinite;
     position: relative;
+    cursor: crosshair;
+}
+
+button, a {
+    cursor: pointer; /* Deixa a mãozinha nativa */
 }
 
 /* Scanlines (Linhas de varredura horizontais leves) */
