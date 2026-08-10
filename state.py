@@ -117,8 +117,8 @@ def registrar_final(nome_final: str) -> bool:
         conquistas.append(nome_final)
         try:
             ARQUIVO_CONQUISTAS.write_text(json.dumps(conquistas, ensure_ascii=False), encoding="utf-8")
-        except Exception as e:
-            logger.warning(f"Falha ao salvar conquistas: {e}")
+        except Exception:
+            logger.warning(f"Falha ao salvar conquistas")
     return all(f in conquistas for f in ["mediocre", "bons_sonhos", "bom", "verdadeiro"])
 
 def salvar_autosave(estado: GameState):
@@ -139,5 +139,7 @@ def carregar_autosave(estado: GameState) -> bool:
             for key, value in novo_estado.to_dict().items():
                 setattr(estado, key, value)
             return True
-        except: pass
+        except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+            logger.warning(f"Falha ao carregar autosave: {e}")
+
     return False

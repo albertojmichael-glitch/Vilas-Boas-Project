@@ -235,7 +235,7 @@ def carregar_save_web(jogo):
                     if k != 'ui_handler':
                         setattr(jogo, k, v)
                 return True
-        except Exception as e:
+        except Exception:
             logger.exception("Erro ao buscar save no MongoDB")
     else:
         caminho = obter_caminho_autosave(sid)
@@ -247,8 +247,8 @@ def carregar_save_web(jogo):
                     if k != 'ui_handler':
                         setattr(jogo, k, v)
                 return True
-            except Exception as e:
-                logger.exception(f"Erro ao carregar save local")
+            except Exception:
+                logger.exception("Erro ao carregar save local")
                 
     return False
 
@@ -264,13 +264,13 @@ def salvar_save_web(jogo):
                 upsert=True
             )
         except Exception as e:
-            logger.exception(f"Erro ao salvar progresso no MongoDB: {e}")
+            logger.exception(f"Erro ao salvar progresso no MongoDB")
     else:
         try:
             caminho = obter_caminho_autosave(sid)
             caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
         except Exception as e:
-            logger.exception(f"Erro ao gerar autosave local: {e}")
+            logger.exception(f"Erro ao gerar autosave local")
 
 def gerar_resposta_json(jogo):
     linhas = []
@@ -433,7 +433,7 @@ def importar_save():
         salvar_save_web(novo_jogo)
         
         return jsonify({"sucesso": True, "mensagem": "Save importado com sucesso."})
-    except Exception as e:
+    except (ValidationError, ValueError, TypeError, KeyError) as e:
         logger.error(f"Erro ao importar save via UI: {e}")
         return jsonify({"erro": "Arquivo de save inválido, corrompido ou de uma versão incompatível."}), 400
 
@@ -542,7 +542,7 @@ def listar_saves_paginados():
             "saves": saves
         })
 
-    except Exception as e:
+    except (pymongo.errors.PyMongoError, ValueError) as e:
         logger.error(f"Erro ao listar saves paginados: {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
 
