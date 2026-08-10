@@ -17,7 +17,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from cachetools import TTLCache
-from engine.core import processar_fluxo_jogo
+from villas_boas.engine.core import processar_fluxo_jogo
 from flask import Flask, jsonify, redirect, request, send_from_directory, session
 from flask_cors import CORS
 from flask_limiter import Limiter
