@@ -1,2 +1,2 @@
-from .minotauro import MinigameMinotauro
-from .seguranca import MinigameSeguranca
+from .minotauro import MinigameMinotauro as MinigameMinotauro
+from .seguranca import MinigameSeguranca as MinigameSeguranca

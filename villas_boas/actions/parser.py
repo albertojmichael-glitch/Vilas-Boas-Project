@@ -68,11 +68,17 @@ def processar_comando(comando, jogo, mapa):
     if jogo.sala_atual in mapa:
         sala = mapa[jogo.sala_atual]
         
-        saidas_validas = [str(k).lower() for k in sala.keys() if k not in ["descrição", "itens", "inspecionaveis", "cofre_important"]]
+        saidas_validas = [
+            str(k).lower()
+            for k in sala
+            if k not in ["descrição", "itens", "inspecionaveis", "cofre_important"]
+        ]
         if normalizar(comando) in saidas_validas:
             comando = f"ir {normalizar(comando)}"
 
-        inspecionaveis_sala = [normalizar(k) for k in sala.get("inspecionaveis", {}).keys()]
+        inspecionaveis_sala = [
+            normalizar(k) for k in sala.get("inspecionaveis", {})
+        ]
         if normalizar(comando) in inspecionaveis_sala:
             comando = f"examinar {normalizar(comando)}"
 

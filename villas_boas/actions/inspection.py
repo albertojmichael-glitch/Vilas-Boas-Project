@@ -1,6 +1,9 @@
+import logging
 from utils import encontrar_melhor_match
-from ui import DOS_VERDE, DOS_AMARELO, RESET
+from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, RESET
 from data import descricoes_itens
+
+logger = logging.getLogger(__name__)
 
 def cmd_examinar(comando, jogo, mapa):
     ui = jogo.ui_handler

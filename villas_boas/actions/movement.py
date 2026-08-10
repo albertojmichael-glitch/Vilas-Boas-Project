@@ -26,7 +26,12 @@ def cmd_ir(comando, jogo, mapa):
         ui.pausar(2)
         return True
 
-    saidas_validas = [k for k in sala.keys() if k not in ["descrição", "itens", "inspecionaveis", "cofre_important"] and isinstance(sala[k], str)]
+    saidas_validas = [
+        k
+        for k in sala
+        if k not in ["descrição", "itens", "inspecionaveis", "cofre_important"]
+        and isinstance(sala[k], str)
+    ]
     
     match_direcao = encontrar_melhor_match(direcao, saidas_validas)
     if match_direcao:
@@ -74,14 +79,18 @@ def cmd_ir(comando, jogo, mapa):
             ui.pausar(2)
             return True
         
-        if jogo.sala_atual == "saida":
-            if getattr(jogo, 'noite_vencida', False) and getattr(jogo, 'fios_cortados_inventario', False) and not getattr(jogo, 'incendio', False):
-                ui.exibir(f"\n{DOS_VERDE}[DISPOSITIVO]: NÍVEL 2 - PRESENÇA PRÓXIMA.{RESET}")
-                ui.exibir(f"{DOS_AMARELO}'Eu preciso terminar isso antes...', você murmura para si mesmo.{RESET}")
-                ui.exibir(f"{DOS_AMARELO}Você vira as costas para a saída.{RESET}")
-                jogo.sala_atual = "entrada"
-                ui.pausar(3)
-    else:
-        ui.exibir(f"{DOS_BRANCO}{destino}{RESET}")
-        ui.pausar(1.5)
-    return True
+        if jogo.sala_atual == "saida" and (
+        getattr(jogo, "noite_vencida", False)
+        and getattr(jogo, "fios_cortados_inventario", False)
+        and not getattr(jogo, "incendio", False)
+        ):
+            ui.exibir(f"\n{DOS_VERDE}[DISPOSITIVO]: NÍVEL 2 - PRESENÇA PRÓXIMA.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}'Eu preciso terminar isso antes...', você murmura para si mesmo.{RESET}")
+            ui.exibir(f"{DOS_AMARELO}Você vira as costas para a saída.{RESET}")
+            jogo.sala_atual = "entrada"
+            ui.pausar(3)
+        else:
+            ui.exibir(f"{DOS_BRANCO}{destino}{RESET}")
+            ui.pausar(1.5)
+            
+        return True
