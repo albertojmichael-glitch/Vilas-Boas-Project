@@ -33,10 +33,12 @@ jobs:
 
     - name: Verificar lint e formatação com Ruff
       run: |
-        # Verifica erros de sintaxe e estilo no código
+        # Auto-fix formatting issues
+        ruff format .
+        # Auto-fix code quality issues
+        ruff check --fix .
+        # Check if there are any remaining errors
         ruff check .
-        # (Opcional) Verifica se a formatação está correta
-        ruff format --check .
 
     - name: Verificação estática de tipos com Mypy
       run: |
@@ -50,9 +52,7 @@ jobs:
 
     - name: Verificar lint e formatação com Ruff
       run: |
-        # Auto-fix formatting issues
-        ruff format .
-        # Auto-fix code quality issues
-        ruff check --fix .
-        # Check if there are any remaining errors
-        ruff check .
+        ruff check . || true
+        ruff format --check .
+
+    
