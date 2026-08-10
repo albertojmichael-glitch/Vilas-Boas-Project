@@ -1,4 +1,3 @@
-
 COFRE_SENHA = "1994"
 MAX_INVENTARIO = 3
 
@@ -86,7 +85,7 @@ ARTE_INDIO = r'''
                         `"$Nu..  .,z
 '''
 
-ARTE_PORCO = r'''
+ARTE_PORCO = r"""
       _.._                 ,.
     .' .-'`               (_|,.
    /  /      * ,' /, )_______   _
@@ -97,7 +96,7 @@ ARTE_PORCO = r'''
                         |_\  |--^.  /
                           /_]'|_| /_)_/
                              /_]'  /_]'
-'''
+"""
 
 ARTE_ROBO = r'''
        .-T-.
@@ -116,7 +115,7 @@ ARTE_ROBO = r'''
      (___Y___)
 '''
 
-ARTE_PIANO = r'''
+ARTE_PIANO = r"""
  ____________________________________
 |\                                    \
 | \                                    \
@@ -133,7 +132,7 @@ ARTE_PIANO = r'''
  \ ||| |           -  -                || |
   \'|| |-----------\\-\\---------------|| |
     \|_|            "  "               \|_|
-'''
+"""
 
 ARTE_MESA_SEGURANCA = r"""
                               ___________
@@ -199,9 +198,9 @@ MAPA_ORIGINAL = {
             "poster": "Um pôster desbotado com os animatrônicos sorrindo: 'Bem-vindo ao Vilas Boas! Trazendo alegria desde 1982.'"
         },
         "direita": "hall de entrada",
-        "atrás": "saida", 
+        "atrás": "saida",
         "esquerda": "parede velha",
-        "itens": ["tabua pequena de madeira"]
+        "itens": ["tabua pequena de madeira"],
     },
     "hall de entrada": {
         "descrição": "voce entra no hall de entrada, está um pouco mais claro, tem mesas de jantar, um balcão, e uma sala no fundo",
@@ -210,29 +209,32 @@ MAPA_ORIGINAL = {
         "esquerda": "mesas de jantar",
         "atrás": "entrada",
         "itens": ["papel", "recorte 1"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
-
     "mesas de jantar": {
         "descrição": "São mesas circulares de jantar, ainda tem pratos com restos largados, e está cheio de baratas. Nojento.",
         "atrás": "hall de entrada",
         "direita": "quarto de refrigeração",
         "esquerda": "entrada",
         "itens": ["remedio"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
-
-
     "balcão": {
         "descrição": "tem presentes, confetes, doces de áçucar e pelucias",
         "frente": "balcão",
         "direita": "balcão",
         "atrás": "hall de entrada",
         "esquerda": "balcão",
-        "itens": ["tesoura quebrada", "pelucias", "doce", "moeda velha", "disquete", "bolsa"],
-        "inspecionaveis": {}
+        "itens": [
+            "tesoura quebrada",
+            "pelucias",
+            "doce",
+            "moeda velha",
+            "disquete",
+            "bolsa",
+        ],
+        "inspecionaveis": {},
     },
-
     "quarto de refrigeração": {
         "descrição": "voce entra no quarto, está muito frio e os ventiladores fazem um barulho alto, tem um tubo de ventilação no centro da sala",
         "frente": "tubo de ventilação",
@@ -240,40 +242,36 @@ MAPA_ORIGINAL = {
         "atrás": "hall de entrada",
         "esquerda": "parede de ventiladores",
         "itens": ["bateria nova"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
-
     "tubo de ventilação": {
         "descrição": "você rasteja pelo aluminio gelado, você sente muito frio",
-        "frente": "morte", 
+        "frente": "morte",
         "direita": "aluminio",
         "atrás": "quarto de refrigeração",
         "esquerda": "aluminio",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
-
     "sala de jantar": {
         "descrição": "tem varias mesas de jantar com confetes, é um lugar bem grande, está bem sujo",
         "inspecionaveis": {
             "jornal": "Caso Vilas Boas: Três desaparecimentos em 1994, seguem sem solução",
-            "mesas": "Tem pedaços de papel, confetes coloridos, sujeira e algumas baratas."
+            "mesas": "Tem pedaços de papel, confetes coloridos, sujeira e algumas baratas.",
         },
         "frente": "duas salas de festas",
         "direita": "corredor",
         "atrás": "entrada",
-        "esquerda": "porta dos fundos", 
-        "itens": ["confete", "isqueiro"]
+        "esquerda": "porta dos fundos",
+        "itens": ["confete", "isqueiro"],
     },
-
     "porta dos fundos": {
         "descrição": "Uma pesada porta de metal. Está trancada a chave.",
         "atrás": "sala de jantar",
         "frente": "Você empurra, mas não cede.",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
-
     "corredor": {
         "descrição": "tem quatro portas, 01-sala de segurança | 02-porta trancada | 03-porta emperrada | 04-sala de intervalo",
         "01": "01",
@@ -283,11 +281,11 @@ MAPA_ORIGINAL = {
         "atrás": "sala de jantar",
         "frente": "parede",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "01": {
         "descrição": "voce entra na sala de segurança, tem um tubo de ventilação do canto esquerdo da sala, e tem uma mesa com ferramentas de segurança. Tem um cofre do seu lado.",
-        "frente": "cadeira", 
+        "frente": "cadeira",
         "cadeira": "cadeira",
         "atrás": "corredor",
         "inspecionaveis": {
@@ -296,7 +294,7 @@ MAPA_ORIGINAL = {
         "esquerda": "nada",
         "direita": "nada",
         "cofre_important": "cofre",
-        "itens": ["recorte 3", "disquete"]
+        "itens": ["recorte 3", "disquete"],
     },
     "02": {
         "descrição": "porta trancada",
@@ -305,7 +303,7 @@ MAPA_ORIGINAL = {
         "esquerda": "parede",
         "direita": "corredor",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "03": {
         "descrição": "porta emperrada",
@@ -314,30 +312,30 @@ MAPA_ORIGINAL = {
         "esquerda": "corredor",
         "direita": "parede",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "04": {
         "descrição": "voce força a porta e consegue entrar, está escuro e você enxerga apenas a tubulação funcionando",
         "atrás": "corredor",
-        "frente": "cama", 
+        "frente": "cama",
         "esquerda": "parede",
         "direita": "parede",
-        "itens": ["pano", "fosforo", "garrafa vazia","bolsa"],
-        "inspecionaveis": {}
+        "itens": ["pano", "fosforo", "garrafa vazia", "bolsa"],
+        "inspecionaveis": {},
     },
     "sala do gerador": {
         "descrição": "A antiga sala de energia (porta 03). O gerador principal está aqui. Há fios soltos e um painel exposto.",
         "atrás": "corredor",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "cozinha privada": {
         "descrição": "Uma cozinha industrial imunda. O cheiro do mofo é insuportável.",
         "atrás": "corredor",
         "itens": ["fita isolante"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
-    "duas salas de festas" : {
+    "duas salas de festas": {
         "descrição": "voce avança e encontra duas salas festas, a sala 1 e sala 2, a sala 1 parece mais calma",
         "atrás": "sala de jantar",
         "sala 1": "sala 1",
@@ -345,38 +343,38 @@ MAPA_ORIGINAL = {
         "esquerda": "corredor",
         "direita": "parede",
         "itens": ["pedra"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "sala 1": {
         "descrição": "voce entra na sala de festas 1, está tudo parado e calmo. A uma sala de fliperamas a sua esquerda",
-        "atrás": "duas salas de festas", 
+        "atrás": "duas salas de festas",
         "frente": "palco",
         "direita": "sala 2",
         "esquerda": "sala de fliperamas",
         "itens": ["recorte 2"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "sala de fliperamas": {
         "descrição": "O chão tem carpete neon sujo. Há três máquinas funcionando: 'fome de jon', 'consertos' e 'julgamento'. Digite 'jogar [nome]'.",
         "direita": "sala 1",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "sala 2": {
         "descrição": "voce da de cara com um animatronico enorme no escuro! O zumbido cresce. Você tem poucos segundos para recuar!",
         "esquerda": "sala 1",
         "atrás": "duas salas de festas",
-        "frente": "morte", 
-        "direita": "morte", 
+        "frente": "morte",
+        "direita": "morte",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "palco": {
         "descrição": "Você sobe no palco fedorento. As cortinas estão rasgadas. Algo terrível te observa nas sombras...",
         "atrás": "sala 1",
-        "frente": "morte", 
+        "frente": "morte",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "sala dos fundos": {
         "descrição": "Um corredor denso e escuro. Há 5 portas com placas: 'pelucias', 'equipamento', 'animatronicos', 'mercadorias' e 'energia'.",
@@ -386,23 +384,22 @@ MAPA_ORIGINAL = {
         "equipamento": "sala de equipamento",
         "animatronicos": "sala de animatronicos",
         "mercadorias": "sala de mercadorias",
-        "energia": "sala de energia", 
+        "energia": "sala de energia",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "cozinha principal": {
         "descrição": "A antiga cozinha que preparava comida. Tem uma caixa de primeiros socorros aberta.",
         "direita": "sala dos fundos",
         "itens": ["remedio", "pizza mofada"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "sala de pelucias": {
         "descrição": "Uma sala cheia de pelúcias apodrecidas. Melhor não ficar aqui.",
         "atrás": "sala dos fundos",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
-
     "sala de energia": {
         "descrição": "Uma sala abafada dominada por painéis elétricos, cabos e um ar quente e metálico. A pesada porta de metal bate atrás de você quando a entrada fecha.",
         "atrás": "sala dos fundos",
@@ -412,49 +409,42 @@ MAPA_ORIGINAL = {
         "itens": ["celular quebrado"],
         "inspecionaveis": {
             "celular quebrado": "Um celular rachado com uma mensagem não lida."
-        }
+        },
     },
-    
     "sala de equipamento": {
         "descrição": "Apenas ferramentas velhas e graxa seca pelo chão.",
         "atrás": "sala dos fundos",
         "itens": ["bateria nova", "disquete"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "sala de animatronicos": {
         "descrição": "Várias carcaças de metal desmontadas. Uma delas vira a cabeça devagar para você! Você bate a porta.",
         "atrás": "sala dos fundos",
         "itens": [],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
     "sala de mercadorias": {
         "descrição": "Caixas de papelão mofadas com camisetas do restaurante.",
         "atrás": "sala dos fundos",
         "itens": ["bolsa"],
-        "inspecionaveis": {}
+        "inspecionaveis": {},
     },
-    
     "morte": {
         "descrição": "Você está morto. O escuro engoliu sua alma.",
-        "itens": [], 
-        "inspecionaveis": {}
+        "itens": [],
+        "inspecionaveis": {},
     },
     "saida": {
         "descrição": "Você escapou pela porta da frente.",
-        "itens": [], 
-        "inspecionaveis": {}
+        "itens": [],
+        "inspecionaveis": {},
     },
-    "cama": {
-        "descrição": "O cheiro dela...",
-        "itens": [], 
-        "inspecionaveis": {}
-    },
+    "cama": {"descrição": "O cheiro dela...", "itens": [], "inspecionaveis": {}},
     "final_bom": {
-        "descrição": 
-        "O silêncio absoluto.",
-        "itens": [], 
-        "inspecionaveis": {}
-    }
+        "descrição": "O silêncio absoluto.",
+        "itens": [],
+        "inspecionaveis": {},
+    },
 }
 
 descricoes_itens = {
@@ -488,5 +478,5 @@ descricoes_itens = {
     "bolsa": "Uma bolsa escolar antiga, desgastadas e um pouco rasgado, deve servir para guardar alguma coisa ainda..",
     "fita isolante": "Um rolo de fita preta grossa. A cola ainda deve servir.",
     "fios cortados": "Um punhado de fios elétricos grossos e coloridos. Estão sujos com o óleo preto do Minotauro.",
-    "chave dos fundos": "Uma chave de metal pesada e enferrujada. Parece pertencer à porta da Sala dos Fundos."
+    "chave dos fundos": "Uma chave de metal pesada e enferrujada. Parece pertencer à porta da Sala dos Fundos.",
 }

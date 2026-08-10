@@ -5,6 +5,8 @@ import os
 import time
 import uuid
 
+import pymongo
+
 try:
     import redis
 except ImportError:
@@ -30,17 +32,23 @@ from views import imprimir_tela_boot
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 log_file = os.path.join(BASE_DIR, "villas_boas.log")
-file_handler = RotatingFileHandler(log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8")
-file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+file_handler = RotatingFileHandler(
+    log_file, maxBytes=10_000_000, backupCount=5, encoding="utf-8"
+)
+file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logging.getLogger().addHandler(file_handler)
 logger = logging.getLogger(__name__)
 
 
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982")
 if os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
-    assert SECRET_KEY != "DEV_SECRET_DO_NOT_USE_IN_PROD_1982", "CRÍTICO: FLASK_SECRET_KEY não configurada em produção! Abortando boot."
+    assert SECRET_KEY != "DEV_SECRET_DO_NOT_USE_IN_PROD_1982", (
+        "CRÍTICO: FLASK_SECRET_KEY não configurada em produção! Abortando boot."
+    )
 
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
@@ -54,7 +62,7 @@ if MONGO_URI:
     db = mongo_client["villasboas_db"]
     saves_collection = db["saves"]
     telemetry_collection = db["telemetry"]
-    shares_collection = db["shares"] 
+    shares_collection = db["shares"]
     logger.info("Conectado ao MongoDB com sucesso...")
 else:
     mongo_client = None
@@ -64,11 +72,12 @@ else:
 def requer_admin(f):
     @functools.wraps(f)
     def decorated(*args, **kwargs):
-        
+
         token = request.headers.get("X-Admin-Token") or request.args.get("token")
         if not token or token != ADMIN_TOKEN:
             return jsonify({"erro": "Acesso negado. Credenciais inválidas."}), 403
         return f(*args, **kwargs)
+
     return decorated
 
 
@@ -85,7 +94,11 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 
-is_production = bool(os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL") or os.environ.get("PROD"))
+is_production = bool(
+    os.environ.get("RENDER")
+    or os.environ.get("RAILWAY_STATIC_URL")
+    or os.environ.get("PROD")
+)
 if is_production:
     app.config["SESSION_COOKIE_SECURE"] = True
     logger.info("🔒 Segurança de Cookies: Modo Produção ativado (Secure=True).")
@@ -98,23 +111,23 @@ CORS(app, supports_credentials=True)
 limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 
 
-
 REDIS_URL = os.environ.get("REDIS_URL")
+
 
 # --- NOVO: Wrapper para serializar o GameState ---
 class RedisSessionStore:
     def __init__(self, client):
         self.client = client
-        
+
     def __contains__(self, key):
         return self.client.exists(key) > 0
-        
+
     def __getitem__(self, key):
         data = self.client.get(key)
         if data:
             return GameState.from_dict(json.loads(data))
         raise KeyError(key)
-        
+
     def __setitem__(self, key, value):
         # Converte o GameState para dict e salva como JSON com expiração de 1 hora
         self.client.setex(key, 3600, json.dumps(value.to_dict()))
@@ -124,23 +137,25 @@ if REDIS_URL and redis is not None:
     try:
         redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
         redis_client.ping()
-        
+
         # Substitui a chamada direta pelo nosso Wrapper
-        MEMORIA_SESSOES = RedisSessionStore(redis_client) 
+        MEMORIA_SESSOES = RedisSessionStore(redis_client)
         logger.info("Conectado ao Redis com sucesso.")
 
     except Exception:
-        logger.exception("Falha inesperada ao conectar no Redis — caindo para TTLCache.")
+        logger.exception(
+            "Falha inesperada ao conectar no Redis — caindo para TTLCache."
+        )
         MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
 else:
     logger.info("Usando TTLCache na memória RAM local.")
     MEMORIA_SESSOES = TTLCache(maxsize=1000, ttl=3600)
 
 
-
 class ComandoRequest(BaseModel):
     comando: str = Field(default="", max_length=256)
     telemetria: bool = Field(default=True)
+
 
 def obter_sid_seguro():
     """Garante que o SID lido do cookie é um UUID válido e não um script de injeção"""
@@ -156,72 +171,97 @@ def obter_sid_seguro():
 
 class WebUIHandler(UIHandler):
     def __init__(self):
-        self.buffer = [] 
-        
-    def limpar(self): 
+        self.buffer = []
+
+    def limpar(self):
         self.buffer.append("@@CLEAR@@")
-        
+
     def pausar(self, segs):
         ms = int(segs * 1000)
         self.buffer.append(f"@@PAUSE@@{ms}")
-        
-    def exibir(self, texto): 
+
+    def exibir(self, texto):
         self.animar(texto, 0.015)
-        
+
     def animar(self, texto, tempo=0.03, cor="", jogo=None):
         cor_nome = "verde"
-        if cor == DOS_BRANCO: cor_nome = "branco"
-        elif cor == DOS_AMARELO: cor_nome = "amarelo"
-        elif cor == DOS_VERMELHO: cor_nome = "vermelho"
-        
-        if jogo and getattr(jogo, 'fast_mode', False): tempo = 0
+        if cor == DOS_BRANCO:
+            cor_nome = "branco"
+        elif cor == DOS_AMARELO:
+            cor_nome = "amarelo"
+        elif cor == DOS_VERMELHO:
+            cor_nome = "vermelho"
+
+        if jogo and getattr(jogo, "fast_mode", False):
+            tempo = 0
         ms = int(tempo * 1000)
         self.buffer.append(f"@@TYPE@@{cor_nome}@@{ms}@@{texto}")
-        
-    def obter_input(self, prompt_text): 
+
+    def obter_input(self, prompt_text):
         return ""
+
 
 def ansi_para_html(texto_ansi):
     import re
-    mapa_cores = { DOS_VERDE: "verde", DOS_BRANCO: "branco", DOS_AMARELO: "amarelo", DOS_VERMELHO: "vermelho" }
-    padrao = re.compile("(" + "|".join(re.escape(c) for c in list(mapa_cores.keys()) + [RESET]) + ")")
+
+    mapa_cores = {
+        DOS_VERDE: "verde",
+        DOS_BRANCO: "branco",
+        DOS_AMARELO: "amarelo",
+        DOS_VERMELHO: "vermelho",
+    }
+    padrao = re.compile(
+        "(" + "|".join(re.escape(c) for c in list(mapa_cores.keys()) + [RESET]) + ")"
+    )
     partes = padrao.split(texto_ansi)
     html, aberto = [], False
     for parte in partes:
         if parte in mapa_cores:
-            if aberto: html.append("</span>")
+            if aberto:
+                html.append("</span>")
             html.append(f'<span class="{mapa_cores[parte]}">')
             aberto = True
         elif parte == RESET:
-            if aberto: html.append("</span>"); aberto = False
-        else: html.append(parte)
-    if aberto: html.append("</span>")
+            if aberto:
+                html.append("</span>")
+                aberto = False
+        else:
+            html.append(parte)
+    if aberto:
+        html.append("</span>")
     return "".join(html)
+
 
 def obter_caminho_autosave(sid):
     return Path(SAVES_DIR_ENV) / f"autosave_{sid}.json"
 
-def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
-    if not mongo_client: return
 
-    if not session.get('permite_telemetria', True):
+def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
+    if not mongo_client:
+        return
+
+    if not session.get("permite_telemetria", True):
         return
 
     try:
-        telemetry_collection.insert_one({
-            "evento": evento,              
-            "sala": sala,                  
-            "dificuldade": dificuldade,    
-            "detalhes": detalhes,          
-            "timestamp": time.time()
-        })
+        telemetry_collection.insert_one(
+            {
+                "evento": evento,
+                "sala": sala,
+                "dificuldade": dificuldade,
+                "detalhes": detalhes,
+                "timestamp": time.time(),
+            }
+        )
     except (KeyError, ValueError, TypeError) as e:
         logger.error(f"Erro na telemetria: {e}")
+
 
 # --- BANCO DE DADOS: CARREGAR E SALVAR ---
 def carregar_save_web(jogo):
     sid = obter_sid_seguro()
-    if not sid: return False
+    if not sid:
+        return False
 
     if mongo_client:
         try:
@@ -229,7 +269,7 @@ def carregar_save_web(jogo):
             if doc and "dados" in doc:
                 novo_jogo = GameState.from_dict(doc["dados"])
                 for k, v in novo_jogo.__dict__.items():
-                    if k != 'ui_handler':
+                    if k != "ui_handler":
                         setattr(jogo, k, v)
                 return True
         except Exception:
@@ -241,69 +281,103 @@ def carregar_save_web(jogo):
                 dados = json.loads(caminho.read_text(encoding="utf-8"))
                 novo_jogo = GameState.from_dict(dados)
                 for k, v in novo_jogo.__dict__.items():
-                    if k != 'ui_handler':
+                    if k != "ui_handler":
                         setattr(jogo, k, v)
                 return True
             except Exception:
                 logger.exception("Erro ao carregar save local")
-                
+
     return False
+
 
 def salvar_save_web(jogo):
     sid = obter_sid_seguro()
-    if not sid: return
-    
+    if not sid:
+        return
+
     if mongo_client:
         try:
             saves_collection.update_one(
                 {"sid": sid},
                 {"$set": {"sid": sid, "dados": jogo.to_dict()}},
-                upsert=True
+                upsert=True,
             )
         except Exception:
             logger.exception("Erro ao salvar progresso no MongoDB")
     else:
         try:
             caminho = obter_caminho_autosave(sid)
-            caminho.write_text(json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8")
+            caminho.write_text(
+                json.dumps(jogo.to_dict(), ensure_ascii=False), encoding="utf-8"
+            )
         except Exception:
             logger.exception("Erro ao gerar autosave local")
+
 
 def gerar_resposta_json(jogo):
     linhas = []
     saidas, hp, luz, inv, sala = [], "...", "...", [], "BOOT"
-    
+
     if jogo:
-        if hasattr(jogo.ui_handler, 'buffer'):
-            linhas = [ansi_para_html(linha) for linha in jogo.ui_handler.buffer if linha.strip() != ""]
+        if hasattr(jogo.ui_handler, "buffer"):
+            linhas = [
+                ansi_para_html(linha)
+                for linha in jogo.ui_handler.buffer
+                if linha.strip() != ""
+            ]
             jogo.ui_handler.buffer.clear()
-            
-        if getattr(jogo, 'estado_atual', "") not in ["FIM", "MENU", "AGUARDANDO_DIR"] and jogo.sala_atual in jogo.mapa:
-            chaves_ignoradas = ["descrição", "itens", "inspecionaveis", "cofre_important", "cadeira"]
-            saidas = [k.title() for k in jogo.mapa[jogo.sala_atual] if k not in chaves_ignoradas and isinstance(jogo.mapa[jogo.sala_atual][k], str)]
-            
-        hp = jogo.hp if not getattr(jogo, 'god_mode', False) else "∞"
-        luz = jogo.turnos_luz if not getattr(jogo, 'god_mode', False) else "∞"
+
+        if (
+            getattr(jogo, "estado_atual", "") not in ["FIM", "MENU", "AGUARDANDO_DIR"]
+            and jogo.sala_atual in jogo.mapa
+        ):
+            chaves_ignoradas = [
+                "descrição",
+                "itens",
+                "inspecionaveis",
+                "cofre_important",
+                "cadeira",
+            ]
+            saidas = [
+                k.title()
+                for k in jogo.mapa[jogo.sala_atual]
+                if k not in chaves_ignoradas
+                and isinstance(jogo.mapa[jogo.sala_atual][k], str)
+            ]
+
+        hp = jogo.hp if not getattr(jogo, "god_mode", False) else "∞"
+        luz = jogo.turnos_luz if not getattr(jogo, "god_mode", False) else "∞"
         inv = jogo.inventario
-        sala = jogo.sala_atual.upper() if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"] else "SISTEMA"
-        
-    return jsonify({
-        "linhas": linhas,
-        "estado": {
-            "hp": hp,
-            "luz": luz,
-            "inventario": inv,
-            "sala": sala,
-            "saidas": saidas
+        sala = (
+            jogo.sala_atual.upper()
+            if jogo.estado_atual not in ["MENU", "AGUARDANDO_DIR"]
+            else "SISTEMA"
+        )
+
+    return jsonify(
+        {
+            "linhas": linhas,
+            "estado": {
+                "hp": hp,
+                "luz": luz,
+                "inventario": inv,
+                "sala": sala,
+                "saidas": saidas,
+            },
         }
-    })
+    )
+
 
 # --- ROTAS PRINCIPAIS ---
 @app.route("/")
-def raiz(): return send_from_directory(BASE_DIR, "index.html")
+def raiz():
+    return send_from_directory(BASE_DIR, "index.html")
+
 
 @app.route("/ping")
-def ping(): return "Estou vivo!", 200
+def ping():
+    return "Estou vivo!", 200
+
 
 @app.route("/style.css")
 def serve_css():
@@ -311,55 +385,59 @@ def serve_css():
         return send_from_directory(BASE_DIR, "style.min.css")
     return send_from_directory(BASE_DIR, "style.css")
 
+
 @app.route("/script.js")
 def serve_js():
     if os.path.exists(os.path.join(BASE_DIR, "script.min.js")):
         return send_from_directory(BASE_DIR, "script.min.js")
     return send_from_directory(BASE_DIR, "script.js")
 
+
 @app.errorhandler(404)
 @app.errorhandler(405)
 def page_not_found(e):
     return send_from_directory(BASE_DIR, "index.html")
 
-@app.route('/iniciar', methods=['GET'])
+
+@app.route("/iniciar", methods=["GET"])
 def iniciar_jogo():
     session.clear()
     sid = str(uuid.uuid4())
     session["sid"] = sid
     session.permanent = True
-    session.modified = True 
-    
+    session.modified = True
+
     jogo = GameState()
     jogo.ui_handler = WebUIHandler()
     jogo.estado_atual = "AGUARDANDO_DIR"
-    
+
     MEMORIA_SESSOES[sid] = jogo
-    
+
     imprimir_tela_boot(jogo.ui_handler)
-    
+
     resposta = gerar_resposta_json(jogo)
     resposta.headers["Cache-Control"] = "no-store"
     return resposta
 
-@app.route('/comando', methods=['GET', 'POST'])
+
+@app.route("/comando", methods=["GET", "POST"])
 @limiter.limit("60 per minute")
 @limiter.limit("500 per hour")
 def receber_comando():
-    if request.method == 'GET':
+    if request.method == "GET":
         return send_from_directory(BASE_DIR, "index.html")
 
     sid = obter_sid_seguro()
-    
+
     if not sid or sid not in MEMORIA_SESSOES:
         sid = str(uuid.uuid4())
         session["sid"] = sid
         session.permanent = True
         session.modified = True
-        
+
         MEMORIA_SESSOES[sid] = GameState()
-        MEMORIA_SESSOES[sid].estado_atual = "AGUARDANDO_DIR" 
-        
+        MEMORIA_SESSOES[sid].estado_atual = "AGUARDANDO_DIR"
+
     jogo = MEMORIA_SESSOES[sid]
     jogo.ui_handler = WebUIHandler()
 
@@ -367,47 +445,59 @@ def receber_comando():
     try:
         requisicao = ComandoRequest(**dados)
         comando = requisicao.comando
-        
-        session['permite_telemetria'] = requisicao.telemetria
+
+        session["permite_telemetria"] = requisicao.telemetria
 
     except ValidationError:
-        return jsonify({
-            "linhas": ["@@TYPE@@vermelho@@15@@[ ERRO DE SEGURANÇA ] O formato do comando enviado é inválido ou excede 256 caracteres."],
-            "estado": {}
-        }), 400
+        return jsonify(
+            {
+                "linhas": [
+                    "@@TYPE@@vermelho@@15@@[ ERRO DE SEGURANÇA ] O formato do comando enviado é inválido ou excede 256 caracteres."
+                ],
+                "estado": {},
+            }
+        ), 400
 
     tem_save = obter_caminho_autosave(sid).exists()
 
     try:
-        processar_fluxo_jogo(comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web)
+        processar_fluxo_jogo(
+            comando, jogo, tem_save=tem_save, callback_load_save=carregar_save_web
+        )
 
-        if getattr(jogo, 'estado_atual', "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
+        if getattr(jogo, "estado_atual", "") in ["JOGO", "COMBATE_ANIMATRONICO"]:
             salvar_save_web(jogo)
 
         MEMORIA_SESSOES[sid] = jogo
 
     except Exception as e:
         logger.exception("Erro critico na Engine")
-        jogo.ui_handler.buffer.append("@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação.")
+        jogo.ui_handler.buffer.append(
+            "@@TYPE@@vermelho@@0@@[ERRO INTERNO]: O servidor falhou ao processar a ação."
+        )
         if app.debug:
-            jogo.ui_handler.buffer.append(f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {e!s}")
+            jogo.ui_handler.buffer.append(
+                f"@@TYPE@@amarelo@@0@@Detalhes (Apenas em Debug): {e!s}"
+            )
 
     return gerar_resposta_json(jogo)
+
 
 # ==========================================
 # GERENCIAMENTO DE SAVES (EXPORT / IMPORT)
 # ==========================================
-@app.route('/save/export', methods=['GET'])
+@app.route("/save/export", methods=["GET"])
 def exportar_save():
     sid = obter_sid_seguro()
     if not sid or sid not in MEMORIA_SESSOES:
         return jsonify({"erro": "Nenhuma sessão ativa."}), 404
-    
+
     jogo = MEMORIA_SESSOES[sid]
     # Retorna o dicionário serializado do GameState
     return jsonify(jogo.to_dict())
 
-@app.route('/save/import', methods=['POST'])
+
+@app.route("/save/import", methods=["POST"])
 @limiter.limit("10 per minute")
 def importar_save():
     sid = obter_sid_seguro()
@@ -416,101 +506,104 @@ def importar_save():
         sid = str(uuid.uuid4())
         session["sid"] = sid
         session.permanent = True
-    
+
     dados = request.json
     if not dados:
         return jsonify({"erro": "Nenhum dado recebido."}), 400
-        
+
     try:
         # Valida e recria o objeto usando o Pydantic
         novo_jogo = GameState.from_dict(dados)
-        novo_jogo.ui_handler = WebUIHandler() # Reconecta a UI Web
-        
+        novo_jogo.ui_handler = WebUIHandler()  # Reconecta a UI Web
+
         MEMORIA_SESSOES[sid] = novo_jogo
         salvar_save_web(novo_jogo)
-        
+
         return jsonify({"sucesso": True, "mensagem": "Save importado com sucesso."})
     except (ValidationError, ValueError, TypeError, KeyError) as e:
         logger.error(f"Erro ao importar save via UI: {e}")
-        return jsonify({"erro": "Arquivo de save inválido, corrompido ou de uma versão incompatível."}), 400
+        return jsonify(
+            {
+                "erro": "Arquivo de save inválido, corrompido ou de uma versão incompatível."
+            }
+        ), 400
+
 
 # --- ROTAS EXTRAS (Achievements, Telemetry, Share) ---
-@app.route('/achievements', methods=['GET'])
+@app.route("/achievements", methods=["GET"])
 def listar_conquistas():
     sid = obter_sid_seguro()
     if not sid or sid not in MEMORIA_SESSOES:
         return jsonify({"erro": "Sessão não encontrada", "conquistas": []})
-    
+
     jogo = MEMORIA_SESSOES[sid]
-    conquistas = getattr(jogo, 'conquistas', [])
+    conquistas = getattr(jogo, "conquistas", [])
     return jsonify({"conquistas": conquistas, "total": len(conquistas)})
 
-@app.route('/admin/analytics', methods=['GET'])
+
+@app.route("/admin/analytics", methods=["GET"])
 @requer_admin
 def ver_telemetria():
-    if not mongo_client: return "Sem banco de dados."
+    if not mongo_client:
+        return "Sem banco de dados."
     mortes = telemetry_collection.count_documents({"evento": "MORTE"})
     vitorias = telemetry_collection.count_documents({"evento": "VITORIA"})
     return jsonify({"mortes_totais": mortes, "vitorias_totais": vitorias})
 
-@app.route('/share/generate', methods=['GET'])
+
+@app.route("/share/generate", methods=["GET"])
 def gerar_link_compartilhamento():
     sid = obter_sid_seguro()
-    if not sid: return jsonify({"erro": "Sem save ativo"}), 401
-    if not mongo_client: return jsonify({"erro": "Banco de dados desativado"}), 400
+    if not sid:
+        return jsonify({"erro": "Sem save ativo"}), 401
+    if not mongo_client:
+        return jsonify({"erro": "Banco de dados desativado"}), 400
 
     # 1. Gera um Token descartável e calcula a expiração (24 horas)
     share_token = str(uuid.uuid4())
-    expires_at = time.time() + (24 * 3600) 
+    expires_at = time.time() + (24 * 3600)
 
     # 2. Salva na coleção isolada de shares
-    shares_collection.insert_one({
-        "share_token": share_token,
-        "original_sid": sid,
-        "expires_at": expires_at
-    })
+    shares_collection.insert_one(
+        {"share_token": share_token, "original_sid": sid, "expires_at": expires_at}
+    )
 
     url_share = f"{request.host_url}share/{share_token}"
-    return jsonify({
-        "link": url_share, 
-        "mensagem": "Link válido por 24 horas."
-    })
+    return jsonify({"link": url_share, "mensagem": "Link válido por 24 horas."})
 
-@app.route('/share/<share_token>', methods=['GET'])
+
+@app.route("/share/<share_token>", methods=["GET"])
 def carregar_save_compartilhado(share_token):
     if not mongo_client:
         return "Banco de dados desativado. Não é possível compartilhar.", 400
-        
-    
+
     share_doc = shares_collection.find_one({"share_token": share_token})
     if not share_doc:
         return "Link inválido ou não encontrado.", 404
-        
-    
+
     if time.time() > share_doc.get("expires_at", 0):
-        
         shares_collection.delete_one({"share_token": share_token})
         return "Este link de compartilhamento expirou.", 410
-        
-    
+
     doc = saves_collection.find_one({"sid": share_doc["original_sid"]})
     if not doc:
         return "O save original foi deletado ou corrompido.", 404
-        
-    
+
     novo_sid = str(uuid.uuid4())
     session["sid"] = novo_sid
     session.permanent = True
-    
+
     jogo_compartilhado = GameState.from_dict(doc["dados"])
     MEMORIA_SESSOES[novo_sid] = jogo_compartilhado
-    
-    saves_collection.insert_one({"sid": novo_sid, "dados": jogo_compartilhado.to_dict()})
-    
+
+    saves_collection.insert_one(
+        {"sid": novo_sid, "dados": jogo_compartilhado.to_dict()}
+    )
+
     return redirect("/")
 
 
-@app.route('/saves', methods=['GET'])
+@app.route("/saves", methods=["GET"])
 @limiter.limit("10 per minute")
 @requer_admin
 def listar_saves_paginados():
@@ -518,30 +611,35 @@ def listar_saves_paginados():
         return jsonify({"erro": "Banco de dados desativado."}), 400
 
     try:
-        
-        page = request.args.get('page', 1, type=int)
+        page = request.args.get("page", 1, type=int)
         limit = 10
         skip = (page - 1) * limit
 
-        
-        cursor = saves_collection.find({}, {"_id": 0}).sort("dados.timestamp", -1).skip(skip).limit(limit)
+        cursor = (
+            saves_collection.find({}, {"_id": 0})
+            .sort("dados.timestamp", -1)
+            .skip(skip)
+            .limit(limit)
+        )
         saves = list(cursor)
-        
-        
+
         total_saves = saves_collection.count_documents({})
         total_pages = (total_saves + limit - 1) // limit
 
-        return jsonify({
-            "page": page,
-            "limit": limit,
-            "total_saves": total_saves,
-            "total_pages": total_pages,
-            "saves": saves
-        })
+        return jsonify(
+            {
+                "page": page,
+                "limit": limit,
+                "total_saves": total_saves,
+                "total_pages": total_pages,
+                "saves": saves,
+            }
+        )
 
     except (pymongo.errors.PyMongoError, ValueError) as e:
         logger.error(f"Erro ao listar saves paginados: {e}")
         return jsonify({"erro": "Erro interno do servidor"}), 500
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True, port=5000)

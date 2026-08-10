@@ -1,12 +1,14 @@
 import os
+
 import rcssmin
 import rjsmin
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+
 def minify_assets():
     print("[BUILD] Iniciando minificação de assets...")
-    
+
     # css
     css_path = os.path.join(BASE_DIR, "style.css")
     css_min_path = os.path.join(BASE_DIR, "style.min.css")
@@ -29,6 +31,6 @@ def minify_assets():
 
     print("[BUILD] Concluído.")
 
+
 if __name__ == "__main__":
     minify_assets()
-    
