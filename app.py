@@ -2,22 +2,15 @@ import functools
 import json
 import logging
 import os
+import sys  # <-- Adicionado para o sys.exit(1) funcionar
 import time
 import uuid
-
-import pymongo
-
-try:
-    import redis
-except ImportError:
-    redis = None
-
 from datetime import timedelta
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
+import pymongo
 from cachetools import TTLCache
-from villas_boas.engine.core import processar_fluxo_jogo
 from flask import Flask, jsonify, redirect, request, send_from_directory, session
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -25,13 +18,67 @@ from flask_limiter.util import get_remote_address
 from pydantic import BaseModel, Field, ValidationError
 from pymongo import MongoClient
 
+try:
+    import redis
+except ImportError:
+    redis = None
+
+# Imports internos da sua aplicação
+from villas_boas.utils import RedisSessionStore, TTLCacheStore
+from villas_boas.engine.core import processar_fluxo_jogo
 from state import GameState
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandler
 from views import imprimir_tela_boot
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+# ==========================================
+# 1. CONFIGURAÇÕES DE AMBIENTE E SEGURANÇA
+# ==========================================
 
+# Consolidação da detecção de produção (Flask_env, Render, Railway, etc)
+IS_PRODUCTION = bool(
+    os.environ.get("FLASK_ENV") == "production"
+    or os.environ.get("RENDER")
+    or os.environ.get("RAILWAY_STATIC_URL")
+    or os.environ.get("PROD")
+)
+
+# Busca os segredos principais
+SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
+
+# Trava de segurança rigorosa para Produção
+if IS_PRODUCTION and not (SECRET_KEY and ADMIN_TOKEN):
+    print("❌ ERRO FATAL: SECRET_KEY e/ou ADMIN_TOKEN não encontrados no ambiente de produção! ❌")
+    sys.exit(1) # Derruba o container imediatamente para evitar vazamentos
+
+# Inicializa o Flask
+app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
+
+# Aplica as chaves
+app.secret_key = SECRET_KEY or "DEV_SECRET_DO_NOT_USE_IN_PROD_1982"
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+
+# Consolidação do Hardening de Cookies
+if IS_PRODUCTION:
+    app.config.update(
+        SESSION_COOKIE_SECURE=True,     # Exige HTTPS
+        SESSION_COOKIE_HTTPONLY=True,   # Impede que o JS (front-end) leia o cookie
+        SESSION_COOKIE_SAMESITE='Lax',  # Protege contra ataques CSRF
+    )
+    print("🔒 Segurança de Cookies: Modo Produção ativado (Secure=True).")
+else:
+    app.config.update(
+        SESSION_COOKIE_SECURE=False,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='Lax',
+    )
+    print("🔓 Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
+
+# ==========================================
+# 2. CONFIGURAÇÃO DE LOGS
+# ==========================================
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
@@ -43,19 +90,17 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logging.getLogger().addHandler(file_handler)
 logger = logging.getLogger(__name__)
 
-
-SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "DEV_SECRET_DO_NOT_USE_IN_PROD_1982")
-if os.environ.get("RENDER") or os.environ.get("RAILWAY_STATIC_URL"):
-    assert SECRET_KEY != "DEV_SECRET_DO_NOT_USE_IN_PROD_1982", (
-        "CRÍTICO: FLASK_SECRET_KEY não configurada em produção! Abortando boot."
-    )
-
+# ==========================================
+# 3. CONEXÕES DE BANCO (MONGO E REDIS)
+# ==========================================
 SAVES_DIR_ENV = os.environ.get("SAVES_DIR", os.path.join(BASE_DIR, "saves"))
 os.makedirs(SAVES_DIR_ENV, exist_ok=True)
 
+# Define o Fallback do ADMIN_TOKEN para testes locais se não existir no ambiente
+if not ADMIN_TOKEN:
+    ADMIN_TOKEN = "senha-super-secreta-mudar-em-prod"
 
-ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "senha-super-secreta-mudar-em-prod")
-
+# Conexão com MongoDB
 MONGO_URI = os.environ.get("MONGO_URI")
 if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
@@ -63,51 +108,13 @@ if MONGO_URI:
     saves_collection = db["saves"]
     telemetry_collection = db["telemetry"]
     shares_collection = db["shares"]
-    logger.info("Conectado ao MongoDB com sucesso...")
+    logger.info("✅ Conectado ao MongoDB com sucesso...")
 else:
     mongo_client = None
-    logger.warning("⚠ Rodando sem Banco de Dados. Usando arquivos locais.")
+    logger.warning("⚠ Rodando sem Banco de Dados MongoDB. Usando arquivos locais.")
 
-
-def requer_admin(f):
-    @functools.wraps(f)
-    def decorated(*args, **kwargs):
-
-        token = request.headers.get("X-Admin-Token") or request.args.get("token")
-        if not token or token != ADMIN_TOKEN:
-            return jsonify({"erro": "Acesso negado. Credenciais inválidas."}), 403
-        return f(*args, **kwargs)
-
-    return decorated
-
-
-app = Flask(__name__, static_folder=BASE_DIR, static_url_path="/")
-app.secret_key = SECRET_KEY
-
-
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
-
-
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-
-
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-
-
-is_production = bool(
-    os.environ.get("RENDER")
-    or os.environ.get("RAILWAY_STATIC_URL")
-    or os.environ.get("PROD")
-)
-if is_production:
-    app.config["SESSION_COOKIE_SECURE"] = True
-    logger.info("🔒 Segurança de Cookies: Modo Produção ativado (Secure=True).")
-else:
-    app.config["SESSION_COOKIE_SECURE"] = False
-    logger.warning("🔓 Segurança de Cookies: Modo Desenvolvimento (Secure=False).")
-
+# Configuração de CORS e Limiter
 CORS(app, supports_credentials=True)
-
 limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 
 
