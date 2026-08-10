@@ -2,23 +2,17 @@ import logging
 from utils import encontrar_melhor_match
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from data import MAX_INVENTARIO
-
 logger = logging.getLogger(__name__)
-
-
 def cmd_pegar(comando, jogo, mapa):
     ui = jogo.ui_handler
     item = comando.replace("pegar ", "").strip()
     sala = mapa.get(jogo.sala_atual, {})
     itens_chao = sala.get("itens", [])
-
     match_item = encontrar_melhor_match(item, itens_chao)
     if not match_item:
         ui.exibir(f"Não há nenhum '{item}' aqui para pegar.")
         return False
-
     item = match_item
-
     qtd_bolsas = jogo.inventario.count("bolsa")
     limite_atual = MAX_INVENTARIO + (qtd_bolsas * 3)
 
@@ -27,13 +21,10 @@ def cmd_pegar(comando, jogo, mapa):
             f"{DOS_VERMELHO}Sua mochila está cheia! Você precisa largar algo antes.{RESET}"
         )
         return False
-
     jogo.inventario.append(item)
     itens_chao.remove(item)
     ui.exibir(f"{DOS_VERDE}Você pegou: {item}{RESET}")
     return True
-
-
 def cmd_largar(comando, jogo, mapa):
     ui = jogo.ui_handler
     item = comando.replace("largar ", "").strip()
@@ -42,7 +33,6 @@ def cmd_largar(comando, jogo, mapa):
     if not match_item:
         ui.exibir(f"Você não tem '{item}' no inventário.")
         return False
-
     item = match_item
     jogo.inventario.remove(item)
     sala = mapa.get(jogo.sala_atual, {})
@@ -51,24 +41,18 @@ def cmd_largar(comando, jogo, mapa):
     sala["itens"].append(item)
     ui.exibir(f"{DOS_AMARELO}Você largou: {item} no chão.{RESET}")
     return True
-
-
 def cmd_usar(comando, jogo, mapa):
     ui = jogo.ui_handler
     item = comando.replace("usar ", "").strip()
-
     match_item = encontrar_melhor_match(item, jogo.inventario)
     if not match_item:
         ui.exibir(f"Você não tem '{item}' no inventário.")
         return False
-
     item = match_item
-
     if item == "lanterna":
         ui.exibir(
             "Você já está usando a lanterna automaticamente (quando tem bateria)."
         )
-
     elif item == "chave dos fundos":
         if jogo.sala_atual == "porta dos fundos":
             ui.exibir(
@@ -87,7 +71,6 @@ def cmd_usar(comando, jogo, mapa):
         else:
             ui.exibir("Não há nenhuma fechadura por aqui que se encaixe nessa chave.")
         return True
-
     elif item == "bateria nova":
         ui.exibir(
             f"{DOS_VERDE}Você abre a parte inferior da lanterna e insere a bateria nova.{RESET}"
@@ -96,7 +79,6 @@ def cmd_usar(comando, jogo, mapa):
         jogo.turnos_luz = 12
         jogo.inventario.remove("bateria nova")
         return True
-
     elif item == "isqueiro":
         if getattr(jogo, "noite_vencida", False):
             if getattr(jogo, "fios_cortados_inventario", False):
@@ -116,7 +98,6 @@ def cmd_usar(comando, jogo, mapa):
                 f"{DOS_AMARELO}Você acende o isqueiro. Uma pequena chama ilumina as sombras, mas você logo a apaga para não chamar atenção.{RESET}"
             )
         return True
-
     elif item == "disquete":
         if jogo.sala_atual == "01":
             ui.exibir(
@@ -125,17 +106,13 @@ def cmd_usar(comando, jogo, mapa):
             ui.pausar(1.5)
             ui.exibir(f"{DOS_BRANCO}LENDO A:\\ ...{RESET}")
             ui.pausar(1)
-
             try:
                 from data import ARTE_DISQUETE
-
                 ui.animar(f"{DOS_BRANCO}{ARTE_DISQUETE}{RESET}", 0.015, jogo=jogo)
                 ui.pausar(1)
             except ImportError as e:
                 logger.debug(f"ARTE_DISQUETE indisponível no arquivo de dados: {e}")
-
                 pass
-
             ui.animar(
                 f"{DOS_AMARELO}ARQUIVO RECUPERADO: ANGELA.TXT{RESET}",
                 0.05,
