@@ -558,10 +558,29 @@ def listar_conquistas():
 @requer_admin
 def ver_telemetria():
     if not mongo_client:
-        return "Sem banco de dados."
+        return jsonify({"erro": "Sem banco de dados conectado."}), 400
+        
+   
     mortes = telemetry_collection.count_documents({"evento": "MORTE"})
     vitorias = telemetry_collection.count_documents({"evento": "VITORIA"})
-    return jsonify({"mortes_totais": mortes, "vitorias_totais": vitorias})
+    
+    
+    pipeline_salas = [
+        {"$match": {"evento": "MORTE"}},                 
+        {"$group": {"_id": "$sala", "total": {"$sum": 1}}}, 
+        {"$sort": {"total": -1}},                         
+        {"$limit": 5}                                     
+    ]
+    
+    ranking_mortes = list(telemetry_collection.aggregate(pipeline_salas))
+    
+    return jsonify({
+        "geral": {
+            "mortes_totais": mortes,
+            "vitorias_totais": vitorias,
+        },
+        "top_salas_mortais": ranking_mortes
+    })
 
 
 @app.route("/share/generate", methods=["GET"])

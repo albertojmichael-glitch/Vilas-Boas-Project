@@ -25,7 +25,7 @@ def mapa_mock():
 
 def test_processar_comando_alias(jogo_mock, mapa_mock):
     """Testa se a engine traduz abreviações (aliases) como 'f' para 'ir frente'."""
-    # Envia apenas "f" em vez de "ir frente"
+    
     processar_comando("f", jogo_mock, mapa_mock)
     
     assert jogo_mock.sala_atual == "sala de jantar"
