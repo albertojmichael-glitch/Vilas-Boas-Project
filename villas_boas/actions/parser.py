@@ -1,4 +1,4 @@
-from utils import normalizar, encontrar_melhor_match
+from villas_boas.utils import encontrar_melhor_match, normalizar
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
 from data import descricoes_itens
 

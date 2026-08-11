@@ -120,7 +120,7 @@ limiter = Limiter(key_func=get_remote_address, app=app, storage_uri="memory://")
 REDIS_URL = os.environ.get("REDIS_URL")
 
 
-# --- NOVO: Wrapper para serializar o GameState ---
+
 class RedisSessionStore:
     def __init__(self, client):
         self.client = client
@@ -135,7 +135,7 @@ class RedisSessionStore:
         raise KeyError(key)
 
     def __setitem__(self, key, value):
-        # Converte o GameState para dict e salva como JSON com expiração de 1 hora
+        
         self.client.setex(key, 3600, json.dumps(value.to_dict()))
 
 
@@ -144,7 +144,7 @@ if REDIS_URL and redis is not None:
         redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
         redis_client.ping()
 
-        # Substitui a chamada direta pelo nosso Wrapper
+        
         MEMORIA_SESSOES = RedisSessionStore(redis_client)
         logger.info("Conectado ao Redis com sucesso.")
 
@@ -272,7 +272,7 @@ def registrar_telemetria(evento, sala, dificuldade, detalhes=""):
         logger.error(f"Erro na telemetria: {e}")
 
 
-# --- BANCO DE DADOS: CARREGAR E SALVAR ---
+
 def carregar_save_web(jogo):
     sid = obter_sid_seguro()
     if not sid:
@@ -383,7 +383,7 @@ def gerar_resposta_json(jogo):
     )
 
 
-# --- ROTAS PRINCIPAIS ---
+
 @app.route("/")
 def raiz():
     return send_from_directory(BASE_DIR, "index.html")
@@ -498,9 +498,7 @@ def receber_comando():
     return gerar_resposta_json(jogo)
 
 
-# ==========================================
-# GERENCIAMENTO DE SAVES (EXPORT / IMPORT)
-# ==========================================
+
 @app.route("/save/export", methods=["GET"])
 def exportar_save():
     sid = obter_sid_seguro()
@@ -508,7 +506,7 @@ def exportar_save():
         return jsonify({"erro": "Nenhuma sessão ativa."}), 404
 
     jogo = MEMORIA_SESSOES[sid]
-    # Retorna o dicionário serializado do GameState
+    
     return jsonify(jogo.to_dict())
 
 
@@ -517,7 +515,7 @@ def exportar_save():
 def importar_save():
     sid = obter_sid_seguro()
     if not sid:
-        # Se não há sessão, cria uma nova
+        
         sid = str(uuid.uuid4())
         session["sid"] = sid
         session.permanent = True
@@ -527,9 +525,9 @@ def importar_save():
         return jsonify({"erro": "Nenhum dado recebido."}), 400
 
     try:
-        # Valida e recria o objeto usando o Pydantic
+        
         novo_jogo = GameState.from_dict(dados)
-        novo_jogo.ui_handler = WebUIHandler()  # Reconecta a UI Web
+        novo_jogo.ui_handler = WebUIHandler()  
 
         MEMORIA_SESSOES[sid] = novo_jogo
         salvar_save_web(novo_jogo)
@@ -544,7 +542,7 @@ def importar_save():
         ), 400
 
 
-# --- ROTAS EXTRAS (Achievements, Telemetry, Share) ---
+
 @app.route("/achievements", methods=["GET"])
 def listar_conquistas():
     sid = obter_sid_seguro()
@@ -574,11 +572,11 @@ def gerar_link_compartilhamento():
     if not mongo_client:
         return jsonify({"erro": "Banco de dados desativado"}), 400
 
-    # 1. Gera um Token descartável e calcula a expiração (24 horas)
+    
     share_token = str(uuid.uuid4())
     expires_at = time.time() + (24 * 3600)
 
-    # 2. Salva na coleção isolada de shares
+    
     shares_collection.insert_one(
         {"share_token": share_token, "original_sid": sid, "expires_at": expires_at}
     )

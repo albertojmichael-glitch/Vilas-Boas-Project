@@ -1,5 +1,5 @@
 import logging
-from utils import encontrar_melhor_match
+from villas_boas.utils import encontrar_melhor_match
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, RESET
 from data import descricoes_itens
 

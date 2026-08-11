@@ -1,5 +1,5 @@
 import random
-from utils import extrair_argumentos, encontrar_melhor_match
+from villas_boas.utils import extrair_argumentos, encontrar_melhor_match
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET, default_ui
 
 def cmd_ir(comando, jogo, mapa):

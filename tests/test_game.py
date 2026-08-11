@@ -5,7 +5,7 @@ import json
 from unittest.mock import patch
 from state import GameState
 from villas_boas.actions import processar_comando
-from utils import encontrar_melhor_match
+from villas_boas.utils import encontrar_melhor_match
 from villas_boas.engine import MinigameMinotauro, MinigameSeguranca
 
 

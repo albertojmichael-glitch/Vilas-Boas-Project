@@ -7,7 +7,7 @@ from villas_boas.actions import processar_comando
 from villas_boas.actions.parser import normalizar
 
 from ui import DOS_VERDE, DOS_BRANCO, DOS_AMARELO, DOS_VERMELHO, RESET
-from utils import extrair_argumentos, atualizar_eventos_de_tempo
+from villas_boas.utils import extrair_argumentos, atualizar_eventos_de_tempo
 
 from data import (
     MAX_INVENTARIO, ARTE_PORCO, ARTE_ROBO, ARTE_PIANO, MAPA_ORIGINAL,
