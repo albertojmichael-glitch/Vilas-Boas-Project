@@ -2,7 +2,7 @@ import functools
 import json
 import logging
 import os
-import sys  # <-- Adicionado para o sys.exit(1) funcionar
+import sys  
 import time
 import uuid
 from datetime import timedelta
@@ -23,8 +23,7 @@ try:
 except ImportError:
     redis = None
 
-# Imports internos da sua aplicação
-from villas_boas.utils import RedisSessionStore, TTLCacheStore
+
 from villas_boas.engine.core import processar_fluxo_jogo
 from state import GameState
 from ui import DOS_AMARELO, DOS_BRANCO, DOS_VERDE, DOS_VERMELHO, RESET, UIHandler
@@ -174,6 +173,15 @@ def obter_sid_seguro():
     except (ValueError, TypeError, AttributeError):
         logger.warning(f"Alerta de Segurança: SID inválido/adulterado: {sid_bruto}")
         return None
+
+def requer_admin(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get("X-Admin-Token") or request.args.get("token")
+        if not token or token != ADMIN_TOKEN:
+            return jsonify({"erro": "Acesso negado. Credenciais inválidas."}), 403
+        return f(*args, **kwargs)
+    return decorated
 
 
 class WebUIHandler(UIHandler):
